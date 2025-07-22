@@ -312,7 +312,7 @@ class TreeGridManager {
                 alert("데이터를 불러오는데 실패했습니다.");
             }
         });
-    }
+    } 
     
     setData(responseData, page = 1) {
         this.currentPage = page;

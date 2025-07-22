@@ -182,7 +182,7 @@ function selectCode() {
                     
                 </div>
             </div>
-        </div>
+        </div> 
 
         <div class="tblBox">
             <table class="tbl col" id="grid1">
