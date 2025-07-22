@@ -189,7 +189,11 @@ function selectCode() {
                 <thead>
                     <tr>
                      <th>NO</th>
-                        <th>ID</th>
+                        
+                         <th scope="col" class="sortable" data-sort="projectTitle">
+            					ID <span class="sort-icon"></span>
+        				</th>
+                        
                         <th>이름</th>
                         <th>useYn</th>
                         <th>description</th>
