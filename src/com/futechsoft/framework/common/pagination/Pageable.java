@@ -20,13 +20,14 @@ public class Pageable {
         pageSize=param.getInt("pageSize");
         
         
-    	List<Map<String, String>> sorters = (List<Map<String, String>>) param.get("sorters");
+    	//List<Map<String, String>> sorters = (List<Map<String, String>>) param.get("sorters");
     	
     	
-    	System.out.println("sorters............"+sorters);
+    	//System.out.println("sorters............"+sorters);
     	
-
+        StringBuilder orderByClause = new StringBuilder();
 		// → MyBatis 쿼리에서 사용할 정렬 문자열 생성
+        /*
 		StringBuilder orderByClause = new StringBuilder();
 		if (sorters != null) {
 			/*
@@ -38,8 +39,8 @@ public class Pageable {
 						orderByClause.append(", ");
 					orderByClause.append(field).append(" ").append(dir);
 				}
-			}*/ 
-			
+			}*/
+			 /*
 			List<String> whitelist = Arrays.asList("ID", "NO", "YEAR", "LIST", "WRITE", "FILE", "COUNT");
 
 			for (Map<String, String> sorter : sorters) {
@@ -55,11 +56,24 @@ public class Pageable {
 			}
 			
 		}
+		*/
+		
+    	List<String> whitelist = Arrays.asList("ID", "NO", "YEAR", "LIST", "WRITE", "FILE", "COUNT");
+		String sortField =	param.getString("sortField");
+		String sortDirection =	param.getString("sortDirection");
 		
 		
+		  if (sortField != null && sortDirection != null) {
+			    if (whitelist.contains(sortField.toUpperCase()) && ("asc".equals(sortDirection) || "desc".equals(sortDirection))) {
+			        orderByClause.append("\"").append(sortField).append("\" ").append(sortDirection);  
+			    }
+		    }
 		
 		
 		orderByString=orderByClause.toString();
+		
+		System.out.println("orderByString...."+orderByString);
+		
 		
 		param.put("orderBy", orderByString);
 		

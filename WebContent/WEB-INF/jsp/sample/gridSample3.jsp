@@ -83,6 +83,26 @@ function test2(){
 	var a= gridManagers['grid1'].getDeletedRows();
 	
 	console.log("...."+JSON.stringify(a));
+	
+	
+	var gridManager = gridManagers['grid1'];
+	
+	
+	// 체크된 행의 전체 데이터 가져오기
+	const checkedRows = gridManager.getCheckedRowsData();
+	console.log('체크된 행 데이터:', checkedRows);
+
+	// 체크된 행의 특정 필드만 가져오기
+	const checkedProjectIds = gridManager.getCheckedRowsField('projectId');
+	console.log('체크된 프로젝트 ID들:', checkedProjectIds);
+
+	const checkedTitles = gridManager.getCheckedRowsField('projectTitle');
+	console.log('체크된 프로젝트 제목들:', checkedTitles);
+
+	// ID만 가져오기
+	const checkedIds = gridManager.getCheckedRowIds();
+	console.log('체크된 행 ID들:', checkedIds);
+	
 }
  
 </script>

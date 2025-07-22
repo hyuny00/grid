@@ -38,6 +38,7 @@ class TreeGridManager {
         
         this.gridData= config.gridData || {};
 
+        this.checkCount = config.checkCount; // undefined면 제한 없음
         
         // 그리드별 독립적인 데이터
         this.currentPage = 1;
@@ -71,6 +72,8 @@ class TreeGridManager {
         this.codeMap =  config.codeMap || {};
         
         this.selectOption=  config.selectOption || {};
+        
+        this.currentSortDirection = 'desc'; // 'asc' 또는 'desc'
     }
     
     
@@ -143,12 +146,31 @@ class TreeGridManager {
 	   	}
         
  
-        
-        // ★ 이벤트 위임 사용 - 상위 요소에서 이벤트를 감지
-        $(`#${this.gridId}-container`).on('change', '.row-check', () => {
-            this.updateHeaderCheckbox();
+      
+        // ★ 개별 체크박스 이벤트 수정 - 개수 제한 추가
+        $(`#${this.gridId}-container`).on('change', '.row-check', function() {
+            const $checkbox = $(this);
+            
+            // 체크하려고 할 때만 개수 제한 확인
+            if ($checkbox.is(':checked') && self.checkCount) {
+                const currentCheckedCount = $(`#${self.gridId}-container .row-check:checked`).length;
+                
+                if (currentCheckedCount > self.checkCount) {
+                    // 제한 개수 초과시 체크 해제하고 경고
+                    $checkbox.prop('checked', false);
+                    alert(`최대 ${self.checkCount}개까지만 선택할 수 있습니다.`);
+                    return;
+                }
+            }
+            
+            self.updateHeaderCheckbox();
         });
         
+        // 헤더 정렬 클릭 이벤트 추가
+        $(`#${this.gridId} th.sortable`).on('click', function() {
+            const sortField = $(this).data('sort');
+            self.handleSort(sortField);
+        });
         
         
         // 저장 기능이 활성화된 경우만 저장 버튼 바인딩
@@ -185,6 +207,32 @@ class TreeGridManager {
     }
     
    
+    handleSort(sortField) {
+        // 같은 필드를 다시 클릭하면 방향 변경, 다른 필드면 ASC로 초기화
+        if (this.currentSortField === sortField) {
+            this.currentSortDirection = this.currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.currentSortField = sortField;
+            this.currentSortDirection = 'asc';
+        }
+        
+        // 정렬 아이콘 업데이트
+        this.updateSortIcons();
+        
+        // 데이터 다시 조회
+        this.searchData();
+    }
+
+    updateSortIcons() {
+        // 모든 정렬 아이콘 초기화
+        $(`#${this.gridId} th .sort-icon`).removeClass('asc desc');
+        
+        // 현재 정렬 필드의 아이콘만 활성화
+        if (this.currentSortField) {
+            $(`#${this.gridId} th[data-sort="${this.currentSortField}"] .sort-icon`)
+                .addClass(this.currentSortDirection);
+        }
+    }
     
     /*
     getSearchParams() {
@@ -245,6 +293,12 @@ class TreeGridManager {
         		params[key] = value.toString().trim();
         	}
         });
+        
+        // 정렬 파라미터 추가
+        if (this.currentSortField) {
+            params.sortField = this.currentSortField;
+            params.sortDirection = this.currentSortDirection;
+        }
         
         return params;
     }
@@ -312,7 +366,7 @@ class TreeGridManager {
                 alert("데이터를 불러오는데 실패했습니다.");
             }
         });
-    } 
+    }
     
     setData(responseData, page = 1) {
         this.currentPage = page;
@@ -1196,8 +1250,8 @@ class TreeGridManager {
         }
     }
     
-    
-    toggleAll(checked) {
+    /*
+    toggleAll2(checked) {
         $(`#${this.gridId}-body .row-check`).prop("checked", checked);
         
         // ★ 헤더 체크박스도 함께 업데이트
@@ -1217,9 +1271,103 @@ class TreeGridManager {
         
        
     }
-
+    */
+    toggleAll(checked) {
+        if (checked && this.checkCount) {
+            // 전체 선택시 개수 제한이 있으면 제한된 개수만 체크
+            const $allCheckboxes = $(`#${this.gridId}-body .row-check`);
+            
+            if ($allCheckboxes.length <= this.checkCount) {
+                // 전체 개수가 제한 개수 이하면 모두 체크
+                $allCheckboxes.prop('checked', true);
+                
+                // ★ 데이터에서도 체크 상태 업데이트
+                const updateNodeChecked = (nodes) => {
+                    nodes.forEach(node => {
+                        node.checked = true;
+                        if (this.isTreeMode && node.children && node.children.length > 0) {
+                            updateNodeChecked(node.children);
+                        }
+                    });
+                };
+                updateNodeChecked(this.data);
+                
+            } else {
+                // 제한 개수만큼만 체크
+                $allCheckboxes.slice(0, this.checkCount).prop('checked', true);
+                
+                // ★ 데이터에서도 제한된 개수만 체크 상태 업데이트
+                let checkedCount = 0;
+                const updateLimitedNodeChecked = (nodes) => {
+                    nodes.forEach(node => {
+                        if (checkedCount < this.checkCount) {
+                            node.checked = true;
+                            checkedCount++;
+                            
+                            if (this.isTreeMode && node.children && node.children.length > 0) {
+                                updateLimitedNodeChecked(node.children);
+                            }
+                        } else {
+                            node.checked = false;
+                            if (this.isTreeMode && node.children && node.children.length > 0) {
+                                const setChildrenUnchecked = (childNodes) => {
+                                    childNodes.forEach(child => {
+                                        child.checked = false;
+                                        if (child.children && child.children.length > 0) {
+                                            setChildrenUnchecked(child.children);
+                                        }
+                                    });
+                                };
+                                setChildrenUnchecked(node.children);
+                            }
+                        }
+                    });
+                };
+                updateLimitedNodeChecked(this.data);
+                
+                //alert(`최대 ${this.checkCount}개까지만 선택할 수 있어 처음 ${this.checkCount}개 항목을 선택했습니다.`);
+            }
+        } else if (!checked) {
+            // 전체 해제
+            $(`#${this.gridId}-body .row-check`).prop('checked', false);
+            
+            // ★ 데이터에서도 체크 해제
+            const updateNodeChecked = (nodes) => {
+                nodes.forEach(node => {
+                    node.checked = false;
+                    if (this.isTreeMode && node.children && node.children.length > 0) {
+                        updateNodeChecked(node.children);
+                    }
+                });
+            };
+            updateNodeChecked(this.data);
+            
+        } else {
+            // 개수 제한이 없으면 기존대로
+            $(`#${this.gridId}-body .row-check`).prop('checked', checked);
+            
+            // ★ 데이터에서도 체크 상태 업데이트
+            const updateNodeChecked = (nodes) => {
+                nodes.forEach(node => {
+                    node.checked = checked;
+                    if (this.isTreeMode && node.children && node.children.length > 0) {
+                        updateNodeChecked(node.children);
+                    }
+                });
+            };
+            updateNodeChecked(this.data);
+        }
+        
+        // ★ 헤더 체크박스도 함께 업데이트
+        this.updateHeaderCheckbox();
+    }
+    
+    
+    
+    
+    /*
     // ★ 새로 추가: 개별 체크박스 상태 변경 시 헤더 체크박스 업데이트
-    updateHeaderCheckbox() {
+    updateHeaderCheckbox2() {
         const totalCheckboxes = $(`#${this.gridId}-body .row-check`).length;
         const checkedCheckboxes = $(`#${this.gridId}-body .row-check:checked`).length;
         
@@ -1227,6 +1375,49 @@ class TreeGridManager {
         const allChecked = totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes;
         $(`#${this.gridId}-container .check-all`).prop('checked', allChecked);
     }
+    */
+    
+    updateHeaderCheckbox() {
+        const $container = $(`#${this.gridId}-container`);
+        const $allCheckboxes = $container.find('.row-check');
+        const $checkedCheckboxes = $container.find('.row-check:checked');
+        const $headerCheckbox = $container.find('.check-all');
+        
+        const checkedCount = $checkedCheckboxes.length;
+        const totalCount = $allCheckboxes.length;
+        
+        // 개수 제한이 있는 경우
+        if (this.checkCount) {
+            const maxSelectableCount = Math.min(this.checkCount, totalCount);
+            
+            /*
+            if (checkedCount === 0) {
+                $headerCheckbox.prop('checked', false).prop('indeterminate', false);
+            } else if (checkedCount === maxSelectableCount) {
+               // $headerCheckbox.prop('checked', true).prop('indeterminate', false);
+            } else {
+               // $headerCheckbox.prop('checked', false).prop('indeterminate', true);
+            }
+            */
+            
+            // 개수 제한 정보 표시
+            console.log(`체크된 항목: ${checkedCount}개 / 최대 ${this.checkCount}개`);
+           // $(`#${this.gridId}-checked-count`).text(`선택: ${checkedCount}/${this.checkCount}`);
+        } else {
+            // 기존 로직 (개수 제한 없음)
+            if (checkedCount === 0) {
+                $headerCheckbox.prop('checked', false).prop('indeterminate', false);
+            } else if (checkedCount === totalCount) {
+                $headerCheckbox.prop('checked', true).prop('indeterminate', false);
+            } else {
+                $headerCheckbox.prop('checked', false).prop('indeterminate', true);
+            }
+            
+            console.log(`체크된 항목: ${checkedCount}개 / 전체 ${totalCount}개`);
+           // $(`#${this.gridId}-checked-count`).text(`선택된 항목: ${checkedCount}개`);
+        }
+    }
+    
     
     
     trackEdit(nodeId, el, field) {
@@ -1872,7 +2063,44 @@ class TreeGridManager {
         return result;
     }
 
+    getCheckedCount() {
+        const $checkedCheckboxes = $(`#${this.gridId}-container .row-check:checked`);
+        return $checkedCheckboxes.length;
+    }
     
+    getCheckedRowsData() {
+        const checkedData = [];
+        const $checkedCheckboxes = $(`#${this.gridId}-container .row-check:checked`);
+        
+        $checkedCheckboxes.each((index, checkbox) => {
+            const $row = $(checkbox).closest('tr');
+            const nodeId = $row.data('id');
+            
+            // findNodeById를 사용해서 실제 데이터 객체 찾기
+            const result = this.findNodeById(nodeId);
+            if (result && result.node) {
+                checkedData.push(result.node);
+            }
+        });
+        
+        return checkedData;
+    }
+
+    // 체크된 행의 특정 필드값만 가져오는 메서드
+    getCheckedRowsField(fieldName) {
+        const checkedData = this.getCheckedRowsData();
+        return checkedData.map(row => row[fieldName]);
+    }
+
+    // 체크된 행의 ID만 가져오는 메서드 (기존)
+    getCheckedRowIds() {
+        const checkedIds = [];
+        $(`#${this.gridId}-container .row-check:checked`).each(function() {
+            const rowId = $(this).closest('tr').data('id');
+            checkedIds.push(rowId);
+        });
+        return checkedIds;
+    }
     
     updatePageInfo() {
         // 페이지 정보 업데이트
