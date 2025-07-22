@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+
+	<Properties>
+	  	<Property name="logNm">odakorea</Property>
+		<Property name="layoutPattern">%d [%t] %-5level %c(%M:%L) - %m%n</Property>
+	</Properties>
+
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d %5p [%c] %m%n" />
+        </Console>
+
+         <RollingFile name="file" fileName="/log/${logNm}.log" filePattern="/log/logs/${logNm}_%d{yyyy-MM-dd}_%i.log" >
+			   <PatternLayout pattern="${layoutPattern}" />
+			   <Policies>
+			   <!-- <SizeBasedTriggeringPolicy size="10MB" />  10MB 용량이 초과시 DefaultRolloverStrategy 정책만큼 넘버링 -->
+			    <TimeBasedTriggeringPolicy  interval="1" /><!-- 일별 로그 파일 생성-->
+			   </Policies>
+			   <DefaultRolloverStrategy max="500" fileIndex="min" /><!-- 롤링 파일 500개 까지 생성 -->
+		  </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Logger name="java.sql" level="DEBUG" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
+        <Logger name="egovframework" level="INFO" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
+          <!-- log SQL with timing information, post execution -->
+<!--         <Logger name="jdbc.sqltiming" level="INFO" additivity="false"> -->
+<!--             <AppenderRef ref="console" /> -->
+<!--         </Logger> -->
+        <Logger name="org.springframework" level="INFO" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
+
+        <logger name="org.apache" level="OFF" additivity="false">
+			 <AppenderRef ref="console" />
+		</logger>
+
+		<Logger name="jdbc" level="OFF" additivity="false">
+			<AppenderRef ref="console" />
+		</Logger>
+		<Logger name="org.apache.commons.digester" level="ERROR" additivity="false">
+			<AppenderRef ref="console" />
+		</Logger>
+		<Logger name="jdbc.sqlonly" level="INFO" additivity="false">
+			<AppenderRef ref="console" />
+		</Logger>
+		<Logger name="jdbc.resultsettable" level="INFO" additivity="false">
+			<AppenderRef ref="console" />
+		</Logger>
+
+
+        <Root level="debug">
+            <AppenderRef ref="console" />
+            <AppenderRef ref="file" level="debug" />
+        </Root>
+    </Loggers>
+</Configuration>

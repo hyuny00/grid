@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.go.odakorea.gis.mapper.IatiMapper">
+
+
+	<select id="getRgnNo" parameterType="ftMap" resultType="ftMap">
+
+		SELECT
+			rgn_no, biz_rgn_pstn_lot_vl, biz_rgn_pstn_lat_vl
+		FROM tcm_ntn_rgn_cd
+		WHERE ntn_no = (select ntn_no from tcm_ntn_cd where ntn_cd = #{ntnCd})
+			AND del_yn = 'N'
+			AND ( rgn_korn_nm =#{rgnKornNm} OR rgn_eng_nm = #{rgnEngNm} )
+
+	</select>
+
+
+
+	<insert id="inserNtnRgn" parameterType="ftMap">
+
+		INSERT INTO FTCORE.tcm_ntn_rgn_cd (
+			rgn_no, ntn_no,
+			biz_rgn_pstn_lot_vl, biz_rgn_pstn_lat_vl,
+			rgn_korn_nm, rgn_eng_nm,
+			biz_rgn_area, cty_ppltn_cnt,
+		
+			reg_dt, reg_user_id,
+			mdfcn_dt, mdfcn_user_id,
+			del_yn
+		)
+		VALUES (
+			(SELECT COALESCE(MAX(rgn_no), 0) + 1 FROM tcm_ntn_rgn_cd),
+			(select ntn_no from tcm_ntn_cd where ntn_cd = #{ntnCd}),
+			#{bizRgnPstnLotVl}, #{bizRgnPstnLatVl},
+			#{rgnKornNm}, #{rgnEngNm},
+			#{bizRgnArea}, #{ctyPpltnCnt},
+			CURRENT_TIMESTAMP, #{userId},
+			CURRENT_TIMESTAMP, #{userId},
+			'N'
+		)
+
+	</insert>
+	
+	
+	<update id="updateNtnRgn" parameterType="ftMap">
+		UPDATE
+			FTCORE.tcm_ntn_rgn_cd
+		SET
+			biz_rgn_pstn_lot_vl = #{bizRgnPstnLotVl},
+			biz_rgn_pstn_lat_vl = #{bizRgnPstnLatVl},
+		
+		mdfcn_dt =CURRENT_TIMESTAMP,
+		mdfcn_user_id = #{mdfcnUserId}
+		WHERE ntn_no = (select ntn_no from tcm_ntn_cd where ntn_cd = #{ntnCd})
+		AND del_yn = 'N'
+		AND (
+			rgn_korn_nm = #{rgnKornNm}
+			OR rgn_eng_nm =#{rgnEngNm}
+		)
+	</update>
+
+
+
+</mapper>

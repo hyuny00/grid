@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.futechsoft.sample.mapper.SampleMapper">
+
+	   <sql id="whereStatement">
+	    <where>
+	       <if test="params.schCondition != null and params.schCondition != '' 
+        			and params.schKeyword != null and params.schKeyword != ''">
+
+	        
+	            <if test="params.schCondition == 1">
+	                AND name LIKE '%' || #{params.schKeyword} || '%'
+	            </if>
+	            <if test="params.schCondition == 0">
+	                AND ID LIKE '%' || #{params.schKeyword} || '%'
+	            </if>
+	        </if>
+	    </where>
+	</sql>
+
+
+    <select id="selectSampleList"  resultType="ftMap">
+    		SELECT
+ 					"ID" id,
+					USE_YN,
+					NAME,
+					DESCRIPTION,
+				 	REG_USER,
+				 	attc_doc_id2
+			FROM SAMPLE
+			<include refid="whereStatement"/>
+			
+			
+    		<choose>
+			  <when test="params.orderBy != null and params.orderBy != ''">
+			    ORDER BY ${params.orderBy}
+			  </when>
+			  <otherwise>
+			   order by "ID" 
+			  </otherwise>
+			</choose>
+    		
+    		
+			 <if test="pageable.isPaged">
+	           	LIMIT  #{pageable.offset}, #{pageable.pageSize}
+	       	 </if>
+    </select>
+
+   <!--
+   <select id="selectSampleList"  resultType="ftMap">
+    SELECT
+ 					a.ID,
+					NAME,
+					DESCRIPTION,
+					USE_YN,
+					 REG_USER
+		from(
+    		SELECT ID
+			FROM SAMPLE
+			<include refid="whereStatement"/>
+    		order by ID
+			 <if test="pageable.isPaged">
+	           	LIMIT  #{pageable.offset}, #{pageable.pageSize}
+	       	 </if>
+	       ) a	join SAMPLE b on a.ID=b.ID
+  </select>
+-->
+
+    <select id="countSampleList" resultType="long">
+         select count(1)
+         from SAMPLE
+        <include refid="whereStatement"/>
+    </select>
+
+
+    <select id="selectSample" parameterType="ftMap"  resultType="ftMap">
+    		SELECT *
+			FROM SAMPLE
+			WHERE id=#{id}
+    </select>
+
+ 	<select id="deleteSample"  resultType="ftMap">
+    		delete from SAMPLE
+			WHERE "id"=#{id}
+    </select>
+
+
+    <insert id="insertSample"  parameterType="ftMap" >
+    		insert into sample
+    			( reg_user , use_yn , name , description , rgstp_no , "id" , rgst_dttm ,attc_doc_id, attc_doc_id2)
+    		values
+    			( #{regUser} , #{useYn} , #{name} , #{description} , #{userNo} , #{id} , sysdate , #{attcDocId}, #{attcDocId2})
+	</insert>
+
+	 <insert id="updateSample"  parameterType="ftMap" >
+    		UPDATE SAMPLE
+					SET updtp_no=#{userNo},
+					reg_user=#{regUser},
+					use_yn=#{useYn},
+					name=#{name},
+					description=#{description},
+					attc_doc_id=#{attcDocId},
+					attc_doc_id2=#{attcDocId2},
+					updt_dttm=sysdate
+			WHERE "id"=#{id}
+	</insert>
+
+
+</mapper>

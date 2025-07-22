@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>세계 ODA 현황 지도</title>
+    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.js"></script>
+    <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+        #header { padding: 15px; background-color: #f0f0f0; border-bottom: 1px solid #ddd; text-align: center; }
+        #map { flex-grow: 1; height: calc(100vh - 150px); }
+        #controls { padding: 15px; background-color: #fff; border-top: 1px solid #ddd; }
+        .control-row { display: flex; align-items: center;  margin-bottom: 10px; flex-wrap: wrap; gap: 15px; }
+        select, button { padding: 8px 12px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px; }
+        button { background-color: #007cba; color: white; cursor: pointer; border: none; }
+        button:hover { background-color: #005a87; }
+        button.active { background-color: #28a745; }
+        .indicator-description { margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; border-left: 4px solid #007cba; font-size: 14px; }
+        .status-good { color: #28a745; font-weight: bold; }
+        .status-bad { color: #dc3545; font-weight: bold; }
+        .status-neutral { color: #6c757d; }
+        .mapboxgl-popup-content { padding: 15px; }
+        
+        /* 범례 스타일 */
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 14px;
+            line-height: 18px;
+            color: #555;
+            z-index: 1000;
+            min-width: 150px;
+        }
+        .legend h4 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+            margin-right: 8px;
+            opacity: 0.7;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>세계 ODA 현황 지도</h1>
+    </div>
+
+    <div id="controls">
+        <div class="control-row">
+            <label for="indicator-select">지표 선택:</label>
+            <select id="indicator-select">
+                <option value="gdp">1인당 GDP</option>
+                <option value="primary_enrollment">초등교육 순등록률</option>
+                <option value="poverty_rate">빈곤율</option>
+            </select>
+            
+            <label for="status-filter">상태 필터:</label>
+            <button id="filter-all" class="filter-btn active" data-filter="all">전체</button>
+            <button id="filter-good" class="filter-btn" data-filter="good">양호</button>
+            <button id="filter-bad" class="filter-btn" data-filter="bad">개선필요</button>
+        </div>
+        
+        <div class="indicator-description" id="indicator-description">
+            1인당 GDP: 한 국가의 경제 발전 수준을 나타내는 지표로, 높을수록 경제적으로 발달된 것을 의미합니다.
+        </div>
+    </div>
+
+    <div id="map"></div>
+    
+    <!-- 범례 -->
+    <div class="legend" id="legend">
+        <h4>지표 범례</h4>
+        <div id="legend-content"></div>
+    </div>
+
+    <script>
+    
+	
+    	let indicatorInfo1 = {};
+
+    
+	    // 초기 데이터 로딩
+	    fetch('/api/indicators/flat')
+	        .then(response => response.json())
+	        .then(data => {
+	            indicatorInfo1 = data;
+	            console.log(indicatorInfo1);
+	            updateMap(); // indicatorInfo가 로드된 후 초기 지도 업데이트
+	        })
+	        .catch(err => {
+	            console.error('indicatorInfo 로딩 실패:', err);
+	        });
+    
+   
+
+        // 지표 설명 및 기준 정의
+        const indicatorInfo = {
+            gdp: {
+                name: "1인당 GDP",
+                description: "한 국가의 경제 발전 수준을 나타내는 지표로, 높을수록 경제적으로 발달된 것을 의미합니다.",
+                unit: "USD",
+                goodThreshold: 10000,
+                higherIsBetter: true
+            },
+            primary_enrollment: {
+                name: "초등교육 순등록률",
+                description: "초등학교 연령 아동 중 실제로 초등교육을 받고 있는 비율로, 높을수록 교육 접근성이 좋음을 의미합니다.",
+                unit: "%",
+                goodThreshold: 90,
+                higherIsBetter: true
+            },
+            poverty_rate: {
+                name: "빈곤율",
+                description: "전체 인구 중 빈곤선 이하에서 생활하는 인구의 비율로, 낮을수록 사회경제적 상황이 좋음을 의미합니다.",
+                unit: "%",
+                goodThreshold: 10,
+                higherIsBetter: false
+            }
+        };
+
+        // MapTiler SDK로 지도 초기화
+        const map = new maptilersdk.Map({
+            container: 'map',
+            //style: 'http://localhost:8080/maps/streets/style.json',
+            style: 'https://api.maptiler.com/maps/streets/style.json?key=iRygt1pZ3xh6jQCXRwv4',
+            
+            center: [0, 0],
+            zoom: 1
+        });
+
+        let currentFilter = 'all';
+        let allCountriesGeoJSON;
+
+        // 예시 데이터 (3자리 국가코드 사용)
+        const exampleCountryData = {
+            "KOR": { "oda_status": "공여국", "gdp": 35000, "primary_enrollment": 99.9, "poverty_rate": 0.5 },
+            "USA": { "oda_status": "공여국", "gdp": 70000, "primary_enrollment": 98.5, "poverty_rate": 10.0 },
+            "JPN": { "oda_status": "공여국", "gdp": 40000, "primary_enrollment": 99.8, "poverty_rate": 2.0 },
+            "DEU": { "oda_status": "공여국", "gdp": 45000, "primary_enrollment": 99.5, "poverty_rate": 1.5 },
+            "KEN": { "oda_status": "수원국", "gdp": 2000, "primary_enrollment": 85.0, "poverty_rate": 35.0 },
+            "VNM": { "oda_status": "수원국", "gdp": 4000, "primary_enrollment": 95.0, "poverty_rate": 5.0 },
+            "ETH": { "oda_status": "수원국", "gdp": 1000, "primary_enrollment": 70.0, "poverty_rate": 25.0 },
+            "BGD": { "oda_status": "수원국", "gdp": 2500, "primary_enrollment": 88.0, "poverty_rate": 20.0 },
+            "IND": { "oda_status": "수원국", "gdp": 2500, "primary_enrollment": 92.0, "poverty_rate": 15.0 },
+            "BRA": { "oda_status": "중진국", "gdp": 8500, "primary_enrollment": 96.0, "poverty_rate": 8.0 },
+            "NGA": { "oda_status": "수원국", "gdp": 2400, "primary_enrollment": 65.0, "poverty_rate": 40.0 },
+            "CHN": { "oda_status": "중진국", "gdp": 12000, "primary_enrollment": 99.0, "poverty_rate": 2.0 },
+            "FRA": { "oda_status": "공여국", "gdp": 42000, "primary_enrollment": 99.7, "poverty_rate": 1.8 },
+            "GBR": { "oda_status": "공여국", "gdp": 46000, "primary_enrollment": 99.8, "poverty_rate": 2.5 },
+            "IDN": { "oda_status": "수원국", "gdp": 4300, "primary_enrollment": 93.0, "poverty_rate": 9.8 },
+            "THA": { "oda_status": "중진국", "gdp": 7800, "primary_enrollment": 97.5, "poverty_rate": 6.2 },
+            "PHL": { "oda_status": "수원국", "gdp": 3500, "primary_enrollment": 88.5, "poverty_rate": 16.7 },
+            "MYS": { "oda_status": "중진국", "gdp": 11200, "primary_enrollment": 98.2, "poverty_rate": 3.8 },
+            "AFG": { "oda_status": "수원국", "gdp": 500, "primary_enrollment": 45.0, "poverty_rate": 55.0 }
+        };
+
+        // 지표 상태 판단 함수
+        function getIndicatorStatus(value, indicator) {
+            if (value === null || value === undefined) return 'neutral';
+            
+            const info = indicatorInfo[indicator];
+            if (info.higherIsBetter) {
+                return value >= info.goodThreshold ? 'good' : 'bad';
+            } else {
+                return value <= info.goodThreshold ? 'good' : 'bad';
+            }
+        }
+
+        // 상태에 따른 색상 함수
+        function getColor(value, indicator) {
+            if (value === null || value === undefined) return '#ccc';
+
+            const status = getIndicatorStatus(value, indicator);
+            if (status === 'good') {
+                if (indicator === 'gdp') {
+                    return value > 50000 ? '#00441b' :
+                           value > 30000 ? '#238b45' :
+                           value > 20000 ? '#41ab5d' :
+                           value > 10000 ? '#74c476' :
+                                           '#a1d99b';
+                } else if (indicator === 'primary_enrollment') {
+                    return value > 98 ? '#08519c' :
+                           value > 95 ? '#3182bd' :
+                           value > 90 ? '#6baed6' :
+                                        '#9ecae1';
+                } else if (indicator === 'poverty_rate') {
+                    return value <= 2 ? '#00441b' :
+                           value <= 5 ? '#238b45' :
+                           value <= 10 ? '#74c476' :
+                                         '#a1d99b';
+                }
+            } else {
+                if (indicator === 'gdp') {
+                    return value > 5000 ? '#fd8d3c' :
+                           value > 2000 ? '#fc4e2a' :
+                           value > 1000 ? '#e31a1c' :
+                                          '#b10026';
+                } else if (indicator === 'primary_enrollment') {
+                    return value > 80 ? '#fd8d3c' :
+                           value > 60 ? '#fc4e2a' :
+                           value > 40 ? '#e31a1c' :
+                                        '#b10026';
+                } else if (indicator === 'poverty_rate') {
+                    return value > 30 ? '#b10026' :
+                           value > 20 ? '#e31a1c' :
+                           value > 15 ? '#fc4e2a' :
+                                        '#fd8d3c';
+                }
+            }
+            return '#ccc';
+        }
+
+        // 국가가 현재 필터에 맞는지 확인
+        function matchesFilter(properties) {
+            if (currentFilter === 'all') return true;
+            
+            const countryData = properties.oda_data;
+            if (!countryData) return currentFilter === 'all';
+            
+            const selectedIndicator = document.getElementById('indicator-select').value;
+            const indicatorValue = countryData[selectedIndicator];
+            const status = getIndicatorStatus(indicatorValue, selectedIndicator);
+            
+            return status === currentFilter;
+        }
+
+        // 국가코드 매핑 함수
+        function getCountryCode(id, properties) {
+           
+        	/*
+        	const possibleFields = ['ISO_A3', 'ADM0_A3', 'ISO3', 'WB_A3', 'UN_A3', 'SOV_A3'];
+            
+            for (const field of possibleFields) {
+                if (properties[field] && properties[field].length === 3) {
+                    return properties[field];
+                }
+            }
+            
+            const countryNameToCode = {
+                'Afghanistan': 'AFG', 'South Korea': 'KOR', 'Korea': 'KOR',
+                'United States of America': 'USA', 'United States': 'USA',
+                'Japan': 'JPN', 'Germany': 'DEU', 'Kenya': 'KEN',
+                'Vietnam': 'VNM', 'Ethiopia': 'ETH', 'Bangladesh': 'BGD',
+                'India': 'IND', 'Brazil': 'BRA', 'Nigeria': 'NGA',
+                'China': 'CHN', 'France': 'FRA', 'United Kingdom': 'GBR',
+                'Indonesia': 'IDN', 'Thailand': 'THA', 'Philippines': 'PHL',
+                'Malaysia': 'MYS'
+            };
+            
+            const countryName = properties.name || properties.NAME || properties.NAME_EN;
+            if (countryName && countryNameToCode[countryName]) {
+                return countryNameToCode[countryName];
+            }
+            
+            return null;
+            */
+            return id;
+        }
+
+        // 지도 업데이트 함수
+        function updateMap() {
+            const selectedIndicator = document.getElementById('indicator-select').value;
+            
+            if (!allCountriesGeoJSON) return;
+
+            // 기존 레이어 제거
+            if (map.getLayer('countries-fill')) {
+                map.removeLayer('countries-fill');
+            }
+            if (map.getLayer('countries-line')) {
+                map.removeLayer('countries-line');
+            }
+            if (map.getSource('countries')) {
+                map.removeSource('countries');
+            }
+
+            // 필터링된 피처와 색상 설정
+            const filteredFeatures = allCountriesGeoJSON.features.map(feature => {
+                const countryData = feature.properties.oda_data;
+                const indicatorValue = countryData ? countryData[selectedIndicator] : null;
+                const color = getColor(indicatorValue, selectedIndicator);
+                const opacity = matchesFilter(feature.properties) ? 0.7 : 0.2;
+                
+                return {
+                    ...feature,
+                    properties: {
+                        ...feature.properties,
+                        color: color,
+                        opacity: opacity
+                    }
+                };
+            });
+
+            // 소스 및 레이어 추가
+            map.addSource('countries', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: filteredFeatures
+                }
+            });
+
+            // 채우기 레이어
+            map.addLayer({
+                id: 'countries-fill',
+                type: 'fill',
+                source: 'countries',
+                paint: {
+                    'fill-color': ['get', 'color'],
+                    'fill-opacity': ['get', 'opacity']
+                }
+            });
+
+            // 테두리 레이어
+            map.addLayer({
+                id: 'countries-line',
+                type: 'line',
+                source: 'countries',
+                paint: {
+                    'line-color': '#ffffff',
+                    'line-width': 1
+                }
+            });
+
+            updateDescription(selectedIndicator);
+            updateLegend(selectedIndicator);
+        }
+
+        // 범례 업데이트 함수
+        function updateLegend(indicator) {
+            const div = document.getElementById('legend-content');
+            const info = indicatorInfo[indicator];
+            
+            div.innerHTML = `<b>${info.name} (${info.unit})</b><br>`;
+            div.innerHTML += '<i style="background:#00441b"></i> 매우 양호<br>';
+            div.innerHTML += '<i style="background:#74c476"></i> 양호<br>';
+            div.innerHTML += '<i style="background:#fd8d3c"></i> 개선필요<br>';
+            div.innerHTML += '<i style="background:#b10026"></i> 매우 개선필요<br>';
+            div.innerHTML += '<i style="background:#ccc"></i> 데이터 없음<br>';
+        }
+
+        // 팝업 생성 함수
+        function createPopupContent(properties) {
+        	
+            let popupContent = `<div><h3>${properties.name || properties.NAME || '알 수 없음'}</h3>`;
+            
+            const countryData = JSON.parse(properties.oda_data);
+            if (countryData) {
+                const selectedIndicator = document.getElementById('indicator-select').value;
+                const indicatorName = indicatorInfo[selectedIndicator].name;
+                const indicatorValue = countryData[selectedIndicator];
+                const status = getIndicatorStatus(indicatorValue, selectedIndicator);
+                
+                popupContent += `<p><strong>ODA 지위:</strong> ${countryData.oda_status || '정보 없음'}</p>`;
+                
+                if (indicatorValue !== null) {
+                    const statusText = status === 'good' ? '양호' : status === 'bad' ? '개선필요' : '정보없음';
+                    const statusClass = status === 'good' ? 'status-good' : status === 'bad' ? 'status-bad' : 'status-neutral';
+                    
+                    popupContent += `<p><strong>${indicatorName}:</strong> ${indicatorValue}${indicatorInfo[selectedIndicator].unit} `;
+                    popupContent += `<span class="${statusClass}">(${statusText})</span></p>`;
+                } else {
+                    popupContent += `<p><strong>${indicatorName}:</strong> 데이터 없음</p>`;
+                }
+
+                popupContent += `<hr><h4>모든 지표:</h4>`;
+                Object.keys(indicatorInfo).forEach(key => {
+                    const info = indicatorInfo[key];
+                    const value = countryData[key];
+                    if (value !== null) {
+                        const itemStatus = getIndicatorStatus(value, key);
+                        const statusText = itemStatus === 'good' ? '양호' : itemStatus === 'bad' ? '개선필요' : '정보없음';
+                        const statusClass = itemStatus === 'good' ? 'status-good' : itemStatus === 'bad' ? 'status-bad' : 'status-neutral';
+                        popupContent += `<p><strong>${info.name}:</strong> ${value}${info.unit} <span class="${statusClass}">(${statusText})</span></p>`;
+                    } else {
+                        popupContent += `<p><strong>${info.name}:</strong> 데이터 없음</p>`;
+                    }
+                });
+            } else {
+                popupContent += `<p>ODA 및 지표 데이터 없음</p>`;
+            }
+
+            popupContent += '</div>';
+            return popupContent;
+        }
+
+        // 지표 설명 업데이트
+        function updateDescription(indicator) {
+            const info = indicatorInfo[indicator];
+            const descDiv = document.getElementById('indicator-description');
+            const thresholdText = info.higherIsBetter ? 
+                `${info.goodThreshold}${info.unit} 이상` : 
+                `${info.goodThreshold}${info.unit} 이하`;
+            
+            descDiv.innerHTML = `<b>${info.name}:</b> ${info.description}<br>
+                                <small>양호 기준: ${thresholdText}</small>`;
+        }
+
+        // GeoJSON 파일 로드
+        function loadGeoJSONData() {
+            fetch('countries.geo.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    allCountriesGeoJSON = data;
+
+                    // 로드된 GeoJSON 데이터에 ODA 및 지표 데이터 매핑
+                    allCountriesGeoJSON.features.forEach(feature => {
+                    	
+                    	
+                        const countryCode = getCountryCode(feature.id,feature.properties);
+                      
+                        
+                        if (countryCode && exampleCountryData[countryCode]) {
+                            feature.properties.oda_data = exampleCountryData[countryCode];
+                        } else {
+                            feature.properties.oda_data = {
+                                "oda_status": "데이터 없음",
+                                "gdp": null,
+                                "primary_enrollment": null,
+                                "poverty_rate": null
+                            };
+                        }
+                    });
+                    
+                    console.log("GeoJSON 데이터 로드 및 매핑 완료");
+                    updateMap();
+                })
+                .catch(error => {
+                    console.error('Error loading the GeoJSON data:', error);
+                    alert('GeoJSON 파일을 로드할 수 없습니다. countries.geo.json 파일이 같은 폴더에 있는지 확인해주세요.');
+                });
+        }
+
+        // 지도 로드 완료 후 이벤트 설정
+        map.on('load', () => {
+            loadGeoJSONData();
+            
+            // 클릭 이벤트
+            map.on('click', 'countries-fill', (e) => {
+                const properties = e.features[0].properties;
+              
+                new maptilersdk.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(createPopupContent(properties))
+                    .addTo(map);
+            });
+
+            // 마우스 오버 이벤트
+            map.on('mouseenter', 'countries-fill', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            map.on('mouseleave', 'countries-fill', () => {
+                map.getCanvas().style.cursor = '';
+            });
+        });
+
+        // 이벤트 리스너
+        document.getElementById('indicator-select').addEventListener('change', updateMap);
+
+        // 필터 버튼 이벤트
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                currentFilter = this.dataset.filter;
+                updateMap();
+            });
+        });
+    </script>
+</body>
+</html>

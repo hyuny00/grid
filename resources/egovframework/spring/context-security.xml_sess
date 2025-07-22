@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:security="http://www.springframework.org/schema/security"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd
+        http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+	<!-- secured method -->
+	<security:global-method-security proxy-target-class="true" secured-annotations="enabled" pre-post-annotations="enabled" />
+
+    <!-- url패턴과 스프링 시큐리티를 무시-->
+    <security:http pattern="/js/**" security="none"/>
+    <security:http pattern="/css/**" security="none"/>
+    <security:http pattern="/img/**" security="none"/>
+    <security:http pattern="/fonts/**" security="none"/>
+    <security:http pattern="/webfonts/**" security="none"/>
+    <security:http pattern="/images/**" security="none"/>
+    <security:http pattern="/resources/**" security="none"/>
+	<security:http pattern="/favicon.ico" security="none"/>
+	<security:http pattern="/index.jsp" security="none"/>
+	<security:http pattern="/login/loginPage" security="none"/>
+
+
+
+
+    <security:http auto-config="true" use-expressions="true" disable-url-rewriting="true">
+
+		<security:headers>
+	           <security:frame-options disabled="true"></security:frame-options>
+	    </security:headers>
+
+ 		<security:access-denied-handler ref="acessDeniedHandler" />
+
+        <security:form-login 	login-page="/login/loginPage"
+					            authentication-success-handler-ref="loginSuccessHandler"
+					            authentication-failure-handler-ref="loginFailureHandler"
+					            login-processing-url="/auth"
+					            username-parameter="userId"
+					            password-parameter="password" />
+
+		<!--<security:csrf disabled ="false" /> -->
+		<security:csrf request-matcher-ref="csrfSecurityRequestMatcher"/>
+
+	  	<security:anonymous granted-authority="ROLE_ANONYMOUS" />
+
+		<security:logout 	logout-url="/logout"
+	  						success-handler-ref="logoutSuccessHandler"
+	  						invalidate-session="true"
+	  						delete-cookies="JSESSIONID" />
+
+
+        <security:session-management invalid-session-url="/login/loginPage">
+        		<security:concurrency-control max-sessions="2" expired-url="/login/loginPage"/>
+        </security:session-management>
+
+   	 	<security:custom-filter ref="filterSecurityInterceptor" before="FILTER_SECURITY_INTERCEPTOR" />
+   	 	<security:custom-filter ref="ajaxSessionTimeoutFilter"  after="EXCEPTION_TRANSLATION_FILTER" />
+
+    </security:http>
+
+
+   	<bean id="loginSuccessHandler" class="com.futechsoft.framework.security.handler.LoginSuccessHandler">
+	    <property name="loginId" value="userId"/>
+	    <property name="defaultUrl" value="/main"/>
+	</bean>
+
+    <bean id="loginFailureHandler" class="com.futechsoft.framework.security.handler.LoginFailureHandler">
+	    <property name="loginId" value="userId"/>
+	    <property name="loginPwd" value="password"/>
+	    <property name="errorMsg" value="ERRORMSG"/>
+	    <property name="defaultFailureUrl" value="/login/loginPage?error"/>
+	</bean>
+
+	<bean id="logoutSuccessHandler" class="com.futechsoft.framework.security.handler.CustomLogoutSuccessHandler">
+		<property name="defaultUrl" value="/login/loginPage"/>
+	</bean>
+
+
+
+   	<bean id="filterSecurityInterceptor" class="org.springframework.security.web.access.intercept.FilterSecurityInterceptor">
+        <property name="accessDecisionManager" ref="accessDecisionManager" />
+        <property name="authenticationManager" ref="authenticationManager" />
+        <property name="securityMetadataSource" ref="securityMetadataSource" />
+    </bean>
+
+	<bean id="accessDecisionManager" class="org.springframework.security.access.vote.AffirmativeBased">
+		<constructor-arg>
+			<list>
+				<bean class="org.springframework.security.access.vote.RoleVoter" />
+				<bean class="org.springframework.security.access.vote.AuthenticatedVoter" />
+			  	<bean class="org.springframework.security.web.access.expression.WebExpressionVoter" />
+			</list>
+		</constructor-arg>
+		<property name="allowIfAllAbstainDecisions" value="false"/>
+	</bean>
+
+    <bean id="securityMetadataSource" class="com.futechsoft.framework.security.auth.CustomFilterInvocationSecurityMetadataSource" />
+    <bean id="resourceMenuService" class="com.futechsoft.framework.security.auth.ResourceMenuService"  />
+
+    <security:authentication-manager alias="authenticationManager">
+         <security:authentication-provider ref="customeAuthenticationProvider"></security:authentication-provider>
+ 	 	 <security:authentication-provider user-service-ref="userDetailsService">
+ 	 	 </security:authentication-provider>
+	</security:authentication-manager>
+
+    <bean id="acessDeniedHandler" class="com.futechsoft.framework.security.handler.CustomAccessDeniedHandler">
+        <property name="redirect" value="false" />
+        <property name="errorPage" value="/accessdenied" />
+    </bean>
+
+	<bean id="userDetailsService" class="com.futechsoft.framework.security.auth.CustomUserDetailsService"/>
+    <bean id="customeAuthenticationProvider" class="com.futechsoft.framework.security.auth.CustomAuthenticationProvider"></bean>
+	
+	<bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+	<!--  
+	<bean id="passwordEncoderSha256" class="com.futechsoft.framework.security.crypto.Sha256PasswordEncoder"/>
+-->
+	<bean id="ajaxSessionTimeoutFilter" class="com.futechsoft.framework.security.filter.AjaxSecurityFilter">
+         <property name="ajaxHeader" value="AJAX" />
+ 	</bean>
+
+	<bean id="csrfSecurityRequestMatcher" class="com.futechsoft.framework.security.auth.CsrfSecurityRequestMatcher"/>
+</beans>

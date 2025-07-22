@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.futechsoft.framework.file.mapper.FileMapper">
+
+
+	<select id="selectFileList" parameterType="ftMap"  resultType="ftMap">
+	       SELECT
+				file_id,
+				file_group_id as doc_id,
+				lgc_file_nm as file_nm,
+				file_sz as file_size,
+				del_yn,
+				file_seq as file_ord,
+				'N' temp,
+				reg_dt as rgst_dttm, 
+				reg_user_id  as rgstp_no
+			
+			FROM tcm_file_dt WHERE file_group_id=#{docId} AND  del_yn = 'N' ORDER BY file_seq
+	 </select>
+
+
+				   
+	 <select id="selectFileInfo" parameterType="ftMap"   resultType="com.futechsoft.framework.file.vo.FileInfoVo">
+	       SELECT
+				file_id,
+				file_group_id as doc_id,
+				lgc_file_nm as file_nm,
+				file_sz as file_size,
+				file_path_cn as file_path,
+				del_yn
+			FROM tcm_file_dt WHERE file_id=#{fileId} AND del_yn='N'
+	 </select>
+
+
+ 	<update id="updateMergeDocId" parameterType="ftMap" >
+	      UPDATE tcm_file_dt SET file_group_id= #{mergeDocId}  WHERE file_group_id= #{tempDocId}
+	 </update>
+
+
+	<update id="updateThumbNnailFileInfo" parameterType="com.futechsoft.framework.file.vo.FileInfoVo" >
+	      UPDATE tcm_file_dt SET file_path_cn= #{filePath}, file_sz=#{fileSize}   WHERE file_id= #{fileId}
+	 </update>
+	 
+	 
+	 	 <select id="selectFile" parameterType="ftMap"  resultType="ftMap">
+	       SELECT
+				file_id,
+				file_group_id as doc_id,
+				lgc_file_nm as file_nm,
+				file_sz as file_size ,
+				file_path_cn as file_path,
+				del_yn,
+				file_seq as file_ord,
+				'N' temp,
+				reg_dt, 
+				reg_user_id, 
+				mdfcn_dt,
+				mdfcn_user_id
+			
+			FROM tcm_file_dt WHERE doc_id=#{docId} AND del_yn= 'N' ORDER BY file_seq
+	 </select>
+	 
+	 <select id="selectDocId" parameterType="ftMap"  resultType="String">
+			 select file_group_id from tcm_file_group_mt where file_group_id=#{docId}
+	 </select>
+
+
+	 <insert id="insertFileGroup" parameterType="ftMap" >
+	 
+	 	INSERT INTO tcm_file_group_mt(
+					 	file_group_id, 
+					 	task_secd, 
+					 	reg_dt, 
+					 	reg_user_id, 
+					 	mdfcn_dt, 
+					 	mdfcn_user_id, 
+					 	del_yn
+					 	)
+					VALUES(
+					#{docId}, 
+					#{taskSecd}, 
+					sysdatetime, 
+					#{userId}, 
+					sysdatetime, 
+					#{userId}, 
+					'N'
+					)
+	 
+	 </insert> 
+
+
+
+	 <insert id="insertFileInfo" parameterType="ftMap" >
+			INSERT INTO tcm_file_dt (
+				  file_group_id, 
+				  file_id, 
+				  lgc_file_nm, 
+				  phys_file_nm,
+				  file_path_cn, 
+				  file_extn_cn, 
+				  file_sz, 
+				  file_expln, 
+				  file_seq, 
+				  reg_dt, 
+				  reg_user_id, 
+				  mdfcn_dt, 
+				  mdfcn_user_id, 
+				  del_yn
+				   )
+			VALUES (
+			 		#{docId} ,
+					#{fileId} ,
+				   #{fileNm} ,
+				    #{fileId}||'.FILE',
+				   #{filePath},
+				   #{fileExt},
+				   #{fileSize} ,
+				   #{fileExpln} ,
+				   #{fileOrd} ,
+				   sysdatetime ,
+				   #{userId} ,
+				    sysdatetime,
+				   #{userId} ,
+				   'N' 
+				    )
+	 </insert>
+
+
+	  <update id="updateFileOrd" parameterType="ftMap">
+    	UPDATE
+    		tcm_file_dt
+    	SET
+    		file_seq = #{fileOrd}
+    	WHERE
+    		file_id = #{fileId}
+    </update>
+
+ 
+
+      <delete id="deleteDoc" parameterType="ftMap">
+    	DELETE
+    		tcm_file_dt
+    	WHERE
+    		file_group_id = #{docId}
+    </delete>
+
+      <delete id="deleteFile" parameterType="ftMap">
+    	DELETE
+    		tcm_file_dt
+    	WHERE
+    		file_id = #{fileId}
+    </delete>
+    
+     <update id="updateFileGroupDelYn" parameterType="String">
+    	update tcm_file_group_mt set del_yn='Y'
+    	WHERE
+    		file_group_id = #{docId}
+    </update>
+    
+     <update id="updateFileGroupDtDelYn" parameterType="String">
+    	update tcm_file_dt set del_yn='Y'
+    	WHERE
+    		file_group_id = #{docId}
+    </update>
+    
+    <update id="updateFileDtDelYn" parameterType="ftMap">
+    	update tcm_file_dt set del_yn='Y'
+    	WHERE
+    		file_id = #{fileId}
+    </update>
+    
+	 
+</mapper>

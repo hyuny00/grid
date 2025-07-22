@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE tiles-definitions PUBLIC
+       "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN"
+       "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+
+<tiles-definitions>
+
+    <definition name="base-layout" template="/WEB-INF/jsp/framework/layout/layout.jsp">
+        <put-attribute name="header" value="/framework/layout/header" />
+        <put-attribute name="leftMenu" value="/framework/layout/leftMenu" />
+        <put-attribute name="body" />
+        <!-- <put-attribute name="footer" value="/WEB-INF/jsp/framework/layout/footer.jsp"  /> -->
+    </definition>
+
+
+     <definition name="tiles:*" extends="base-layout">
+     	<put-attribute name="includeCss"  value="/{1}" />
+        <put-attribute name="body"  value="/WEB-INF/jsp/{1}.jsp" />
+    </definition>
+
+    <definition name="tiles:*/*" extends="base-layout">
+    	<put-attribute name="includeCss"  value="/{1}" />
+        <put-attribute name="body"  value="/WEB-INF/jsp/{1}/{2}.jsp" />
+    </definition>
+
+     <definition name="tiles:*/*/*" extends="base-layout">
+     	<put-attribute name="includeCss"  value="/{1}" />
+        <put-attribute name="body"  value="/WEB-INF/jsp/{1}/{2}/{3}.jsp" />
+    </definition>
+
+	 <definition name="tiles:*/*/*/*" extends="base-layout">
+		<put-attribute name="includeCss"  value="/{1}" />
+        <put-attribute name="body"  value="/WEB-INF/jsp/{1}/{2}/{3}/{4}.jsp" />
+    </definition>
+    
+    
+
+
+</tiles-definitions>

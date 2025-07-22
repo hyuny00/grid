@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd">
+
+	<!-- SqlSession setup for MyBatis Database Layer
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configLocation" value="classpath:/sqlmap/sql-mapper-config.xml" />
+		<property name="mapperLocations" value="classpath:/sqlmap/mappers/**/*.xml" />
+	</bean>
+-->
+	<bean id="sqlSession" class="com.futechsoft.framework.util.RefreshableSqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configLocation" value="classpath:egovframework/sqlmap/sql-mapper-config.xml" />
+		<property name="mapperLocations" value="classpath:egovframework/sqlmap/mappers/**/*.xml" />
+		<property name="interval" value="5000" />
+	</bean>
+
+ 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.futechsoft,sample,kr.go.odakorea" />
+ 	    <property name="sqlSessionFactoryBeanName" value="sqlSession"/>
+		<property name="annotationClass" value="com.futechsoft.framework.annotation.Mapper" />
+	</bean>
+
+
+	<bean id="sqlSessionIn" class="com.futechsoft.framework.util.RefreshableSqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource_in" />
+		<property name="configLocation" value="classpath:egovframework/sqlmap/sql-mapper-config.xml" />
+		<property name="mapperLocations" value="classpath:egovframework/sqlmap/inMappers/**/*.xml" />
+		<property name="interval" value="5000" />
+	</bean>
+
+ 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.futechsoft,kr.go.odakorea" />
+	 	<property name="sqlSessionFactoryBeanName" value="sqlSessionIn"/>
+		<property name="annotationClass" value="com.futechsoft.framework.annotation.InMapper" />
+	</bean>
+
+
+
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg ref="sqlSession"></constructor-arg>
+	</bean>
+	
+	
+	<bean id="sqlSessionTemplateIn" class="org.mybatis.spring.SqlSessionTemplate">
+	    <constructor-arg ref="sqlSessionIn" />
+	</bean>
+
+</beans>

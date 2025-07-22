@@ -1,0 +1,18 @@
+<%@ page session="false"%>
+<%@ page language="java" pageEncoding="UTF-8" contentType="text/html; charset=UTF-8"%>
+<link href="${basePath}/js/jquery/jquery-ui-1.12.1/jquery-ui.min.css" rel="stylesheet" />
+<link href="${basePath}/js/timepicker/jquery.timepicker.min.css" rel="stylesheet" />
+<link href="${basePath}/js/select2-4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+<link href="${basePath}/js/jstree/themes/default/style.min.css" rel="stylesheet"/>
+<link href="${basePath}/js/session-expiration-idle-hands/jquery-idle-hands.css" rel="stylesheet" />
+<link href="${basePath}/css/toastr/toastr.css" rel="stylesheet" />
+<link href="${basePath}/js/grid/ftGrid.css" rel="stylesheet" />
+<link href="${basePath}/js/file/fileupload.css" rel="stylesheet" />
+
+ <c:if test="${includeCss}">
+ 	<link rel="stylesheet" href="${basePath}/css<tiles:getAsString name="includeCss"/>.css" >
+ </c:if>
+
+
+<!--<link href="data:image/x-icon;" type="image/x-icon" rel="shortcut icon">-->
+

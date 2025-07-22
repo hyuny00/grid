@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.go.odakorea.gis.mapper.KoicaScrapingMapper">
+
+
+
+
+	<select id="getEnfcInstUnqBizNo"  resultType="String">
+		SELECT enfc_inst_unq_biz_no
+		FROM tcm_biz_file_scrp_ls
+		ORDER BY enfc_inst_unq_biz_no DESC
+		LIMIT 1;
+
+	</select> 
+
+ 
+  <select id="selectFileInfo" parameterType="ftMap"   resultType="com.futechsoft.framework.file.vo.FileInfoVo">
+	       SELECT
+				file_id,
+				lgc_file_nm as file_nm,
+				file_sz as file_size,
+				file_path_cn as file_path
+			FROM tcm_biz_file_scrp_ls WHERE file_id=#{fileId} AND del_yn='N'
+	 </select>
+ 
+  
+
+<insert id="insertKoicaScrpInfo" parameterType="ftMap">
+    INSERT INTO tcm_biz_file_scrp_ls (
+        file_id,
+        enfc_inst_unq_biz_no,
+        biz_korn_nm,
+        biz_prd_bgng_yr,
+        biz_prd_end_yr,
+        biz_fld_nm,
+        biz_rgn_cn,
+        lgc_file_nm,
+        phys_file_nm,
+        file_path_cn,
+        file_extn_cn,
+        file_sz,
+        file_pstn_secd,
+        reg_dt,
+        reg_user_id,
+        mdfcn_dt,
+        mdfcn_user_id,
+        del_yn
+    ) VALUES (
+        #{fileId},
+        #{enfcInstUnqBizNo},
+        #{bizKornNm},
+        #{bizPrdBgngYr},
+        #{bizPrdEndYr},
+        #{bizFldNm},
+        #{bizRgnCn},
+        #{lgcFileNm},
+        #{physFileNm},
+        #{filePathCn},
+        #{fileExtnCn},
+        #{fileSz},
+        #{filePstnSecd},
+        SYS_DATETIME,
+        #{regUserId},
+        SYS_DATETIME,
+        #{mdfcnUserId},
+        'N'
+    )
+</insert>
+
+
+	
+
+
+</mapper>

@@ -1,0 +1,96 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:security="http://www.springframework.org/schema/security"
+       	xmlns:tx="http://www.springframework.org/schema/tx"
+       	  xmlns:cache="http://www.springframework.org/schema/cache"
+       xsi:schemaLocation="
+				http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+				http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+				http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd
+				http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+				http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd
+					http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+					http://www.springframework.org/schema/cache
+                                  http://www.springframework.org/schema/cache/spring-cache.xsd
+				">
+
+    <!-- The controllers are autodetected POJOs labeled with the @Controller annotation. -->
+    <context:component-scan base-package="com.futechsoft,kr.go.odakorea">
+    	<context:include-filter expression="org.springframework.web.bind.annotation.ControllerAdvice" type="annotation"/>
+        <context:include-filter expression="org.springframework.stereotype.Controller" type="annotation"/>
+        <context:exclude-filter expression="org.springframework.stereotype.Service" type="annotation"/>
+        <context:exclude-filter expression="org.springframework.stereotype.Repository" type="annotation"/>
+    </context:component-scan>
+
+    
+     
+ 	<mvc:annotation-driven/>
+
+ 	<aop:aspectj-autoproxy />
+ 	<bean id="commonAop" class="com.futechsoft.framework.aop.CommonAop" />
+
+    <mvc:default-servlet-handler/>
+
+	<mvc:resources mapping="/css/**" location="/resources/css/" />
+	<mvc:resources mapping="/images/**" location="/resources/images/" />
+	<mvc:resources mapping="/img/**" location="/resources/img/" />
+	<mvc:resources mapping="/js/**" location="/resources/js/" />
+	<mvc:resources mapping="/fonts/**" location="/resources/fonts/" />
+	<mvc:resources mapping="/webfonts/**" location="/resources/webfonts/" />
+  	<mvc:resources mapping="/resources/**" location="/resources/" />
+
+  	<!-- secured method -->
+	<security:global-method-security proxy-target-class="true" secured-annotations="enabled" pre-post-annotations="enabled" />
+
+	<bean id="tilesViewResolver" class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+	  <property name="viewClass" value="org.springframework.web.servlet.view.tiles3.TilesView"/>
+	  <property name="order" value="0"/>
+	</bean>
+
+	<bean id="tilesConfigurer" class="org.springframework.web.servlet.view.tiles3.TilesConfigurer">
+	    <property name="definitions">
+	        <list>
+	            <value>/WEB-INF/tiles/default-layout.xml</value>
+	        </list>
+	    </property>
+	</bean>
+
+    <bean class="org.springframework.web.servlet.view.UrlBasedViewResolver" p:order="1" p:prefix="/WEB-INF/jsp/"
+          p:suffix=".jsp" p:viewClass="org.springframework.web.servlet.view.JstlView">
+    </bean>
+
+
+
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+
+	<!-- DEV 설정 -->
+	<beans profile="dev">
+		<bean
+			class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+			<property name="locations">
+				<list>
+					<value>classpath:globals-dev.properties</value>
+				</list>
+			</property>
+		</bean>
+	</beans>
+
+	<!-- PROD 설정 -->
+	<beans profile="prod">
+		<bean
+			class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+			<property name="locations">
+				<list>
+					<value>classpath:globals-prod.properties</value>
+				</list>
+			</property>
+		</bean>
+	</beans>
+
+
+
+</beans>

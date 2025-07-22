@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.futechsoft.framework.security.mapper.SecurityMapper">
+
+
+    <select id="getUserInfo" parameterType="String" resultType="com.futechsoft.admin.user.vo.User">
+       SELECT *  FROM TB_USER_SAMPLE  WHERE user_id=#{userId}
+ 	</select>
+
+
+     <select id="getUserRoleList" parameterType="String" resultType="com.futechsoft.admin.user.vo.UserRole">
+       	 SELECT
+		       	 a.user_no,
+		       	 c.role_cd,
+		       	 c.role_nm,
+		       	 c.role_seq
+       	 FROM TB_USER_SAMPLE a
+       	 				left join tb_user_role_SAMPLE b ON a.user_no = b.user_no
+       					left join tb_role_SAMPLE c ON b.role_seq=c.role_seq
+       	 WHERE a.user_id=#{userId}
+	 </select>
+
+
+	 <update id="resetFailCnt" parameterType="String">
+       	 UPDATE  TB_USER_SAMPLE SET  login_fail_cnt = 0,  acct_locked_yn='N'  WHERE user_id=#{userId}
+	 </update>
+
+
+	 <update id="plusFailCnt" parameterType="String">
+       	 UPDATE  TB_USER_SAMPLE SET  LOGIN_FAIL_CNT = LOGIN_FAIL_CNT+1  WHERE user_id=#{userId}
+	 </update>
+
+	  <update id="disabledUser" parameterType="String">
+       	 UPDATE  TB_USER_SAMPLE SET  acct_locked_yn = 'Y'  WHERE user_id=#{userId}
+	 </update>
+
+
+	 <select id="getRoleMenu" parameterType="long"  resultType="com.futechsoft.admin.auth.vo.RoleMenu">
+		<![CDATA[
+
+		    SELECT 	a.menu_seq,  a.up_menu_seq, a.menu_url, a.menu_nm, a.menu_ord, a.menu_type_cd,
+            		c.role_seq, c.role_cd,  a.top_menu_seq, a.open_yn
+            from tb_menu_SAMPLE a left outer join tb_role_menu_SAMPLE b ON a.menu_seq= b.menu_seq
+            left outer join tb_role_SAMPLE c ON b.role_seq= c.role_seq
+            WHERE a.use_yn='Y' AND  b.role_seq= #{roleSeq}
+            order by a.menu_ord
+
+		]]>
+	</select>
+
+ 	<select id="getTopMenuList"  resultType="com.futechsoft.admin.menu.vo.Menu">
+		<![CDATA[
+
+		    SELECT * from tb_menu_SAMPLE
+		    where use_yn='Y' and menu_type_cd='010'
+            order by menu_ord
+
+		]]>
+	</select>
+
+	<select id="getSubMenuList" parameterType="long"  resultType="com.futechsoft.admin.menu.vo.Menu">
+		<![CDATA[
+
+		    SELECT
+			     menu_seq,
+				 up_menu_seq,
+				 menu_nm,
+				 menu_url,
+				 menu_type_cd,
+				 menu_ord,
+				 etc,
+				 use_yn,
+				 open_yn,
+				(SELECT COUNT(MENU_SEQ) FROM TB_MENU_SAMPLE   WHERE UP_MENU_SEQ  =  A.MENU_SEQ  AND USE_YN = 'Y') subMenuCnt
+		    from TB_MENU_SAMPLE a
+		    where use_yn='Y'  AND up_menu_seq=#{menuSeq}
+            order by up_menu_seq, menu_ord,menu_type_cd
+
+		]]>
+	</select>
+
+	<select id="getPathRoleList" parameterType="long" resultType="com.futechsoft.admin.auth.vo.PathRole">
+		<![CDATA[
+	        SELECT
+				a.role_seq, a.path_seq, a.path_role_seq,  b.up_path_seq, b.path, c.role_cd
+	        FROM  tb_path_role_SAMPLE a join tb_path_SAMPLE b on a.path_seq= b.path_seq join  tb_role_SAMPLE c on a.role_seq=c.role_seq
+	        where   c.use_yn= 'Y' and c.role_type_cd='030' and b.path_seq=#{pathSeq}
+		]]>
+    </select>
+
+    <select id="getAllPathList" resultType="com.futechsoft.admin.auth.vo.Path">
+		<![CDATA[
+	       SELECT * FROM TB_PATH_SAMPLE  where up_path_seq=0 order by path_ord
+		]]>
+    </select>
+
+</mapper>

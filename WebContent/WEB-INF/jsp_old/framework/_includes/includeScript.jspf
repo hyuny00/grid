@@ -1,0 +1,107 @@
+<%@ page session="false"%>
+<%@ page language="java" pageEncoding="UTF-8" contentType="text/html; charset=UTF-8"%>
+<script  src="${basePath}/js/jquery/jquery-3.5.1.min.js"></script>
+<script  src="${basePath}/js/jquery/jquery-ui-1.12.1/jquery-ui.min.js"></script>
+<script  src="${basePath}/js/jquery/jquery.fileDownload.js"></script>
+<script  src="${basePath}/js/select2-4.0.13/dist/js/select2.min.js"></script>
+<script  src="${basePath}/js/jstree/jstree.min.js"></script>
+<script  src="${basePath}/js/session-expiration-idle-hands/basil.min.js"></script>
+<script  src="${basePath}/js/session-expiration-idle-hands/jquery-idle-hands.js"></script>
+<script  src="${basePath}/js/eventsource-polyfill/eventsource.js"></script>
+<script  src="${basePath}/js/date/moment.min.js"></script>
+
+<script  src="${basePath}/js/timepicker/jquery.timepicker.min.js"></script>
+
+
+
+<script src="${basePath}/js/bootstrap.min.js"></script>
+<script src="${basePath}/js/ui.js" ></script>
+<script src="${basePath}/js/menu/common-menu.js" ></script>
+
+<script  src="${basePath}/js/tabulator/tabulator.min.js"></script>
+<script  src="${basePath}/js/grid/ftGrid.js"></script>
+<script src="${basePath}/js/xlsx/xlsx.full.min.js"></script>
+<script src="${basePath}/js/toastr/toastr.min.js"></script>
+<script >
+
+
+	var console = window.console || {log:function(){}};
+
+	if (window && !window.EventSource){
+	    window.EventSource = PolyfillEventSource;
+	    if (console){
+		console.log("polyfill-eventsource added missing EventSource to window");
+	    }
+	}
+
+	jQuery.fn.center = function () {
+	    this.css("position","absolute");
+	    this.css("top", Math.max(0, (($(window).height() - $(this).outerHeight()) / 2) + $(window).scrollTop()) + "px");
+	    this.css("left", Math.max(0, (($(window).width() - $(this).outerWidth()) / 2) + $(window).scrollLeft()) + "px");
+	    return this;
+	}
+	 var token;
+	 $(document).ready(function(){
+		  token =  $('input[name="_csrf"]').attr('value');
+		  $.ajaxSetup({
+			    beforeSend: function(xhr, settings) {
+			    	xhr.setRequestHeader("AJAX", true);
+			    	//jwt 사용시 csrf사용안하게 함
+			        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+			            xhr.setRequestHeader("${_csrf.headerName}", token);
+			        }
+			    }
+			});
+
+			  $.idleHands({
+	              activityEvents: 'click keypress scroll wheel mousewheel mousemove',
+	              applicationId: 'my_application',
+	              dialogMessage: '계속 로그인을 유지하겠습니까?',
+	              dialogTimeRemainingLabel: '로그아웃까지 남은 시간',
+	              dialogTitle: 'Logging out...',
+	              documentTitle: 'Warning',
+	              heartbeatCallback: (function (data, textStatus, jqXHR) {
+	                  console.log('pulse');
+	              }),
+	              heartbeatUrl: window.location.href,
+	              heartRate: 300,
+	              inactivityLogoutUrl: '${basePath}/autoLogout',
+	              inactivityDialogDuration: 45,
+	              localStoragePrefix: 'my_application',
+	              logoutNowButtonText: "로그아웃",
+	              manualLogoutUrl: null,
+	              maxInactivitySeconds: 5400,
+	              stayLoggedInButtonText: "로그인유지"
+	          });
+			  $('#jquery-idle-hands').hide();
+
+	 });
+
+
+ 	function csrfSafeMethod(method) {
+	    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+	}
+
+
+ 	
+ 	 toastr.options = {
+   		  "closeButton": true,
+             "debug": false,
+             "newestOnTop": false,
+             "progressBar": true,
+             "positionClass": "toast-bottom-right",
+             "preventDuplicates": false,
+             "onclick": null,
+             "showDuration": "300",
+             "hideDuration": "1000",
+             "timeOut": "5000",
+             "extendedTimeOut": "1000",
+             "showEasing": "swing",
+             "hideEasing": "linear",
+             "showMethod": "fadeIn",
+             "hideMethod": "fadeOut"
+           }
+
+
+</script>
+<script  src="${basePath}/js/file/fileupload.js"></script>

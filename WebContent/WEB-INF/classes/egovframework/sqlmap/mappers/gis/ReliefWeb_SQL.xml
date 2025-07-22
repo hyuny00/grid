@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.go.odakorea.gis.mapper.ReliefWebMapper">
+
+
+	<insert id="insertRcntnClmty" parameterType="ftMap">
+
+
+			INSERT tcm_rcntn_clmty_ls
+			
+				(
+				clmty_sn, 
+				ntn_no, 
+				clmty_id_vl,
+				clmty_nm, 
+				clmty_ocrn_dt, 
+				clmty_prgrs_stcd, 
+				atch_file_group_id, 
+				reg_dt, 
+				reg_user_id, 
+				mdfcn_dt, 
+				mdfcn_user_id, 
+				del_yn
+				)
+			
+			VALUES
+			
+				((SELECT COALESCE(MAX(clmty_sn), 0) + 1 FROM tcm_rcntn_clmty_ls),
+				 (select ntn_no from tcm_ntn_cd where ntn_cd = #{ntnCd} and indiv_ntn_yn='Y'),  
+				 #{clmtyIdVl},  
+				 #{clmtyNm},  
+				 STR_TO_DATE(#{clmtyOcrnDt}, '%Y-%m-%d %H:%i:%s'),
+				 #{clmtyPrgrsStcd},  
+				 #{atchFileGroupId}, 
+				 SYS_DATETIME,  
+				 #{userId}, 
+				 SYS_DATETIME,  
+				 #{userId}, 
+				 'N'
+			 )
+					
+
+	</insert>
+	
+	
+	
+	<select id="getClmtyIdVl" parameterType="ftMap" resultType="int">
+		SELECT
+			count(clmty_id_vl) cnt
+		FROM tcm_rcntn_clmty_ls
+		WHERE  clmty_id_vl= #{clmtyIdVl}
+
+	</select>
+	
+	
+	
+	<update id="updateClmtyPrgrsStcd" parameterType="ftMap">
+	
+		UPDATE FTCORE.tcm_rcntn_clmty_ls
+				SET		 clmty_prgrs_stcd= #{clmtyPrgrsStcd}, 
+						reg_dt=SYS_DATETIME, 
+						reg_user_id= #{userId}, 
+						mdfcn_dt=SYS_DATETIME, 
+						mdfcn_user_id= #{userId}
+				WHERE clmty_id_vl= #{clmtyIdVl}
+		
+	</update>
+
+
+
+</mapper>

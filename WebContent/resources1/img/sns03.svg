@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
+	<!ENTITY ns_flows "http://ns.adobe.com/Flows/1.0/">
+]>
+<svg version="1.1"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
+	 x="0px" y="0px" width="27px" height="27px" viewBox="0 -0.07 27 27" enable-background="new 0 -0.07 27 27" xml:space="preserve">
+<defs>
+</defs>
+<path fill="#FCE202" d="M13.437,0h-0.008C6.015,0,0,6.011,0,13.428v0.004c0,7.417,6.015,13.436,13.429,13.436h0.008
+	c7.413,0,13.428-6.015,13.428-13.432v-0.003C26.864,6.011,20.85,0,13.437,0z"/>
+<ellipse fill="#391804" cx="13.364" cy="12.701" rx="8.817" ry="7.411"/>
+<path fill="#391804" d="M9.175,18.185c0,0-0.273,2.6-0.406,3.36c0,0-0.041,0.79,0.602,0.374l3.011-2.41"/>
+<text transform="matrix(1 0 0 1 6.1035 14.9233)"><tspan x="0" y="0" fill="#FCE202" font-family="'Binggrae-Bold-KSCpc-EUC-H'" font-size="5.8393">TA</tspan><tspan x="7.72" y="0" fill="#FCE202" font-family="'Jalnan'" font-size="5.8393"> </tspan><tspan x="9.121" y="0" fill="#FCE202" font-family="'Jalnan'" font-size="5.8393"> </tspan><tspan x="11.048" y="0" fill="#FCE202" font-family="'Binggrae-Bold-KSCpc-EUC-H'" font-size="5.8393">K</tspan></text>
+<line fill="none" stroke="#FCE202" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" x1="14.367" y1="10.976" x2="14.367" y2="14.566"/>
+<line fill="none" stroke="#FCE202" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" x1="14.367" y1="14.566" x2="16.304" y2="14.566"/>
+</svg>

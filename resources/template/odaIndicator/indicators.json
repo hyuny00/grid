@@ -1,0 +1,178 @@
+{
+  "기초생활": [
+    {
+      "code": "SI.POV.DDAY",
+      "name": "극빈곤율",
+      "description": "하루 2.15달러 미만으로 생활하는 인구의 비율로, 극심한 빈곤 상태를 나타냅니다. 수치가 낮을수록 빈곤 문제가 적음을 의미합니다.",
+      "unit": "%",
+      "target": 3.0,
+      "threshold": 20.0,
+      "higherIsBetter": false
+    },
+    {
+      "code": "SH.H2O.BASW.ZS",
+      "name": "안전한 식수 접근률",
+      "description": "안전하게 관리되는 식수원에 접근 가능한 인구 비율로, 깨끗한 식수를 이용할 수 있는 정도를 나타냅니다. 수치가 높을수록 위생적이고 건강한 환경임을 의미합니다.",
+      "unit": "%",
+      "target": 90.0,
+      "threshold": 50.0,
+      "higherIsBetter": true
+    },
+    {
+      "code": "EG.ELC.ACCS.ZS",
+      "name": "전력 접근률",
+      "description": "전기 공급을 받을 수 있는 인구 비율로, 전기 사용 가능 여부를 나타냅니다. 높을수록 생활의 편리성과 경제활동 여건이 좋음을 의미합니다.",
+      "unit": "%",
+      "target": 95.0,
+      "threshold": 70.0,
+      "higherIsBetter": true
+    }
+  ],
+  "인간개발": [
+    {
+      "code": "SE.PRM.NENR",
+      "name": "초등교육 순등록률",
+      "description": "초등학교 연령대 아동 중 실제로 초등교육에 등록한 비율로, 교육 접근성과 참여도를 보여줍니다. 높을수록 교육기회가 널리 제공됨을 의미합니다.",
+      "unit": "%",
+      "target": 95.0,
+      "threshold": 80.0,
+      "higherIsBetter": true
+    },
+    {
+      "code": "SH.DYN.MORT",
+      "name": "5세 미만 사망률",
+      "description": "출생 1,000명당 5세 이전에 사망하는 아동 수로, 보건 의료 수준과 아동 생존률을 나타냅니다. 수치가 낮을수록 보건 환경이 좋음을 뜻합니다.",
+      "unit": "‰",
+      "target": 25.0,
+      "threshold": 75.0,
+      "higherIsBetter": false
+    },
+    {
+      "code": "SP.DYN.LE00.IN",
+      "name": "기대수명",
+      "description": "출생 시 기대되는 평균 수명으로, 국민 건강 수준과 사회 발전 정도를 반영합니다. 높을수록 건강하고 안정적인 사회임을 의미합니다.",
+      "unit": "년",
+      "target": 70.0,
+      "threshold": 60.0,
+      "higherIsBetter": true
+    }
+  ],
+ "경제": [
+    {
+      "code": "NY.GDP.PCAP.CD",
+      "name": "1인당 GDP",
+      "description": "국민 1인당 국내총생산의 명목 가치로, 경제적 부와 생활수준의 척도입니다. 수치가 높을수록 경제력이 좋음을 나타냅니다.",
+      "unit": "USD",
+      "target": 5000.0,
+      "threshold": 1500.0,
+      "higherIsBetter": true
+    },
+    {
+      "code": "SL.UEM.TOTL.ZS",
+      "name": "실업률",
+      "description": "경제활동 인구 중 실업자의 비율로, 노동 시장의 건전성과 경제 상황을 보여줍니다. 수치가 낮을수록 고용 상태가 안정적임을 의미합니다.",
+      "unit": "%",
+      "target": 5.0,
+      "threshold": 15.0,
+      "higherIsBetter": false
+    },
+    {
+      "code": "FB.BNK.ACCNT.ZS",
+      "name": "은행 계좌 보유율",
+      "description": "15세 이상 인구 중 은행 계좌를 보유한 비율로, 금융 접근성과 경제활동 참여도를 나타냅니다. 높을수록 금융 서비스 이용이 활발함을 뜻합니다.",
+      "unit": "%",
+      "target": 70.0,
+      "threshold": 30.0,
+      "higherIsBetter": true
+    }
+  ],
+  "거버넌스": [
+    {
+      "code": "CC.EST",
+      "name": "부패통제",
+      "description": "부패 수준을 제어하는 정도를 나타내는 지수로, 값이 높을수록 부패가 적고 투명성이 높음을 의미합니다.부패통제 지수 (-2.5~2.5, 높을수록 부패통제 잘됨)",
+      "unit": "지수",
+      "target": 0.0,
+      "threshold": -1.0,
+      "higherIsBetter": true
+    },
+    {
+      "code": "GE.EST",
+      "name": "정부효과성",
+      "description": "정부가 정책을 효과적으로 집행하는 정도를 나타내는 지수로, 높을수록 정부 역량과 공공서비스 질이 우수함을 뜻합니다.정부효과성 지수 (-2.5~2.5, 높을수록 효과적)",
+      "unit": "지수",
+      "target": 0.0,
+      "threshold": -1.0,
+      "higherIsBetter": true
+    },
+    {
+      "code": "RL.EST",
+      "name": "법치주의",
+      "description": "법과 제도가 잘 확립되어 준수되는 정도를 나타내는 지수로, 높을수록 공정하고 안정적인 사회임을 의미합니다.법치주의 지수 (-2.5~2.5, 높을수록 법치 잘 확립)",
+      "unit": "지수",
+      "target": 0.0,
+      "threshold": -1.0,
+      "higherIsBetter": true
+    }
+  ],
+  "환경": [
+    {
+      "code": "EN.ATM.CO2E.PC",
+      "name": "1인당 CO2 배출량",
+      "description": "1인당 연간 이산화탄소 배출량으로, 환경오염과 기후변화에 미치는 영향을 나타냅니다. 수치가 낮을수록 친환경적임을 뜻합니다.",
+      "unit": "톤",
+      "target": 4.0,
+      "threshold": 10.0,
+      "higherIsBetter": false
+    },
+    {
+      "code": "AG.LND.FRST.ZS",
+      "name": "산림면적 비율",
+      "description": "국토 면적 중 산림이 차지하는 비율로, 생태계 건강성과 자연보전 정도를 보여줍니다. 높을수록 자연환경이 잘 보존된 상태입니다.",
+      "unit": "%",
+      "target": 30.0,
+      "threshold": 10.0,
+      "higherIsBetter": true
+    }
+  ],
+  "성평등": [
+    {
+      "code": "SG.GEN.PARL.ZS",
+      "name": "여성 국회의원 비율",
+      "description": "국회의원 중 여성의 비율로, 정치 참여와 성평등 수준을 나타냅니다. 높을수록 성평등이 잘 이루어진 사회를 의미합니다.",
+      "unit": "%",
+      "target": 30.0,
+      "threshold": 15.0,
+      "higherIsBetter": true
+    },
+    {
+      "code": "SE.ENR.PRIM.FM.ZS",
+      "name": "초등교육 성비",
+      "description": " 초등교육에 등록한 여성 학생 수를 남성 학생 수로 나눈 비율에 100을 곱한 값으로, 성별 교육 기회의 평등성을 나타냅니다. 100에 가까울수록 성평등이 잘 이루어졌음을 뜻합니다.",
+      "unit": "비율",
+      "target": 95.0,
+      "threshold": 85.0,
+      "higherIsBetter": true
+    }
+  ],
+  "ODA 흐름": [
+    {
+      "code": "DT.ODA.ODAT.CD",
+      "name": "총 ODA 수령액",
+      "description": " 공적개발원조로 받은 총 금액으로, 국제원조 규모를 나타냅니다. 높을수록 외부 지원이 활발함을 의미합니다.",
+      "unit": "USD",
+      "target": 1000000000.0,
+      "threshold": 100000000.0,
+      "higherIsBetter": true
+    },
+    {
+      "code": "DT.ODA.ODAT.GN.ZS",
+      "name": "GNI 대비 ODA 비율",
+      "description": "국민총소득 대비 받은 ODA 비율로, 경제 규모 대비 원조 의존도를 보여줍니다. 수치가 높을수록 원조 의존도가 높음을 뜻합니다.",
+      "unit": "%",
+      "target": 2.0,
+      "threshold": 10.0,
+      "higherIsBetter": false
+    }
+  ]
+}

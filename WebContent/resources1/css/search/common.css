@@ -1,0 +1,253 @@
+@charset "UTF-8";
+/**
+ * @file	: common.css
+ * @author	: story
+ * @brief	: 기본 css 파일
+ **/
+
+/* 리셋 */
+body, div, dl, dt, dd, th, td, ul, ol, li, h1, h2, h3, h4, h5, h6, form, fieldset, p, blockquote, button, input, textarea {margin:0;padding:0;}
+article, aside, canvas, details, figcaption, figure, footer, header, hgroup, menu, nav, section, summary, main {display:block;margin:0;padding:0;}
+hr, table caption, legend, .blind {position:absolute;width:0;height:0;overflow:hidden;top:-999999px;text-indent:-9999px;}
+table {border-spacing:0;border-collapse:collapse;border:0;}
+img, fieldset, button, input {border:0;vertical-align:middle;}
+ul, ol, li {list-style:none;}
+em, address {font-style:normal;}
+label, button {cursor:pointer;}
+a {text-decoration:none;}
+a:hover {text-decoration:none;}
+button {vertical-align:top;background:transparent;}
+button::-moz-focus-inner {padding:0;border:0;}
+h1, h2, h3, h4, h5, h6 {font-size:1.0rem;font-weight:normal;font-family:'나눔바른고딕',NanumBarunGothic;}
+input, select, button, textarea {font:1.3rem '나눔바른고딕',NanumBarunGothic;color:#000000;}
+input[type=text]::-ms-clear {display:none;}
+select::-ms-expand {display:none;}
+select {vertical-align:middle;border-radius:0;-webkit-appearance:none;border:1px solid #b2b4b6;}
+div, p, span, em, input {-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;}
+
+/* XEICON 적용 공통 */
+:before, :after {background-repeat:no-repeat;}
+.ico_xi:before, .ico_xi:after {display:inline-block;font-family:xeicon;}
+
+/* HTML5 display-role reset for older browsers */
+article,aside,details,figcaption,figure,footer,header,hgroup,main,menu,nav,section,summary {display:block;}
+body {line-height:1;word-break:break-all;word-wrap:break-word;}
+blockquote,q {quotes:none;}
+blockquote:before,blockquote:after,q:before,q:after {content:'';content:none;}
+img {max-width:100%;height:auto;}
+
+/* 기본 사이즈 세팅 */
+/* 폰트 사이즈는 반응형 홈페이지를 위해 상대적 단위 rem으로 한다. rem은 html요소에 지정된 글꼴 크기로부터 선택된 요소의 글꼴 크기를 상대적으로 결정한다. */
+/* html의 기본 폰트사이즈 62.5%(10px)로 하여 하위 요소의 폰트 사이즈 계산을 쉽게 예측하게 한다 */
+/* IE9 미만 지원하는 폴백 내용 : px의 폰트사이즈를 rem 앞에 적는다. */
+html {width:100%;height:100%;font-size:62.5%;}
+body {width:100%;height:100%;color:#555;font-family:'나눔바른고딕',NanumBarunGothic;font-size:1.4rem;-webkit-text-size-adjust:none;}
+
+/* 링크 된 폰트 세팅 */
+a {color:#555;text-decoration:none;}
+a:link {color:#555;text-decoration:none;}
+a:visited {color:#555;text-decoration:none;}
+a:active {color:#555;text-decoration:none;}
+a:hover {color:#666;text-decoration:none;}
+
+:before,:after {background-repeat:no-repeat;}
+
+/* 버튼 리셋 */
+button {display:inline-block;overflow:visible;padding:0;border:0;background:transparent;text-align:center;vertical-align:middle;cursor:pointer;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;}
+button::-moz-focus-inner,input::-moz-focus-inner {border:0;padding:0;}
+/* Firefox에서 <button>과 <input>태그의 내부 여백을 없애줍니다. 호환성과 관련된 부분이니 꼭 정의해 줍니다. */
+
+/* 공통 */
+.replace_txt {display:block;overflow:hidden;font-size:0px;line-height:0;text-indent:-9999px;} /* 사용된 이미지내 의미있는 텍스트의 대체텍스트를 제공할때 */
+.replace_txt_off {display:block;overflow:hidden;position:relative;width:100%;height:100%;z-index:-1;} /* 중요한 이미지 대체텍스트로 이미지 off시에도 대체 텍스트를 보여주고자 할때 */
+.screen_out {overflow:hidden;position:absolute;width:0;height:0;line-height:0;text-indent:-9999px;} /* 대체텍스트가 아닌 접근성을 위한 숨김텍스트를 제공할때 */
+
+/* 정렬 */
+.fl_left {float:left !important;}
+.fl_right {float:right !important;}
+.fl_clear {clear:both;height:0;font-size:0;line-height:0;}
+.dp_block {display:block !important;}
+.dp_iblock {display:inline-block !important;}
+
+/* 텍스트 정렬 */
+.ta_l {text-align:left !important;}
+.ta_c {text-align:center !important;}
+.ta_r {text-align:right !important;}
+
+/* 텍스트 컬러 */
+.color_red {color:#ed1c24 !important;}
+.color_blue {color:#0e61b1 !important;}
+
+/* 스킵 네비게이션 */
+.skipNav a {position:absolute;width:0;top:-100%;left:0;padding:20px 0;color:#7f7e7e;text-align:center;text-decoration:none;background:#333;border-bottom:1px solid #7d7d7d;}
+.skipNav a:focus {top:0;color:#fff;width:100%;z-index:9999;}
+
+/* 공통 레이아웃 */
+#wrapper {position:relative;}
+#header {border-top:3px solid #298d9a;}
+#header .header-inner {position:relative;width:1200px;height:97px;margin:0 auto;z-index:999;}
+#header .header-inner:after {content:"";display:block;clear:both;}
+#container {overflow:hidden;position:relative;width:1200px;height:inherit;margin:0 auto;padding:0;}
+#container:before {content:"";position:absolute;left:0;top:0;width:219px;height:100%;background-color:#fafafa;border-right:1px solid #cecece;z-index:1;}
+#container:after {content:"";position:absolute;right:0;top:0;width:239px;height:100%;background-color:#fafafa;border-left:1px solid #cecece;z-index:1;}
+#container.image {background:none;}
+#column-wrap {position:relative;padding-bottom:15px;border-bottom:1px solid #dadaea;}
+#column-left {position:relative;float:left;width:219px;height:100%;z-index:5;}
+#column-center {position:relative;float:left;width:740px;}
+#column-center::after {content:"";display:block;clear:both;}
+#column-right {position:relative;float:right;width:239px;height:100%;z-index:5;}
+#footer {width:100%;margin:0 auto;padding:20px 0;background-color:#298d9a;}
+
+/* 메뉴 */
+.nav {position:relative;width:1200px;height:130px;margin:0 auto;}
+.toplogo {position:absolute;top:30px;left:0;width:176px;height:37px;background-image:url(/search/images/toplogo.png);background-repeat:no-repeat;background-size:176px auto;line-height:0;text-indent:-9999px;transition:all 0.1s linear;-ms-transition:all 0.1s linear;-webkit-transition:all 0.1s linear;}
+
+/* 컨텐츠 레이어 팝업 */
+.layer_wrap {display:none;position:absolute;left:0;top:100px;width:100%;text-align:center;z-index:2000;}
+.layer_wrap:before {content: "";display:inline-block;height:100%;vertical-align:middle;}
+
+/* 컨텐츠 레이어 팝업 - 내용 */
+.pop_layer {position:relative;display:inline-block;vertical-align:middle;width:auto;height:auto;text-align:left;background-color:#fff;z-index:2001;}
+.pop_warp {position:relative;width:100%;margin:0;padding:0;background-color:#fff;border:3px solid #fff;}
+.poplayer_bg {display:block;position:fixed;left:0;top:0;right:0;bottom:0;text-align:center;background-image:url(/search/images/layer_back.png);z-index:2000;}
+
+/* 팝업 상단 */
+.pop_header {position:relative;width:100%;height:79px;}
+.pop_header_inner {background-color:#298d9a;}
+.pop_title {padding:3px 10px 0 20px;font-size:26px;font-size:2.6rem;line-height:50px;line-height:5.0rem;color:#fff;border-bottom:1px solid #ddd;}
+
+/* 컨텐츠 레이어 팝업 - 팝업 컨텐츠 공통 */
+.pop_container {width:100%;}
+.pop_content {padding:0 35px 30px;font-size:16px;font-size:1.6rem;line-height:1.25rem;}
+.pop_warp .searchbox_area {margin-bottom:8px;}
+
+/* 컨텐츠 레이어 팝업 - 팝업 스크롤 컨텐츠 높이 */
+.pop_h_200 {max-height:200px;}
+.pop_h_300 {max-height:300px;}
+
+/* 컨텐츠 레이어 팝업 - 팝업 닫기 */
+.btn_popup_close {position:absolute;top:12px;right:15px;}
+.btn_popup_close:before {content:"\e9af";color:#fff;font-size:35px;font-size:3.5rem;}
+
+/* 테이블 - 테이블 디자인 */
+.pop_warp table.tbl_basic {text-align:center;}
+
+/* 모바일 기기 일때 화면 숨김 */
+.mobile_view {display:none;}
+
+/* 레이어 팝업 */
+.pop_layer {max-width:700px;min-width:600px;margin:10px;}
+.layer-body {position:relative;}
+.layer-body input[type="text"] {border:1px solid #b2b2b2;line-height:26px;}
+.layer-body input.full {width:100%;height:35px;margin: 0 0 5px;padding:2px 5px;}
+.layer-btn {position:relative;margin-top:25px;padding-top:25px;border-top:1px solid #ddd;text-align:center;}
+.layerBtn {min-width:90px;height:30px;padding:0 10px;color:#fff;background-color:#298d9a;}
+
+.lsearch-base {border-bottom:1px solid #ddd;margin-bottom:20px;padding-bottom:20px;}
+.lsearch-base dl {overflow:hidden;line-height:26px;}
+.lsearch-base dt {float:left;width:30%;font-weight: bold;}
+.lsearch-base dd {float:right;width:70%;font-size:14px;font-size:1.4rem;}
+.lsearch-detail {}
+.lsearch-detail dl {overflow:hidden;line-height:26px;}
+.lsearch-detail dt {font-weight:bold;}
+.lsearch-detail dd {overflow:hidden;font-size:14px;font-size:1.4rem;line-height:16px;line-height:1.6rem;margin-top:5px;}
+.lsearch-detail dd:first-child {margin-top:0;}
+.lsearch-detail span.popup_title {display:inline-block;float:left;width:30%;margin-top:7px;}
+.lsearch-detail .rcont {float:right;width:70%;}
+.lsearch-detail li {display:inline-block;margin-right:5px;}
+
+/*.gotop a {position:absolute;display:inline-block;bottom:10px;right:10px;width:30px;height:30px;background-image:url(/search/images/icon_gotop.png);background-size:30px 30px;line-height:0;text-indent:-9999px;z-index:999;}*/
+
+
+/* 하단 */
+.footerWrap {position:relative;width:100%;margin:0 auto;text-align:center;font-size:12px;font-size:1.3rem;color:#666;}
+.footerWrap .btm_logo {width:100%;padding:10px 0;font-size:16px;font-size:1.6rem;color:#fff;}
+.footerWrap address {margin:10px 0;color:#fff;}
+.footerWrap .copyright {margin:10px 0;font-size:12px;color:#fff;line-height:16px;}
+.footerWrap .copyright span {display:inline-block;}
+
+
+
+/**
+ *	Tablet Device & Mobile Device
+ * 	- 1024px 미만 해상도의 모바일 기기를 위한 코드를 작성
+ */
+@media screen and (max-width:1200px) {
+#header{border-top:3px solid #298d9a;width:100%;min-height:94px;}
+#header .header-inner {position:relative;width:100%;margin:0 auto;z-index:999;}
+#header .header-inner:after {content:"";display:block;clear:both;}
+#container {width:100%;}
+#container:before, #container:after, #column-left, #column-right{display:none;}
+#column-center {width:100%;min-height:500px;}
+.nav {width:100%;height:60px;background-color:#288d9a;}
+.toplogo {position:absolute;top:30px;left:30px;width:180px;height:38px;background-image:url(/search/images/m_toplogo.png);background-repeat:no-repeat;background-size:180px auto;line-height:0;text-indent:-9999px;}
+}
+
+
+/**
+ *	Tablet Device
+ * 	- 769px ~ 1024px 해상도의 모바일 기기를 위한 코드를 작성
+ */
+@media screen and (min-width:769px) and (max-width:1024px) {
+
+}
+
+
+@media screen and (max-width:1024px) {
+#header .header-inner {position:relative;width:100%;height:140px;margin:0 auto;z-index:999;}
+.toplogo {position:absolute;top:20px;left:50%;width:180px;height:38px;margin-left:-90px;background-image:url(/search/images/m_toplogo.png);background-repeat:no-repeat;background-size:180px auto;line-height:0;text-indent:-9999px;}
+.pop_layer {max-width:700px;min-width:600px;margin-top:30px;}
+}
+
+
+@media screen and (max-width:979px) {
+.layer_wrap {display:none;position:absolute;left:0;top:15px;width:100%;text-align:center;z-index:2000;}
+#footer {width:100%;margin:0 auto;padding:10px 0;background-color:#298d9a;}
+}
+
+
+/**
+ *	Mobile Device
+ * 	- 768px 미만 해상도의 모바일 기기를 위한 코드를 작성
+*/
+@media screen and (max-width:768px) {
+
+}
+
+
+@media screen and (max-width:736px) {
+.layer_wrap {display:none;position:absolute;left:0;top:0;width:100%;text-align:center;z-index:2000;}
+}
+
+
+@media screen and (max-width:667px) {
+.layer_wrap {display:none;position:absolute;left:0;top:-15px;width:100%;text-align:center;z-index:2000;}
+.pop_layer {max-width:700px;min-width:600px;margin-top:50px;}
+.pop_content {padding:0 15px 30px;font-size:16px;font-size:1.6rem;line-height:1.25rem;}
+}
+
+
+@media screen and (max-width:640px) {
+#header .header-inner {position:relative;height:165px;margin:0 auto;z-index:999;}
+.toplogo {position:absolute;top:12px;left:50%;width:165px;height:35px;margin-left:-75px;background-image:url(/search/images/m_toplogo.png);background-repeat:no-repeat;background-size:165px auto;line-height:0;text-indent:-9999px;}
+.lsearch-detail span.popup_title{display:inline-block;float:left;width:28%;margin-right:5px;}
+}
+
+@media screen and (max-width:600px) {
+.pop_layer {max-width:700px;min-width:auto;margin-top:50px;}
+}
+
+
+@media screen and (max-width:540px) {
+.pop_layer {max-width:700px;min-width:auto;margin:10px;}
+}
+
+
+@media screen and (max-width:480px) {
+
+}
+
+
+@media screen and (max-width:360px) {
+
+}

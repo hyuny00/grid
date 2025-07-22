@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.futechsoft.admin.code.mapper.CodeMapper">
+
+
+
+ 	<select id="getCodeList" parameterType="ftMap"  resultType="com.futechsoft.admin.code.vo.Code">
+		<![CDATA[
+
+		    SELECT
+				    	cd_seq, up_cd_seq, cd_div, dtl_cd, dtl_cd_nm, shot_dtl_cd_nm, cd_lnth, srt_ord, use_yn, up_cd_div, rmk,
+				       (select count(cd_seq) from tb_hz200   where up_cd_seq  =  a.cd_seq
+				     ]]>
+
+
+				     <![CDATA[
+				       ) sub_cd_cnt,
+				       (select dtl_cd_nm from  tb_hz200    where   cd_seq  =  a.up_cd_seq) up_dtl_cd_nm
+	            from tb_hz200 a
+	            where up_cd_seq = #{cdSeq}
+            ]]>
+
+
+            order by srt_ord
+
+	</select>
+
+
+	 <insert id="insertCode" parameterType="ftMap">
+
+	    <selectKey keyProperty="cdSeq" resultType="int" order="BEFORE">
+	    	SELECT nvl(MAX(cd_seq),0)+1 from tb_hz200
+	    </selectKey>
+
+         	INSERT  INTO tb_hz200 (
+         		cd_seq,
+         		up_cd_seq,
+		        dtl_cd,
+		        dtl_cd_nm,
+		        shot_dtl_cd_nm,
+		        srt_ord,
+				use_yn,
+		        rmk,
+		        rgstp_no,
+		        rgst_dttm,
+		        cd_div
+ 		) VALUES  (
+ 				 #{cdSeq},
+ 				 #{upCdSeq},
+		         #{dtlCd},
+		         #{dtlCdNm},
+		         #{shotDtlCdNm},
+		        (SELECT TO_CHAR(NVL(MAX(srt_ord),0)+1)
+		         FROM   tb_hz200
+		         WHERE  up_cd_seq =  #{upCdSeq}),
+				 'Y',
+	          	#{rmk},
+		         #{userNo},
+		        SYSDATE,
+		        'NOT USE'
+		)
+    </insert>
+    
+    
+    
+    <update id="updateCode" parameterType="ftMap">
+    	UPDATE
+    		tb_hz200
+    	SET
+    		DTL_CD = #{dtlCd},
+    		DTL_CD_NM = #{dtlCdNm},
+    		SHOT_DTL_CD_NM  = #{shotDtlCdNm },
+    		RMK = #{rmk},
+    		CD_DIV= #{cdDiv},
+		    UP_CD_DIV= #{upCdDiv},
+    		USE_YN = #{useYn},
+    		UPDTP_NO  = #{userNo},
+    		updt_dttm = sysdate
+    	WHERE
+    		cd_seq = #{cdSeq}
+    </update>
+
+    <update id="updateSrtOrd" parameterType="ftMap">
+    	UPDATE
+    		tb_hz200
+    	SET
+    		srt_Ord = #{srtOrd}
+    	WHERE
+    		cd_seq = #{cdSeq}
+    </update>
+
+ 	<update id="updateUseYn" parameterType="ftMap">
+    	UPDATE
+    		tb_hz200
+    	SET
+    		USE_YN = #{useYn}
+    	WHERE
+    		cd_seq = #{cdSeq}
+    </update>
+
+
+
+
+</mapper>

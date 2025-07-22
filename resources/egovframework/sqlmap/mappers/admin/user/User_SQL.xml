@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.futechsoft.admin.user.mapper.UserMapper">
+
+
+
+    <sql id="whereStatement">
+        <where>
+              <if test="@org.apache.commons.lang.StringUtils@isNotEmpty(params.schUserNm)">
+             	 AND	user_nm LIKE '%' || #{params.schUserNm} || '%'
+              </if>
+        </where>
+    </sql>
+
+
+    <select id="selectUserList"  resultType="ftMap">
+    		SELECT
+					user_no,
+					user_id,
+					user_nm	,
+					user_email,
+					tel_no
+			FROM TB_USER_SAMPLE
+			<include refid="whereStatement"/>
+
+			 <if test="pageable.isSorted">
+			 	<trim suffixOverrides=",">
+			    	order by   ${pageable.sort.direction}
+			    </trim>
+	         </if>
+
+			 <if test="pageable.isPaged">
+	           	LIMIT  #{pageable.offset}, #{pageable.pageSize}
+	       	 </if>
+    </select>
+
+
+    <select id="countUserList" resultType="long">
+         select count(1)
+         from TB_USER_SAMPLE
+        <include refid="whereStatement"/>
+    </select>
+
+
+
+
+   <select id="getUserRoleList" parameterType="ftMap" resultType="com.futechsoft.admin.user.vo.UserRole">
+		<![CDATA[
+	        SELECT
+				b.user_no, a.role_seq, a.up_role_seq, a.role_cd, a.role_nm, a.role_type_cd,
+                                   DECODE(B.role_seq, NULL,'N','Y') select_yn
+	        FROM  tb_role_SAMPLE  a left outer  join tb_user_role_SAMPLE b on a.role_seq= b.role_seq and b.user_no = #{userNo}   left outer  join  tb_user_SAMPLE c on b.user_no =c.user_no
+	        where a.use_yn= 'Y'
+		]]>
+	</select>
+
+
+
+
+
+	 <insert id="insertUser"  parameterType="ftMap" >
+
+	    <selectKey keyProperty="userNo" resultType="String" order="BEFORE">
+	    	SELECT  lpad( nvl(MAX(USER_NO),0)+1, 9,'0') from tb_user
+	    </selectKey>
+	    
+	    
+
+    		insert into tb_user
+    			(
+    			USER_NO,
+    			USER_ID,
+    			USER_NM,
+    			user_PWD,
+    			user_EMAIL,
+    			TEL_NO,
+    			MOBILE,
+    			RGSTP_NO,
+    			RGST_DTTM
+    			)
+    		values
+    			(
+    			 #{userNo},
+    			  #{userId} ,
+    			  #{userNm} ,
+    			  #{userPwd} ,
+    			  #{userEmail} ,
+    			  #{telNo} ,
+    			  #{mobile} ,
+    			  #{userNo},
+    			  sysdate
+    			  )
+	</insert>
+	
+	
+	 <insert id="insertUserRole"  parameterType="ftMap" >
+	    <selectKey keyProperty="userRoleSeq" resultType="String" order="BEFORE">
+	    	SELECT nvl(MAX(user_role_seq ),0)+1 from TB_USER_Role
+	    </selectKey>
+	  insert into TB_USER_Role ( user_role_seq, rgstp_no , role_seq , user_no , rgst_dttm )
+	   values ( #{userRoleSeq},  #{userNo} ,  #{roleSeq} ,  #{userNo} , sysdate )
+	 </insert>
+
+<update id="updateUser"  parameterType="ftMap" >
+
+ UPDATE TB_USER SET user_email= #{userEmail}, updtp_no=#{userNo}, user_id= #{userId}, user_nm=#{userNm}, user_pwd=#{userPwd}, user_no=#{userNo}, updt_dttm=sysdate 
+ WHERE user_no=#{userNo}
+ 
+</update>
+
+
+ <!-- 유저  삭제 -->
+	<delete id="deleteUser" parameterType="ftMap">
+		DELETE FROM
+			TB_USER
+		WHERE
+			user_no =#{userNo}
+	</delete>
+
+
+	
+    <!-- 유저 권한 삭제 -->
+	<delete id="deleteUserRole" parameterType="ftMap">
+		DELETE FROM
+			TB_USER_Role
+		WHERE
+			user_no =#{userNo}
+	</delete>
+
+ <select id="detailUser"  resultType="ftMap">
+	SELECT * FROM TB_USER WHERE (user_no=?)
+	
+	</select>
+	
+
+</mapper>

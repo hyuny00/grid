@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.futechsoft.framework.common.mapper.CommonMapper">
+
+
+
+
+	<select id="selectCommonCodeList" parameterType="ftMap"  resultType="ftMap">
+		SELECT
+			 cd code,
+		     cd_korn_nm "value",
+		     cd id,
+		     cd_korn_nm text,
+		     up_cd,
+		     cd_group_sn,
+		     up_cd
+		FROM
+		TCM_INTG_CD
+	
+		WHERE 1=1
+		   
+		   <if test="@org.apache.commons.lang.StringUtils@isNotEmpty(cdGroupSn)">
+		    	AND cd_group_sn = #{cdGroupSn}
+		    </if>
+		   
+		  
+		     <if test="@org.apache.commons.lang.StringUtils@isNotEmpty(schCd)">
+		    	AND cd = #{schCd}
+		    </if>
+		    
+		    
+		   <if test="schCntnt != null and schCntnt.equals('Y')">
+			    AND up_cd IS NULL
+			</if>
+					   
+		    
+		AND   NVL(up_cd,'') =  NVL(#{upCd},'')
+		AND NVL(use_yn,'Y') = 'Y'
+		AND del_yn = 'N'
+		
+		ORDER BY cd_seq
+		
+		
+	 </select>
+	 
+	 
+	 <select id="selectNtcCodeList" parameterType="ftMap"  resultType="ftMap">
+	 
+			WITH code_tree AS (
+			    SELECT
+			        ic.cd
+			    FROM FTCORE.tcm_intg_cd ic
+			    WHERE ic.cd_group_sn = 16
+			      AND ic.use_yn = 'Y'
+			      AND ic.del_yn = 'N'
+			    START WITH ic.cd =#{schUpNtnCd} 
+			    CONNECT BY PRIOR ic.cd = ic.up_cd
+			)
+			SELECT DISTINCT
+			    nc.ntn_no code,
+			    nc.ntn_nm text,
+			    nc.ntn_eng_nm,
+			    nc.ntn_cd,
+			    nc.cntnt_cd
+			FROM FTCORE.tcm_ntn_cd nc
+			JOIN code_tree ct
+			  ON nc.cntnt_cd = ct.cd
+			WHERE nc.use_yn = 'Y'
+			  AND nc.del_yn = 'N'
+			ORDER BY nc.cntnt_cd, nc.ntn_nm;
+	 
+	 
+	 </select>
+	 
+
+
+
+	 <insert id="insertUserAuth" parameterType="ftMap">
+	       	INSERT INTO tb_user_auth_sample (
+						       	user_auth_seq,
+								user_no,
+								auth_seq,
+								rgstp_no,
+								rgst_dttm
+
+								)
+								values(
+									(SELECT nvl(MAX(user_auth_seq),0)+1 from tb_user_auth_sample),
+									#{userNo},
+									(SELECT auth_seq FROM TB_AUTH_sample where auth_cd=#{authCd} AND use_yn='Y'),
+									#{userNo},
+									sysdate
+								)
+
+
+	 </insert>
+
+	 <delete id="deleteUserAuth" parameterType="ftMap">
+	       	delete tb_user_auth_sample where user_no =#{userNo} and  auth_seq=(SELECT auth_seq FROM TB_AUTH_sample where auth_cd=#{authCd} AND use_yn='Y')
+	 </delete>
+	 
+	 
+	
+
+
+</mapper>

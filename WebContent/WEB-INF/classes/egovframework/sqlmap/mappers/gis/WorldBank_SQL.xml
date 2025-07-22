@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.go.odakorea.gis.mapper.WorldBankMapper">
+
+
+
+	<insert id="insertNtnIdct" parameterType="ftMap">
+	    INSERT INTO FTCORE."tcm_ntn_idct_dt"
+	    (
+	        "edcf_ntn_cd",
+	        "idct_cd_vl",
+	        "crtr_yr",
+	        "idct_nm",
+	        "idct_unit",
+	        "idct_vl",
+	        "reg_dt",
+	        "reg_user_id",
+	        "mdfcn_dt",
+	        "mdfcn_user_id",
+	        "del_yn"
+	    )
+	    VALUES
+	    (
+	        #{edcfNtnCd},
+	        #{idctCdVl},
+	        #{crtrYr},
+	        #{idctNm},
+	        #{idctUnit},
+	        #{idctVl},
+	        SYS_DATETIME,
+	        'system',
+	        SYS_DATETIME,
+	        'system',
+	        'N'
+	    )
+	</insert>
+
+	
+	
+	
+	<delete id="deletetNtnIdct" parameterType="ftMap">
+	
+		DELETE FROM FTCORE."tcm_ntn_idct_dt"
+    	WHERE 
+    		"edcf_ntn_cd" = #{edcfNtnCd}
+     		 AND "idct_cd_vl" = #{idctCdVl}
+		
+	</delete>
+
+
+
+
+	<select id="getNtnCdList"  resultType="String">
+		SELECT
+			ntn_cd
+		FROM tcm_ntn_cd
+		WHERE del_yn='N' AND use_yn='Y' AND indiv_ntn_yn='Y'
+
+	</select>
+
+</mapper>

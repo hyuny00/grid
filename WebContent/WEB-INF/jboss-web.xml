@@ -1,0 +1,21 @@
+<!DOCTYPE jboss-web PUBLIC
+   "-//JBoss//DTD Web Application 5.0//EN"
+   "http://www.jboss.org/j2ee/dtd/jboss-web_5_0.dtd">
+
+<jboss-web>
+	<context-root>/</context-root>
+        <!--20201006-->
+        <replication-config>
+
+         <!--<replication-granularity>ATTRIBUTE</replication-granularity>-->
+        	<replication-trigger>SET</replication-trigger>
+      		<replication-granularity>SESSION</replication-granularity>
+        </replication-config>
+
+	<!--
+    <resource-ref>
+        <res-ref-name>jdbc/mysqlDB</res-ref-name>
+        <jndi-name>java:jdbc/mysqlDB</jndi-name>
+    </resource-ref>
+	-->
+</jboss-web>

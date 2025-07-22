@@ -1,0 +1,46 @@
+
+
+.tree-row {
+    display: table-row;
+    background: #f9f9f9;
+}
+.tree-row.hidden {
+    display: none;
+}
+
+.date-input { 
+    width: 120px; 
+}
+/*
+.tree-indent {
+    padding-left: 20px;
+}
+*/
+.tree-toggle {
+    cursor: pointer;
+    margin-right: 8px;
+    display: inline-block;
+    width: 16px;
+    text-align: center;
+    color: #007bff;
+    font-weight: bold;
+}
+.tree-toggle:hover {
+    color: #0056b3;
+}
+.tree-toggle.no-children {
+    color: transparent;
+    cursor: default;
+}
+
+
+
+/* 오류 셀 스타일 */
+.excel-error-cell {
+    color: #d32f2f !important;
+}
+
+.excel-error-cell:focus {
+    background-color: #ffcdd2 !important;
+    border-color: #d32f2f !important;
+}

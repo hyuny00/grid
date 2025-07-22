@@ -1,0 +1,190 @@
+/* 드래그 드롭 영역 기본 스타일 (view 모드 제외) */
+[data-file-list]:not([data-mode="view"]) {
+    position: relative;
+    min-height: 60px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 10px;
+ /*   background-color: #fafafa;*/
+    transition: all 0.3s ease;
+}
+
+/* 드래그 오버 시 스타일 (view 모드 제외) */
+[data-file-list]:not([data-mode="view"]).dragover {
+    border-color: #2196f3 !important;
+    background-color: #e3f2fd !important;
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+/* 드래그 메시지 애니메이션 */
+.drag-message {
+    animation: fadeInScale 0.3s ease-out;
+    pointer-events: none;
+}
+
+.drop-success {
+    animation: fadeInScale 0.3s ease-out;
+    pointer-events: none;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* 파일 입력 영역 호버 효과 (view 모드 제외) */
+[data-file-list]:not([data-mode="view"]):hover {
+    border-color: #bbb;
+    background-color: #f5f5f5;
+}
+
+/* 업로드 중일 때 스타일 (view 모드 제외) */
+[data-file-list]:not([data-mode="view"]).uploading {
+    pointer-events: none;
+    opacity: 0.7;
+    background-color: #f0f0f0;
+}
+
+/* 드래그 불가능 상태 (view 모드 제외) */
+[data-file-list]:not([data-mode="view"]).disabled {
+    background-color: #f5f5f5;
+    border-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* view 모드일 때는 기본 스타일 적용 */
+[data-file-list][data-mode="view"] {
+    border: none;
+    background-color: transparent;
+    padding: 5px;
+}
+
+/* 파일 목록 아이템 간격 조정 - 간격을 최소화 */
+[data-file-list] ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    line-height: 1.1; /* 줄 간격 축소 */
+}
+
+[data-file-list] li {
+    margin: 0; /* 상하 여백 제거 */
+    padding: 0; /* 상하 패딩 제거 */
+    line-height: 1.2; /* 줄 높이 최소화 */
+}
+
+[data-file-list] li > div {
+    padding-left: 4px !important;
+    padding-top: 1px; /* 최소 상단 패딩 */
+    padding-bottom: 1px; /* 최소 하단 패딩 */
+}
+
+/* 체크박스와 레이블 간격 조정 */
+[data-file-list] li input[type="checkbox"] {
+    margin: 0 4px 0 0;
+    vertical-align: middle;
+}
+
+[data-file-list] li label {
+    margin: 0;
+    vertical-align: middle;
+    line-height: 1.2;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    [data-file-list]:not([data-mode="view"]) {
+        min-height: 50px;
+        padding: 8px;
+    }
+    
+    .drag-message,
+    .drop-success {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+}
+
+.file-upload ul li label a {
+    display: inline-block;
+    padding-left: 25px;
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 20px 20px;
+}
+
+
+
+.file-upload ul li label .hwp {
+    background: url(../../img/ico_hwp.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li label .xls {
+    background: url(../../img/ico_excel.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li label .pdf {
+    background: url(../../img/ico_pdf.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+
+.file-upload ul li label .zip {
+    background: url(../../img/ico_zip.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li label .doc {
+    background: url(../../img/ico_doc.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li label .ppt {
+    background: url(../../img/ico_ppt.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li label .txt {
+    background: url(../../img/ico_txt.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li label .img {
+    background: url(../../img/ico_img.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li label .etc {
+    background: url(../../img/ico_etc.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li label::before {position: relative;top: 3px;margin-right: 8px;}

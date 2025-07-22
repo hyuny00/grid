@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.futechsoft.admin.menu.mapper.MenuMapper">
+
+
+
+<select id="getMenuList" parameterType="ftMap" resultType="com.futechsoft.admin.menu.vo.Menu">
+    SELECT
+        a.menu_seq,
+        a.up_menu_seq,
+        a.menu_url,
+        a.menu_nm,
+        a.menu_ord,
+        a.menu_type_cd,
+        a.use_yn,
+        a.etc,
+        a.open_yn,
+        COALESCE(b.sub_menu_cnt, 0) AS sub_menu_cnt,  
+        c.menu_nm AS up_menu_nm,  
+        d.menu_seq AS top_menu_seq  
+    FROM
+        tb_menu_SAMPLE a
+    LEFT JOIN
+        (  -- sub_menu_cnt를 계산하는 JOIN
+            SELECT up_menu_seq, COUNT(menu_seq) AS sub_menu_cnt
+            FROM tb_menu_SAMPLE
+            GROUP BY up_menu_seq
+        ) b ON a.menu_seq = b.up_menu_seq
+    LEFT JOIN
+        tb_menu_SAMPLE c ON a.up_menu_seq = c.menu_seq  -- 상위 메뉴 이름
+    LEFT JOIN
+        tb_menu_SAMPLE d ON a.up_menu_seq = d.menu_seq AND d.menu_type_cd = '010' 
+    WHERE
+        a.up_menu_seq = #{menuSeq}
+    <if test="@org.apache.commons.lang.StringUtils@isNotEmpty(useYn)">
+        AND a.use_yn = #{useYn}
+    </if>
+    ORDER BY
+        a.menu_ord
+</select>
+
+
+
+
+	 <insert id="insertMenu" parameterType="ftMap">
+
+	    <selectKey keyProperty="menuSeq" resultType="int" order="BEFORE">
+	    	SELECT nvl(MAX(menu_seq),0)+1 from tb_menu_SAMPLE
+	    </selectKey>
+
+         	insert into tb_menu_SAMPLE
+         	(
+         		menu_seq,
+       		 	menu_nm,
+  		    	use_yn,
+ 		    	up_menu_seq,
+  		    	menu_ord,
+  		    	menu_type_cd,
+  		    	etc,
+  		    	menu_url,
+  		    	top_menu_seq,
+  		    	rgstp_no,
+				rgst_dttm
+         	)
+         	values
+         	(
+         	  	#{menuSeq},
+	         	#{menuNm},
+  		    	'Y',
+ 		    	#{upMenuSeq},
+  		    	#{menuOrd},
+  		    	#{menuTypeCd},
+  		    	#{etc},
+  		    	#{menuUrl},
+  		    	<if test='menuTypeCd=="010"'>
+  		    		#{menuSeq},
+  		    	</if>
+  		    	<if test='menuTypeCd!="010"'>
+  		    		#{topMenuSeq},
+  		    	</if>
+  		    	#{userNo},
+			    sysdate
+         	)
+    </insert>
+    
+     <!-- 메뉴수정 -->
+    <update id="updateMenu" parameterType="ftMap">
+    	UPDATE
+    		tb_menu_SAMPLE
+    	SET
+    		top_menu_seq = #{topMenuSeq},
+    		up_menu_seq = #{upMenuSeq},
+    		menu_type_cd = #{menuTypeCd},
+    		menu_nm = #{menuNm},
+    		menu_url = #{menuUrl},
+    		etc = #{etc},
+    		use_yn = #{useYn},
+    		updtp_no = #{userNo},
+    		updt_dttm = sysdate
+    	WHERE
+    		menu_seq = #{menuSeq}
+    </update>
+
+	<select id="getMenuCount" parameterType="ftMap"  resultType="java.lang.Integer">
+ 		SELECT count(1) as cnt FROM TB_MENU_SAMPLE WHERE up_menu_seq=#{upMenuSeq}
+ 	</select>
+ 	
+ 	  <delete id="deleteRoleMenu" parameterType="ftMap">
+ 	  	 DELETE FROM TB_ROLE_MENU_SAMPLE WHERE menu_seq=#{menuSeq}
+ 	  </delete>
+ 	
+ 	<delete id="deleteMenu" parameterType="ftMap">
+ 	  	 DELETE FROM TB_MENU_SAMPLE WHERE menu_seq=#{menuSeq}
+ 	</delete>
+ 	
+ 	<update id="updateMenuOrd" parameterType="ftMap">
+ 		UPDATE TB_MENU_SAMPLE SET menu_ord=#{menuOrd}, updt_dttm=sysdate WHERE menu_seq=#{menuSeq}
+	</update>
+</mapper>
+

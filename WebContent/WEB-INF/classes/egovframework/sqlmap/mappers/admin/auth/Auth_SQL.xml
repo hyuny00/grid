@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.futechsoft.admin.auth.mapper.RoleMapper">
+
+
+
+	<select id="getRoleList" parameterType="ftMap"
+        resultType="com.futechsoft.admin.auth.vo.Role">
+
+        SELECT
+            A.ROLE_SEQ,
+            A.UP_ROLE_SEQ,
+            A.ROLE_CD,
+            A.ROLE_NM,
+            A.ROLE_TYPE_CD,
+            A.USE_YN,
+            COALESCE(B.SUB_ROLE_CNT, 0) AS SUB_ROLE_CNT,  
+            C.ROLE_NM AS UP_ROLE_NM  
+        FROM 
+            TB_ROLE_SAMPLE A
+        LEFT JOIN 
+            ( 
+                SELECT UP_ROLE_SEQ, COUNT(ROLE_SEQ) AS SUB_ROLE_CNT
+                FROM TB_ROLE_SAMPLE
+                WHERE USE_YN = 'Y' 
+                GROUP BY UP_ROLE_SEQ
+            ) B ON A.ROLE_SEQ = B.UP_ROLE_SEQ
+        LEFT JOIN 
+            TB_ROLE_SAMPLE C ON A.UP_ROLE_SEQ = C.ROLE_SEQ
+        WHERE 
+            A.UP_ROLE_SEQ = #{roleSeq}
+            <if test="@org.apache.commons.lang.StringUtils@isNotEmpty(useYn)">
+                AND A.USE_YN = #{useYn}
+            </if>
+
+</select>
+
+
+
+
+	<select id="getRoleCdList"
+		resultType="com.futechsoft.admin.auth.vo.Role">
+		<![CDATA[
+	        SELECT
+				ROLE_SEQ, ROLE_CD
+	        FROM  TB_ROLE_SAMPLE WHERE ROLE_TYPE_CD='030' AND USE_YN= 'Y'
+		]]>
+	</select>
+
+
+
+	<select id="getRoleMenuList"
+		resultType="com.futechsoft.admin.auth.vo.RoleMenu">
+		<![CDATA[
+		  SELECT
+			    a.menu_type_cd,
+			    a.menu_nm,
+			    b.role_seq,
+			    a.menu_seq,
+			    b.role_menu_seq,
+			    c.role_cd,
+			    a.up_menu_seq,
+			    a.menu_url,
+			    a.open_yn,
+			    CASE WHEN b.menu_seq IS NULL THEN 'N' ELSE 'Y' END AS selectYn,  
+			    COALESCE(d.noRoleCount, 0) AS noRoleCount, 
+			    COALESCE(e.subMenuCnt, 0) AS subMenuCnt 
+			FROM 
+			    tb_menu_SAMPLE a
+			LEFT OUTER JOIN 
+			    tb_role_menu_SAMPLE b 
+			    ON a.menu_seq = b.menu_seq 
+			    AND b.role_seq = #{roleSeq}
+			LEFT OUTER JOIN 
+			    tb_role_SAMPLE c 
+			    ON b.role_seq = c.role_seq 
+			    AND c.USE_YN = 'Y'
+			LEFT JOIN 
+			    ( 
+			        SELECT a.up_menu_seq, COUNT(a.menu_seq) AS noRoleCount -- 테이블 'a'의 'menu_seq'와 'up_menu_seq' 사용
+			        FROM tb_menu_SAMPLE a
+			        LEFT OUTER JOIN tb_role_menu_SAMPLE b
+			        ON a.menu_seq = b.menu_seq
+			        WHERE b.role_seq IS NULL
+			        GROUP BY a.up_menu_seq
+			    ) d 
+			    ON a.menu_seq = d.up_menu_seq
+			LEFT JOIN 
+			    (
+			        SELECT a.up_menu_seq, COUNT(a.menu_seq) AS subMenuCnt -- 테이블 'a'의 'menu_seq'와 'up_menu_seq' 사용
+			        FROM TB_MENU_SAMPLE a
+			        WHERE a.USE_YN = 'Y'
+			        GROUP BY a.up_menu_seq
+			    ) e 
+			    ON a.menu_seq = e.up_menu_seq
+			WHERE 
+			    a.use_yn = 'Y'
+	]]>
+	</select>
+
+
+
+	<select id="getPathList" parameterType="ftMap"
+		resultType="com.futechsoft.admin.auth.vo.Path">
+		<![CDATA[
+		    SELECT
+	  			PATH_SEQ,
+	  			UP_PATH_SEQ,
+	  			PATH,
+	  			PATH_NM,
+	       		(SELECT COUNT(PATH_SEQ) FROM TB_PATH_SAMPLE   WHERE  UP_PATH_SEQ  =  A.PATH_SEQ) SUB_CNT,
+          		(SELECT PATH FROM  TB_PATH_SAMPLE    WHERE   PATH_SEQ  =  A.UP_PATH_SEQ) UP_PATH
+            FROM TB_PATH_SAMPLE A
+            WHERE UP_PATH_SEQ = #{pathSeq}
+ 			ORDER BY PATH_ORD
+		]]>
+	</select>
+
+
+	<select id="getPathRoleList"
+		resultType="com.futechsoft.admin.auth.vo.PathRole">
+		<![CDATA[
+	         SELECT
+					A.ROLE_SEQ, A.ROLE_NM,   A.UP_ROLE_SEQ, A.ROLE_TYPE_CD, B.PATH_SEQ, B.PATH_ROLE_SEQ,  C.UP_PATH_SEQ, DECODE(B.PATH_SEQ, NULL,'N','Y') SELECT_YN
+        	FROM  TB_ROLE_SAMPLE A LEFT OUTER JOIN TB_PATH_ROLE_SAMPLE B ON A.ROLE_SEQ= B.ROLE_SEQ AND B.PATH_SEQ =  #{pathSeq}     LEFT OUTER JOIN TB_PATH_SAMPLE C ON B.PATH_SEQ=C.PATH_SEQ
+	        WHERE   A.USE_YN= 'Y'
+		]]>
+	</select>
+
+
+
+	<!-- 권한메뉴등록등록 -->
+	<insert id="insertRoleMenu" parameterType="ftMap">
+		<selectKey keyProperty="roleMenuSeq" resultType="String"
+			order="BEFORE">
+			SELECT nvl(MAX(role_menu_seq ),0)+1 from TB_ROLE_MENU_SAMPLE
+		</selectKey>
+		INSERT INTO TB_ROLE_MENU_SAMPLE (
+		ROLE_MENU_SEQ,
+		MENU_SEQ ,
+		RGSTP_NO ,
+		ROLE_SEQ ,
+		RGST_DTTM
+		)
+		VALUES (
+		#{roleMenuSeq},
+		#{menuSeq} ,
+		#{userNo} ,
+		#{roleSeq} ,
+		sysdate
+		)
+	</insert>
+
+	<!-- 권한등록 -->
+	<insert id="insertRole" parameterType="ftMap">
+		<selectKey keyProperty="roleSeq" resultType="String"
+			order="BEFORE">
+			SELECT NVL(MAX(ROLE_SEQ),0)+1 FROM TB_ROLE_SAMPLE
+		</selectKey>
+		INSERT INTO TB_ROLE_SAMPLE (
+		ROLE_SEQ,
+		ROLE_CD,
+		ROLE_NM,
+		ROLE_TYPE_CD,
+		UP_ROLE_SEQ,
+		USE_YN,
+
+		rgstp_no,
+		rgst_dttm
+		) VALUES (
+		#{roleSeq},
+		<if test="roleTypeCd == '010' or roleTypeCd == '020'">
+			#{roleSeq}||'_'||#{roleCd},
+		</if>
+
+		<if test='roleTypeCd =="030"'>
+			#{roleCd},
+		</if>
+
+		#{roleNm},
+		#{roleTypeCd},
+		#{upRoleSeq},
+		'Y',
+
+		#{userNo},
+		sysdate
+
+		)
+
+	</insert>
+
+	<!-- 권한수정 -->
+	<update id="updateRole" parameterType="ftMap">
+		UPDATE
+		TB_ROLE_SAMPLE
+		SET
+		ROLE_TYPE_CD = #{roleTypeCd},
+		ROLE_NM = #{roleNm},
+		ROLE_CD = #{roleCd},
+		USE_YN = #{useYn},
+		UPDTP_NO = #{userNo},
+		UPDT_DTTM = sysdate
+		WHERE
+		ROLE_SEQ = #{roleSeq}
+	</update>
+
+
+	<!-- 경로등록 -->
+	<insert id="insertPath" parameterType="ftMap">
+		<selectKey keyProperty="pathSeq" resultType="String"
+			order="BEFORE">
+			SELECT NVL(MAX(PATH_SEQ),0)+1 FROM TB_PATH_SAMPLE
+		</selectKey>
+
+		INSERT INTO TB_PATH_SAMPLE(
+		PATH_SEQ,
+		UP_PATH_SEQ,
+		PATH,
+		PATH_NM,
+		PATH_ORD,
+		RGSTP_NO ,
+		rgst_dttm
+		) VALUES (
+		#{pathSeq},
+		#{upPathSeq},
+		#{path},
+		#{pathNm},
+		#{pathOrd},
+		#{userNo},
+		sysdate
+
+		)
+	</insert>
+
+	<!-- 경로수정 -->
+	<update id="updatePath" parameterType="ftMap">
+		UPDATE
+		TB_PATH_SAMPLE
+		SET
+		PATH = #{path},
+		PATH_NM = #{pathNm},
+		UPDTP_NO = #{userNo},
+		UPDT_DTTM =
+		sysdate
+		WHERE
+		PATH_SEQ = #{pathSeq}
+	</update>
+
+
+
+
+	<select id="getRoleCount" parameterType="ftMap"
+		resultType="java.lang.Integer">
+		SELECT count(1) as cnt FROM TB_ROLE_SAMPLE WHERE
+		up_role_seq=#{upRoleSeq}
+	</select>
+
+	<delete id="deleteUserRole" parameterType="ftMap">
+		DELETE FROM
+		TB_USER_ROLE_SAMPLE WHERE role_seq=#{roleSeq}
+	</delete>
+
+	<delete id="deleteRoleMenu" parameterType="ftMap">
+		DELETE FROM
+		TB_ROLE_MENU_SAMPLE WHERE role_seq=#{roleSeq}
+	</delete>
+
+	<delete id="deleteRole" parameterType="ftMap">
+		DELETE FROM TB_ROLE_SAMPLE
+		WHERE role_seq=#{roleSeq}
+	</delete>
+
+	<delete id="deletePathRoleByRoleSeq" parameterType="ftMap">
+		DELETE FROM
+		TB_PATH_ROLE_SAMPLE WHERE role_seq=#{roleSeq}
+	</delete>
+
+
+	<update id="updatePathOrd" parameterType="ftMap">
+		UPDATE TB_PATH_SAMPLE SET path_ord=#{pathOrd}, updt_dttm=sysdate WHERE
+		path_seq=#{pathSeq}
+	</update>
+
+
+	<delete id="deletePathRoleByPathSeq" parameterType="ftMap">
+		DELETE FROM TB_PATH_ROLE_SAMPLE WHERE path_seq=#{pathSeq}
+	</delete>
+
+	<delete id="deletePath" parameterType="ftMap">
+		DELETE FROM TB_PATH_SAMPLE WHERE path_seq=#{pathSeq}
+	</delete>
+
+
+
+	<!-- 권한메뉴등록등록 -->
+	<insert id="insertPathRole" parameterType="ftMap">
+		<selectKey keyProperty="pathRoleSeq" resultType="String"
+			order="BEFORE">
+			SELECT nvl(MAX(path_role_seq ),0)+1 from TB_PATH_ROLE_SAMPLE
+		</selectKey>
+		insert into TB_PATH_ROLE_SAMPLE ( path_role_seq, rgstp_no , role_seq ,
+		path_seq , rgst_dttm ) values ( #{pathRoleSeq}, #{userNo} , #{roleSeq}
+		, #{pathSeq} , sysdate )
+	</insert>
+</mapper>
