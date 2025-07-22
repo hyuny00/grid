@@ -2,86 +2,47 @@ package com.futechsoft.framework.common.pagination;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import com.futechsoft.framework.util.CommonUtil;
 import com.futechsoft.framework.util.FtMap;
 
 public class Pageable {
-    private int page = 1;  // 기본값 1페이지
-    private int pageSize = 10; // 기본 페이지 크기
+	private int page = 1; // 기본값 1페이지
+	private int pageSize = 10; // 기본 페이지 크기
 	private long totalCount;
 	private int lastPage;
-	
-	
-	private String orderByString = null;
-	
-	public void setParam(FtMap param) {
-        page=param.getInt("page");
-        pageSize=param.getInt("pageSize");
-        
-        
-    	//List<Map<String, String>> sorters = (List<Map<String, String>>) param.get("sorters");
-    	
-    	
-    	//System.out.println("sorters............"+sorters);
-    	
-        StringBuilder orderByClause = new StringBuilder();
-		// → MyBatis 쿼리에서 사용할 정렬 문자열 생성
-        /*
-		StringBuilder orderByClause = new StringBuilder();
-		if (sorters != null) {
-			/*
-			for (Map<String, String> sorter : sorters) {
-				String field = sorter.get("field");
-				String dir = sorter.get("dir");
-				if (field != null && dir != null) {
-					if (orderByClause.length() > 0)
-						orderByClause.append(", ");
-					orderByClause.append(field).append(" ").append(dir);
-				}
-			}*/
-			 /*
-			List<String> whitelist = Arrays.asList("ID", "NO", "YEAR", "LIST", "WRITE", "FILE", "COUNT");
 
-			for (Map<String, String> sorter : sorters) {
-			    String field = sorter.get("field");
-			    String dir = sorter.get("dir");
-			    
-			    if (field != null && dir != null) {
-				    if (whitelist.contains(field.toUpperCase()) && ("asc".equals(dir) || "desc".equals(dir))) {
-				        if (orderByClause.length() > 0) orderByClause.append(", ");
-				        orderByClause.append("\"").append(field).append("\" ").append(dir);  
-				    }
-			    }
-			}
-			
+	private String orderByString = null;
+
+	public void setParam(FtMap param) {
+		page = param.getInt("page");
+		pageSize = param.getInt("pageSize");
+
+		StringBuilder orderByClause = new StringBuilder();
+	
+		
+		
+		//List<String> allowedFields = Arrays.asList("ID", "NAME", "CREATED_AT");
+		List<String> allowedDirections = Arrays.asList("ASC", "DESC");
+
+		String sortField = param.getString("sortField");
+		String sortDirection = param.getString("sortDirection");
+
+		if (sortField != null && sortDirection != null &&
+		    !sortField.trim().isEmpty() && !sortDirection.trim().isEmpty() &&
+		    sortField.matches("^[A-Za-z_]{1,20}$")) {
+
+		    String direction = sortDirection.toUpperCase();
+
+		    if (allowedDirections.contains(direction)) {
+		        String orderBy = "\"" + sortField + "\" " + direction;
+		        param.put("orderBy", orderBy);
+		    }
 		}
-		*/
-		
-    	//List<String> whitelist = Arrays.asList("ID", "NO", "YEAR", "LIST", "WRITE", "FILE", "COUNT");
-		String sortField =	param.getString("sortField");
-		String sortDirection =	param.getString("sortDirection");
-		
-		System.out.println("sortField...."+sortField);
-		System.out.println("sortDirection...."+sortDirection);
-		
-		  if (!CommonUtil.nvl(sortField).equals("") && !CommonUtil.nvl(sortDirection).equals("")) {
-			  
-		        orderByClause.append("\"").append(sortField).append("\" ").append(sortDirection);  
-				orderByString=orderByClause.toString();
-				
-				System.out.println("orderByString...."+orderByString);
-				
-				
-				param.put("orderBy", orderByString);
-		   }
-		
-		
-		
-    }
-	
-	
+
+
+	}
+
 	public int getLastPage() {
 		return lastPage;
 	}
@@ -91,9 +52,8 @@ public class Pageable {
 	}
 
 	private boolean isPaged = true;
-	
-	
-    public boolean isPaged() {
+
+	public boolean isPaged() {
 		return isPaged;
 	}
 
@@ -110,40 +70,37 @@ public class Pageable {
 		paging();
 	}
 
-	
-
-    // Getter / Setter
-    public int getPage() {
-        return page;
-    }
-    public void setPage(int page) {
-        this.page = page;
-    }
-
-    public int getPageSize() {
-        return pageSize;
-    }
-    public void setPageSize(int pageSize) {
-        this.pageSize = pageSize;
-    }
-
-    public int getOffset() {
-        return (page - 1) * pageSize;
-    }
-    
-    private void paging() {
-    	lastPage= (int) Math.ceil((double) totalCount / pageSize);
+	// Getter / Setter
+	public int getPage() {
+		return page;
 	}
 
+	public void setPage(int page) {
+		this.page = page;
+	}
+
+	public int getPageSize() {
+		return pageSize;
+	}
+
+	public void setPageSize(int pageSize) {
+		this.pageSize = pageSize;
+	}
+
+	public int getOffset() {
+		return (page - 1) * pageSize;
+	}
+
+	private void paging() {
+		lastPage = (int) Math.ceil((double) totalCount / pageSize);
+	}
 
 	public String getOrderByString() {
 		return orderByString;
 	}
 
-
 	public void setOrderByString(String orderByString) {
 		this.orderByString = orderByString;
 	}
-    
-    
+
 }

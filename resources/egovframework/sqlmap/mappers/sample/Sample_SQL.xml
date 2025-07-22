@@ -33,9 +33,9 @@
 			
 			
     		<choose>
-			 	<when test="params.orderBy != null and !params.orderBy.equals('')">
-				  ORDER BY ${params.orderBy}
-				</when>
+			  <when test="params.orderBy != null and params.orderBy != ''">
+			    ORDER BY ${params.orderBy}
+			  </when>
 			  <otherwise>
 			   order by "ID" desc
 			  </otherwise>
