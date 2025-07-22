@@ -73,7 +73,7 @@ class TreeGridManager {
         
         this.selectOption=  config.selectOption || {};
         
-        this.currentSortDirection = 'desc'; // 'asc' 또는 'desc'
+        this.currentSortDirection = 'asc'; // 'asc' 또는 'desc'
     }
     
     

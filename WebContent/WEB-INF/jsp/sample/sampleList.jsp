@@ -193,8 +193,11 @@ function selectCode() {
                          <th scope="col" class="sortable" data-sort="id">
             					ID <span class="sort-icon"></span>
         				</th> 
+        				
+        				 <th scope="col" class="sortable" data-sort="name">
+            					이름 <span class="sort-icon"></span>
+        				</th> 
                         
-                        <th>이름</th>
                         <th>useYn</th> 
                         <th>description</th> 
                         <th>regUser</th>

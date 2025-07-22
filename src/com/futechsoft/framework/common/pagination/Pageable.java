@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import com.futechsoft.framework.util.CommonUtil;
 import com.futechsoft.framework.util.FtMap;
 
 public class Pageable {
@@ -13,7 +14,7 @@ public class Pageable {
 	private int lastPage;
 	
 	
-	private String orderByString = "";
+	private String orderByString = null;
 	
 	public void setParam(FtMap param) {
         page=param.getInt("page");
@@ -58,24 +59,25 @@ public class Pageable {
 		}
 		*/
 		
-    	List<String> whitelist = Arrays.asList("ID", "NO", "YEAR", "LIST", "WRITE", "FILE", "COUNT");
+    	//List<String> whitelist = Arrays.asList("ID", "NO", "YEAR", "LIST", "WRITE", "FILE", "COUNT");
 		String sortField =	param.getString("sortField");
 		String sortDirection =	param.getString("sortDirection");
 		
+		System.out.println("sortField...."+sortField);
+		System.out.println("sortDirection...."+sortDirection);
 		
-		  if (sortField != null && sortDirection != null) {
-			    if (whitelist.contains(sortField.toUpperCase()) && ("asc".equals(sortDirection) || "desc".equals(sortDirection))) {
-			        orderByClause.append("\"").append(sortField).append("\" ").append(sortDirection);  
-			    }
-		    }
+		  if (!CommonUtil.nvl(sortField).equals("") && !CommonUtil.nvl(sortDirection).equals("")) {
+			  
+		        orderByClause.append("\"").append(sortField).append("\" ").append(sortDirection);  
+				orderByString=orderByClause.toString();
+				
+				System.out.println("orderByString...."+orderByString);
+				
+				
+				param.put("orderBy", orderByString);
+		   }
 		
 		
-		orderByString=orderByClause.toString();
-		
-		System.out.println("orderByString...."+orderByString);
-		
-		
-		param.put("orderBy", orderByString);
 		
     }
 	
