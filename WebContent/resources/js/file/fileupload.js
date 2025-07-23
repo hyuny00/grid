@@ -357,7 +357,6 @@ var uploadModule =(function() {
 		 formdata.append('file',  piece);
 		 formdata.append('metadata', JSON.stringify(metadata));
 
-		 console.log(JSON.stringify(metadata));
 		  $.ajax({
 
 

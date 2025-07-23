@@ -52,6 +52,9 @@ class TreeGridManager {
         // 행 클릭 콜백 함수
         this.onRowClick = config.onRowClick;
         
+     // 행 더블클릭 콜백 함수
+        this.onRowDoubleClick = config.onRowDoubleClick;
+        
         
         // 엑셀 업로드 관련 설정 추가
         this.excelUploadEnabled = config.excelUploadEnabled || false;
@@ -234,22 +237,6 @@ class TreeGridManager {
         }
     }
     
-    /*
-    getSearchParams() {
-        const params = {};
-        
-        $(`#${this.searchFormId}`).find('input, select, textarea').each(function() {
-            const $this = $(this);
-            const name = $this.attr('name');
-            const value = $this.val();
-            
-            if (name && value && value.trim() !== '') {
-                params[name] = value.trim();
-            }
-        });
-        
-        return params;
-    }*/
     
     getSearchParams() {
         const params = {};
@@ -559,16 +546,7 @@ class TreeGridManager {
             const $element = $(this);
             const value = $element.data('value');
             
-            /*
-            if (value !== undefined && value !== null) {
-                if ($element.is('select')) {
-                    $element.val(value);
-                } else if ($element.is('input[type="checkbox"]')) {
-                    $element.prop('checked', value === true || value === 'true' || value === 'Y');
-                } else if ($element.is('input, textarea')) {
-                    $element.val(value);
-                }
-            }*/
+           
             
             if (value !== undefined && value !== null) {
                 if ($element.is('select')) {
@@ -671,10 +649,7 @@ class TreeGridManager {
             toggleClass = hasChildren ? 'tree-toggle' : 'tree-toggle no-children';
         }
         
-        //const displayClass = node.level === 0 ? '' : (isVisible ? 'tree-row show' : 'tree-row');
-        //const indentStyle = 'padding-left: ' + (node.level * 20) + 'px;';
-        
-        
+   
         const displayClass = node.level === 0 ? '' : (isVisible ? 'tree-row' : 'tree-row hidden');
         const indentStyle = 'padding-left: ' + (node.level * 20) + 'px;';
         
@@ -2311,9 +2286,11 @@ class TreeGridManager {
         pagination.append(pageSizeSelect);
     }
     
- // 2. 행 클릭 이벤트 바인딩 메서드 추가
+ 
     bindRowClickEvents() {
         const self = this;
+        let clickTimer = null;
+        const clickDelay = 300; // 300ms 지연
         
         // 행 클릭 이벤트 (체크박스나 버튼 클릭은 제외)
         $(`#${this.gridId}-body`).off('click.rowClick').on('click.rowClick', 'tr', function(e) {
@@ -2329,14 +2306,54 @@ class TreeGridManager {
             const rowData = self.getRowData(nodeId);
             
             if (rowData) {
-               // console.log('클릭된 행 데이터:', rowData);
+                // 기존 타이머가 있다면 취소
+                if (clickTimer) {
+                    clearTimeout(clickTimer);
+                    clickTimer = null;
+                }
                 
-                // 행 선택 표시 (선택사항)
-                self.selectRow($row);
+                // 지연 후 클릭 이벤트 실행
+                clickTimer = setTimeout(function() {
+                    // console.log('클릭된 행 데이터:', rowData);
+                    
+                    // 행 선택 표시 (선택사항)
+                    self.selectRow($row);
+                    
+                    // 콜백 함수가 있다면 실행
+                    if (self.onRowClick && typeof self.onRowClick === 'function') {
+                        self.onRowClick(rowData, $row);
+                    }
+                    
+                    clickTimer = null;
+                }, clickDelay);
+            }
+        });
+
+        // 행 더블클릭 이벤트
+        $(`#${this.gridId}-body`).off('dblclick.rowDoubleClick').on('dblclick.rowDoubleClick', 'tr', function(e) {
+            // 체크박스, 버튼, input 등은 제외
+            if ($(e.target).is('input, button, select, .tree-toggle')) {
+                return;
+            }
+            
+            // 클릭 타이머가 있다면 취소 (더블클릭 우선)
+            if (clickTimer) {
+                clearTimeout(clickTimer);
+                clickTimer = null;
+            }
+            
+            const $row = $(this);
+            const nodeId = String($row.data('id'));
+            
+            // 행 데이터 가져오기
+            const rowData = self.getRowData(nodeId);
+            
+            if (rowData) {
+                // console.log('더블클릭된 행 데이터:', rowData);
                 
-                // 콜백 함수가 있다면 실행
-                if (self.onRowClick && typeof self.onRowClick === 'function') {
-                    self.onRowClick(rowData, $row);
+                // 더블클릭 콜백 함수가 있다면 실행
+                if (self.onRowDoubleClick && typeof self.onRowDoubleClick === 'function') {
+                    self.onRowDoubleClick(rowData, $row);
                 }
             }
         });

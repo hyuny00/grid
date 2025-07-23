@@ -39,6 +39,12 @@ $(document).ready(function() {
         onRowClick: function(rowData, $row) {
             console.log('선택된 행:', rowData);
             sampleDetail(rowData.id);
+        },
+        
+        onRowDoubleClick: function(rowData, $row) {
+            console.log('더블클릭된 행:', rowData);
+            // 여기에 더블클릭 시 실행할 로직 추가
+            // 예: 상세 페이지 이동, 수정 모달 열기 등
         }
     });
 

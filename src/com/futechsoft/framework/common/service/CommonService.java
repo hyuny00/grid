@@ -104,9 +104,27 @@ public class CommonService extends EgovAbstractServiceImpl {
 	 */
 	public FtMap selectCommonCodeMap(FtMap params) throws Exception {
 		List<FtMap> codeList = commonMapper.selectCommonCodeList(params);
-		//return selectCommonCodeMap(codeList);
-		return null;
+		return selectCommonCodeMap(codeList);
+		//return null;
 	}
+	
+	/**
+	 * 데이터에 숫자만 남김 . - / , . 등 제거 . 소숫점도 제거됨 cleanData(params, "phoneNumber", "birthDate", "amount");
+	 * @param params
+	 * @param fields
+	 * @return
+	 */
+	public FtMap cleanData(FtMap params, String... fields) {
+	    for (String field : fields) {
+	        String temp = params.getString(field);
+	        if (temp != null) {
+	            temp = temp.replaceAll("[^\\d]", "");
+	            params.put(field, temp);
+	        }
+	    }
+	    return params;
+	}
+
 
 
 	/**

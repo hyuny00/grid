@@ -68,9 +68,16 @@ $(document).ready(function() {
 		    	 saveUrl: '/sample/grid/save',
 		     }, 
 		     pageSize: 10,
+		     checkCount: 3, 
 		     selectOption :selectOption,
 		     onRowClick: function(rowData, $row) {
 		         console.log('선택된 행:', rowData);
+		     },
+		     
+		     onRowDoubleClick: function(rowData, $row) {
+		         console.log('더블클릭된 행:', rowData);
+		         // 여기에 더블클릭 시 실행할 로직 추가
+		         // 예: 상세 페이지 이동, 수정 모달 열기 등
 		     }
 		 });
 	}
@@ -246,8 +253,5 @@ function test2(){
 </div>
 	</td>
 </tr>
-{{format regDate "date"}}
-
-
 
 </script>

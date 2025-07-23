@@ -3,7 +3,6 @@ package com.futechsoft.framework.common.pagination;
 import java.util.Arrays;
 import java.util.List;
 
-import com.futechsoft.framework.util.CommonUtil;
 import com.futechsoft.framework.util.FtMap;
 
 public class Pageable {
@@ -15,12 +14,10 @@ public class Pageable {
 	private String orderByString = null;
 
 	public void setParam(FtMap param) {
+		
+		
 		page = param.getInt("page");
 		pageSize = param.getInt("pageSize");
-
-		StringBuilder orderByClause = new StringBuilder();
-	
-		
 		
 		//List<String> allowedFields = Arrays.asList("ID", "NAME", "CREATED_AT");
 		List<String> allowedDirections = Arrays.asList("ASC", "DESC");
