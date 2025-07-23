@@ -1,37 +1,35 @@
 class ODAFilterSystem {
 	
-	constructor(categoryData, gridInstances = [], multiStepCategories = [], categoryTitles = {},categoryCodeMapping = {}) {
+	constructor(categoryData, gridInstances = [], multiStepCategories = [], categoryTitles = {}, treeData = {}) {
 	    this.selectedFilters = new Map();
 	    this.activeCategory = null;
-	    
-	    // 다단계 관리를 위한 새로운 속성들
-	    this.currentStep = 0; // 현재 단계 (0: 카테고리 선택, 1: 1단계, 2: 2단계...)
-	    this.stepSelections = []; // 각 단계별 선택된 값들 저장 [step1Value, step2Value, ...]
-	    this.maxSteps = 5; // 최대 단계 수
-	    this.stepData = {}; // 모든 단계의 데이터를 저장하는 객체
-	    this.stepTexts = {}; // 각 단계별 텍스트 저장
-	    
+	    this.activeSubCategory = null; // 2단계 카테고리 추가
 	    this.isFilterOpen = false;
 	    this.categoryData = categoryData || {};
+	    this.subCategoryData = {}; // 2단계 데이터 저장
 	    this.gridInstances = Array.isArray(gridInstances) ? gridInstances : [gridInstances].filter(Boolean);
-	    this.multiStepCategories = Array.isArray(multiStepCategories) ? multiStepCategories : [];
-	    this.categoryTitles = categoryTitles || {};
+	    this.multiStepCategories = Array.isArray(multiStepCategories) ? multiStepCategories : []; // 2단계 필터 카테고리 설정
+	    this.categoryTitles = categoryTitles || {}; // 카테고리 제목 맵
 	    
-	    this.categoryCodeMapping = categoryCodeMapping || {};
-	    
+	    this.treeData = treeData || {}; // 트리 데이터 저장
+	    // ✅ 스타일 추가
+	    this.addTreeFilterStyles();
 	    this.init();
 	}
+	
+	
 	
 	init() {
 		this.bindEvents();
 		this.updateSelectedDisplay();
 	}
-
-	init() {
-		this.bindEvents();
-		this.updateSelectedDisplay();
+	
+	// 트리 데이터가 있는 카테고리인지 확인
+	isTreeCategory(category) {
+	    return this.treeData[category] && Array.isArray(this.treeData[category]);
 	}
 
+	// 그리드 인스턴스 설정 (나중에 설정할 수 있도록)
 	setGridInstance(gridInstance) {
 	    if (Array.isArray(gridInstance)) {
 	        this.gridInstances = gridInstance;
@@ -40,10 +38,10 @@ class ODAFilterSystem {
 	    }
 	}
 
+	// 그리드 인스턴스 추가
 	addGridInstance(gridInstance) {
 	    this.gridInstances.push(gridInstance);
 	}
-	
 	
 	bindEvents() {
 		// DOM 요소 존재 확인 후 이벤트 바인딩
@@ -118,41 +116,360 @@ class ODAFilterSystem {
 	}
 
 	toggleCategory(btn, category) {
+	    // 이미 활성화된 카테고리인지 확인
 	    if (this.activeCategory === category) {
+	        // 토글 동작 대신 그대로 유지하거나, 필요에 따라 새로고침
+	        // this.clearActiveCategory();
+	        // return;
+	        
+	        // 옵션 1: 아무것도 하지 않고 그대로 유지
 	        return;
+	        
+	        // 옵션 2: 다시 로드 (필요한 경우)
+	        // this.activeCategory = null;
+	        // this.activeSubCategory = null;
 	    }
 
+	    // 새로운 카테고리 선택 전에 기존 필터 옵션들 모두 정리
 	    this.clearAllFilterOptions();
 
+	    // 모든 카테고리 버튼 비활성화
 	    document.querySelectorAll('.filter-category-btn').forEach(b => {
 	        b.classList.remove('active');
 	    });
 
 	    $("#pTxt").text(btn.innerText);
 	    
+	    // 현재 버튼 활성화
 	    btn.classList.add('active');
 	    this.activeCategory = category;
-	    this.resetStepState(); // 단계 상태 초기화
+	    this.activeSubCategory = null; // 2단계 초기화
 	    
+	    // 2단계 필터가 필요한 카테고리인지 확인
 	    if (this.isMultiStepCategory(category)) {
-	        this.updateMultiStepFilterOptions(category);
+	        this.updateTwoStepFilterOptions(category);
+	    } else {
+	        this.updateFilterOptions(category);
+	    }
+	    
+	    if (this.isTreeCategory(category)) {
+	        this.updateTreeFilterOptions(category);
+	    } else if (this.isMultiStepCategory(category)) {
+	        this.updateTwoStepFilterOptions(category);
 	    } else {
 	        this.updateFilterOptions(category);
 	    }
 	}
 	
-	resetStepState() {
-	    this.currentStep = 0;
-	    this.stepSelections = [];
-	    this.stepTexts = {};
+	// 트리 필터 옵션 업데이트
+	updateTreeFilterOptions(category) {
+	    console.log('=== updateTreeFilterOptions 시작 ===');
+	    console.log('category:', category);
+	    
+	    const firstStepContainer = document.querySelector('.first-step-options');
+	    if (!firstStepContainer) {
+	        return this.updateFilterOptions(category);
+	    }
+	    
+	    // 컨테이너 표시
+	    firstStepContainer.style.display = 'flex';
+	    
+	    const firstStepTitle = firstStepContainer.querySelector('p');
+	    if (firstStepTitle) {
+	        firstStepTitle.textContent = this.getCategoryTitle(category);
+	    }
+	    
+	    // 2, 3, 4단계 컨테이너 숨기기
+	    ['second', 'third', 'fourth'].forEach(step => {
+	        const container = document.querySelector(`.${step}-step-options`);
+	        if (container) {
+	            container.style.display = 'none';
+	        }
+	    });
+	    
+	    const firstStepList = firstStepContainer.querySelector('.first-step-list');
+	    if (firstStepList) {
+	        firstStepList.innerHTML = '';
+	    }
+	    
+	    // 1단계 데이터 (nodeLevel === 1) 가져오기
+	    const level1Items = this.treeData[category].filter(item => item.nodeLevel === 1);
+	    
+	    if (level1Items.length === 0) {
+	       // firstStepList.innerHTML = '<li><div class="empty-state">옵션이 없습니다</div></li>';
+	        return;
+	    }
+	    
+	    // 1단계 옵션들 추가
+	    level1Items.forEach(itemData => {
+	        const li = document.createElement('li');
+	        
+	        const button = document.createElement('button');
+	        button.type = 'button';
+	        button.className = 'filter-option-item';
+	        button.textContent = itemData.fldCdNm;
+	        button.dataset.category = category;
+	        button.dataset.value = itemData.odaFldCd;
+	        button.dataset.nodeLevel = itemData.nodeLevel;
+	        button.id = `${category}-${itemData.odaFldCd}`;
+	        
+	        button.addEventListener('click', () => {
+	            this.selectTreeItem(button, itemData, 1);
+	        });
+	        
+	        li.appendChild(button);
+	        firstStepList.appendChild(li);
+	    });
+	    
+	    console.log('트리 필터 1단계 옵션 생성 완료');
+	}
+	
+	selectTreeItem(button, itemData, level) {
+	    const category = button.dataset.category;
+	    const value = button.dataset.value;
+	    
+	    // 현재 레벨의 모든 버튼 비활성화
+	    const currentLevelContainer = document.querySelector(this.getLevelContainerSelector(level));
+	    if (currentLevelContainer) {
+	        currentLevelContainer.querySelectorAll('.filter-option-item').forEach(btn => {
+	            btn.classList.remove('selected');
+	        });
+	    }
+	    
+	    // 현재 버튼 활성화
+	    button.classList.add('selected');
+	    
+	    // 다음 레벨 데이터 표시
+	    const nextLevel = level + 1;
+	    if (nextLevel <= 4) {
+	        this.showNextTreeLevel(category, value, nextLevel);
+	    } else {
+	        // 4단계가 선택된 경우 최종 선택 처리
+	        this.selectFinalTreeItem(category, value);
+	        
+	        // ✅ 추가: 최종 선택된 항목에 'final-selected' 클래스 추가
+	        button.classList.add('final-selected');
+	    }
+	}
+	
+
+	// 레벨별 컨테이너 선택자 반환
+	getLevelContainerSelector(level) {
+	    const levelNames = ['', 'first', 'second', 'third', 'fourth'];
+	    return `.${levelNames[level]}-step-options`;
+	}
+
+	// 다음 레벨 트리 옵션 표시
+	showNextTreeLevel(category, parentValue, level) {
+	    const levelNames = ['', 'first', 'second', 'third', 'fourth'];
+	    const containerSelector = `.${levelNames[level]}-step-options`;
+	    const listSelector = `.${levelNames[level]}-step-list`;
+	    
+	    const container = document.querySelector(containerSelector);
+	    const list = document.querySelector(listSelector);
+	    
+	    if (!container || !list) return;
+	    
+	    // 해당 레벨과 그 이후 레벨들 초기화
+	    for (let i = level; i <= 4; i++) {
+	        const nextContainer = document.querySelector(`.${levelNames[i]}-step-options`);
+	        const nextList = document.querySelector(`.${levelNames[i]}-step-list`);
+	        if (nextContainer) nextContainer.style.display = 'none';
+	        if (nextList) nextList.innerHTML = '';
+	    }
+	    
+	    // 하위 데이터 찾기
+	    const childItems = this.treeData[category].filter(item => 
+	        item.nodeLevel === level && item.upOdaFldCd === parentValue
+	    );
+	    
+	    if (childItems.length === 0) {
+	        // 하위 항목이 없으면 선택 완료 - 최종 선택 처리
+	        this.selectFinalTreeItem(category, parentValue);
+	        
+	        // ✅ 추가: 현재 선택된 버튼에 'final-selected' 클래스 추가
+	        const currentButton = document.querySelector(`button[data-value="${parentValue}"]`);
+	        if (currentButton) {
+	            currentButton.classList.add('final-selected');
+	        }
+	        return;
+	    }
+	    
+	    // 컨테이너 표시
+	    container.style.display = 'flex';
+	    
+	    // 하위 옵션들 추가
+	    childItems.forEach(itemData => {
+	        const li = document.createElement('li');
+	        
+	        const button = document.createElement('button');
+	        button.type = 'button';
+	        button.className = 'filter-option-item';
+	        button.textContent = itemData.fldCdNm;
+	        button.dataset.category = category;
+	        button.dataset.value = itemData.odaFldCd;
+	        button.dataset.nodeLevel = itemData.nodeLevel;
+	        button.id = `${category}-${itemData.odaFldCd}`;
+	        
+	        button.addEventListener('click', () => {
+	            this.selectTreeItem(button, itemData, level);
+	        });
+	        
+	        li.appendChild(button);
+	        list.appendChild(li);
+	    });
+	}
+
+	
+	
+	selectFinalTreeItem(category, value) {
+	    // 선택된 항목의 전체 경로 찾기
+	    const selectedItem = this.treeData[category].find(item => item.odaFldCd === value);
+	    if (!selectedItem) return;
+	    
+	    let displayText = this.buildTreePath(category, selectedItem);
+	    
+	    const key = `${category}-${value}`;
+	    
+	    // ✅ 수정: 이미 선택된 항목이면 알림 후 리턴
+	    if (this.selectedFilters.has(key)) {
+	        // 이미 선택된 항목 시각적 표시
+	        const existingButton = document.querySelector(`#${key}`);
+	        if (existingButton) {
+	            existingButton.classList.add('already-selected');
+	            setTimeout(() => {
+	                existingButton.classList.remove('already-selected');
+	            }, 1000);
+	        }
+	        return;
+	    }
+	    
+	    this.selectedFilters.set(key, {
+	        category,
+	        value,
+	        text: displayText,
+	        treeData: selectedItem
+	    });
+	    
+	    // ✅ 추가: 선택된 모든 경로의 버튼들을 'in-path' 클래스로 표시
+	    this.markSelectedPath(category, selectedItem);
+	    
+	    this.updateSelectedDisplay();
+	    
+	    // ✅ 추가: 선택 완료 알림
+	    //this.showSelectionFeedback(displayText);
+	}
+	
+	// 4. ✅ 새로운 메서드: 선택된 경로 표시
+	markSelectedPath(category, selectedItem) {
+	    // 기존 경로 표시 제거
+	    document.querySelectorAll('.filter-option-item.in-path').forEach(btn => {
+	        btn.classList.remove('in-path');
+	    });
+	    
+	    // 선택된 항목부터 루트까지의 경로 구성
+	    const pathItems = [];
+	    let currentItem = selectedItem;
+	    
+	    while (currentItem) {
+	        pathItems.unshift(currentItem);
+	        
+	        if (currentItem.upOdaFldCd) {
+	            currentItem = this.treeData[category].find(item => 
+	                item.odaFldCd === currentItem.upOdaFldCd
+	            );
+	        } else {
+	            currentItem = null;
+	        }
+	    }
+	    
+	    // 경로상의 모든 버튼에 'in-path' 클래스 추가
+	    pathItems.forEach(item => {
+	        const button = document.querySelector(`#${category}-${item.odaFldCd}`);
+	        if (button) {
+	            button.classList.add('in-path');
+	        }
+	    });
+	    
+	    // 최종 선택된 항목에는 'final-selected' 클래스 추가
+	    const finalButton = document.querySelector(`#${category}-${selectedItem.odaFldCd}`);
+	    if (finalButton) {
+	        finalButton.classList.add('final-selected');
+	    }
+	}
+
+	// 5. ✅ 새로운 메서드: 선택 완료 피드백
+	showSelectionFeedback(displayText) {
+	    // 간단한 토스트 알림 또는 상태 표시
+	    const feedback = document.createElement('div');
+	    feedback.className = 'selection-feedback';
+	    feedback.textContent = `선택됨: ${displayText}`;
+	    feedback.style.cssText = `
+	        position: fixed;
+	        top: 20px;
+	        right: 20px;
+	        background: #28a745;
+	        color: white;
+	        padding: 10px 15px;
+	        border-radius: 4px;
+	        z-index: 9999;
+	        font-size: 14px;
+	        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+	    `;
+	    
+	    document.body.appendChild(feedback);
+	    
+	    setTimeout(() => {
+	        feedback.remove();
+	    }, 2000);
+	}
+	
+	
+	// 트리 경로를 텍스트로 구성하는 새로운 메서드
+	buildTreePath(category, targetItem) {
+	    const pathItems = [];
+	    let currentItem = targetItem;
+	    
+	    // 상위로 올라가면서 경로 구성
+	    while (currentItem) {
+	        pathItems.unshift(currentItem.fldCdNm); // 배열 앞쪽에 추가
+	        
+	        // 상위 항목 찾기
+	        if (currentItem.upOdaFldCd) {
+	            currentItem = this.treeData[category].find(item => 
+	                item.odaFldCd === currentItem.upOdaFldCd
+	            );
+	        } else {
+	            currentItem = null;
+	        }
+	    }
+	    
+	    return pathItems.join(' > ');
 	}
 	
 	// 모든 필터 옵션 정리하는 새로운 메서드
 	clearAllFilterOptions() {
 	    console.log('=== clearAllFilterOptions 실행 ===');
 	    
-	    // 모든 단계 컨테이너 숨기기
-	    this.hideAllStepContainers();
+	    // 2단계 필터 컨테이너들 초기화
+	    const firstStepContainer = document.querySelector('.first-step-options');
+	    const secondStepContainer = document.querySelector('.second-step-options');
+	    
+	    if (firstStepContainer) {
+	        firstStepContainer.style.display = 'none';
+	        const firstStepList = firstStepContainer.querySelector('.first-step-list');
+	        if (firstStepList) {
+	            firstStepList.innerHTML = '';
+	        }
+	    }
+	    
+	    if (secondStepContainer) {
+	        secondStepContainer.style.display = 'none';
+	        const secondStepList = secondStepContainer.querySelector('.second-step-list');
+	        if (secondStepList) {
+	            secondStepList.innerHTML = '';
+	        }
+	    }
 	    
 	    // 1단계 필터 컨테이너 초기화
 	    const singleStepContainer = document.querySelector('.filter-options-content');
@@ -161,28 +478,98 @@ class ODAFilterSystem {
 	        singleStepContainer.innerHTML = '';
 	    }
 	    
-	    // 기존 선택 상태 초기화
-	    document.querySelectorAll('.filter-option-item.selected, .filter-option-item.on').forEach(btn => {
-	        btn.classList.remove('selected', 'on');
-	    });
-	}
-	
-	// 모든 단계 컨테이너 숨기기
-	hideAllStepContainers() {
-	    const stepNames = ['first', 'second', 'third', 'fourth', 'fifth'];
+	    // 3, 4단계 필터 컨테이너들도 초기화
+	    const thirdStepContainer = document.querySelector('.third-step-options');
+	    const fourthStepContainer = document.querySelector('.fourth-step-options');
 	    
-	    stepNames.forEach((stepName, index) => {
-	        const container = document.querySelector(`.${stepName}-step-options`);
-	        if (container) {
-	            container.style.display = 'none';
-	            const list = container.querySelector(`.${stepName}-step-list`);
-	            if (list) {
-	                list.innerHTML = '';
-	            }
+	    if (thirdStepContainer) {
+	        thirdStepContainer.style.display = 'none';
+	        const thirdStepList = thirdStepContainer.querySelector('.third-step-list');
+	        if (thirdStepList) {
+	            thirdStepList.innerHTML = '';
 	        }
+	    }
+	    
+	    if (fourthStepContainer) {
+	        fourthStepContainer.style.display = 'none';
+	        const fourthStepList = fourthStepContainer.querySelector('.fourth-step-list');
+	        if (fourthStepList) {
+	            fourthStepList.innerHTML = '';
+	        }
+	    }
+	    
+	    
+	  
+	    
+	  // ✅ 수정: 모든 선택 상태 클래스 제거 부분을 더 강화
+	    document.querySelectorAll('.filter-option-item').forEach(btn => {
+	        btn.classList.remove('selected', 'on', 'final-selected', 'in-path', 'already-selected');
 	    });
+
+	    // ✅ 추가: 트리 필터의 경로 표시도 완전히 초기화
+	    document.querySelectorAll('.first-step-list .filter-option-item, .second-step-list .filter-option-item, .third-step-list .filter-option-item, .fourth-step-list .filter-option-item').forEach(btn => {
+	        btn.classList.remove('selected', 'final-selected', 'in-path');
+	    });
+	    
+	    
 	}
 
+	// 7. ✅ CSS 스타일 추가 (별도 CSS 파일에 추가하거나 동적으로 추가)
+	addTreeFilterStyles() {
+	    const style = document.createElement('style');
+	    style.textContent = `
+	        /* 트리 필터 선택 상태 스타일 */
+	        .filter-option-item.selected {
+	            background-color: #007bff !important;
+	            color: white !important;
+	            border-color: #007bff !important;
+	        }
+	        
+	        .filter-option-item.final-selected {
+	            background-color: #28a745 !important;
+	            color: white !important;
+	            border-color: #28a745 !important;
+	            font-weight: bold;
+	        }
+	        
+	        .filter-option-item.in-path {
+	            background-color: #e3f2fd !important;
+	            border-color: #2196f3 !important;
+	        }
+	        
+	        .filter-option-item.already-selected {
+	            background-color: #ffc107 !important;
+	            color: #212529 !important;
+	            animation: pulse 0.5s ease-in-out;
+	        }
+	        
+	        @keyframes pulse {
+	            0% { transform: scale(1); }
+	            50% { transform: scale(1.05); }
+	            100% { transform: scale(1); }
+	        }
+	        
+	        /* 선택 피드백 애니메이션 */
+	        .selection-feedback {
+	            animation: slideInRight 0.3s ease-out;
+	        }
+	        
+	        @keyframes slideInRight {
+	            from {
+	                transform: translateX(100%);
+	                opacity: 0;
+	            }
+	            to {
+	                transform: translateX(0);
+	                opacity: 1;
+	            }
+	        }
+	    `;
+	    document.head.appendChild(style);
+	}
+	
+
+	// 2단계 필터가 필요한 카테고리인지 확인
 	isMultiStepCategory(category) {
 		return this.multiStepCategories.includes(category);
 	}
@@ -192,79 +579,56 @@ class ODAFilterSystem {
 			btn.classList.remove('active');
 		});
 		this.activeCategory = null;
-		this.resetStepState();
+		this.activeSubCategory = null;
 		this.clearFilterOptions();
 	}
-	
 
 	// 2단계 필터 옵션 업데이트 (기존 구조 활용)
-	updateMultiStepFilterOptions(category) {
-	    console.log('=== updateMultiStepFilterOptions 시작 ===');
+	updateTwoStepFilterOptions(category) {
+	    console.log('=== updateTwoStepFilterOptions 시작 ===');
 	    console.log('category:', category);
 	    
-	    // 모든 단계 컨테이너 숨기기
-	    this.hideAllStepContainers();
+	    // DOM 요소 확인
+	    const firstStepContainer = document.querySelector('.first-step-options');
+	    const secondStepContainer = document.querySelector('.second-step-options');
 	    
-	    // 1단계 시작
-	    this.currentStep = 1;
-	    this.showStepContainer(1, category);
-	}
-
-	showStepContainer(step, category, isInitialLoad = false) {
-	    const stepNames = ['', 'first', 'second', 'third', 'fourth', 'fifth'];
-	    const stepName = stepNames[step];
-	    
-	    if (!stepName || step > this.maxSteps) {
-	        console.log('잘못된 단계:', step);
-	        return;
-	    }
-	    
-	    const container = document.querySelector(`.${stepName}-step-options`);
-	    if (!container) {
-	        console.log(`${step}단계 컨테이너를 찾을 수 없음`);
-	        return;
+	    // 만약 2단계 필터 컨테이너가 없다면, 1단계 필터로 대체
+	    if (!firstStepContainer) {
+	        console.log('2단계 필터 컨테이너가 없음, 1단계 필터로 대체');
+	        return this.updateFilterOptions(category);
 	    }
 	    
 	    // 컨테이너 표시
-	    container.style.display = 'flex';
+	    firstStepContainer.style.display = 'flex';
 	    
-	    // 제목 설정
-	    const titleElement = container.querySelector('p');
-	    if (titleElement && step === 1) {
-	        titleElement.textContent = this.getCategoryTitle(category);
+	    // 여기에 추가
+	    const firstStepTitle = firstStepContainer.querySelector('p');
+	    if (firstStepTitle) {
+	        firstStepTitle.textContent = this.getCategoryTitle(category);
 	    }
 	    
-	    // 초기 로드시에만 데이터 로드
-	    if (isInitialLoad || step === 1) {
-	        this.loadAndPopulateStepData(step, category, stepName);
-	    }
-	}
-	
-	
-	// 단계별 데이터 로드 및 표시
-	async loadAndPopulateStepData(step, category, stepName) {
-	    const list = document.querySelector(`.${stepName}-step-list`);
-	    if (!list) return;
 	    
-	    list.innerHTML = '';
-	    
-	    let items;
-	    if (step === 1) {
-	        // 1단계는 기본 카테고리 데이터 사용
-	        items = this.categoryData[category];
-	    } else {
-	        // 2단계 이상은 서버에서 로드
-	        items = await this.loadNextStepData(category, this.stepSelections.slice(0, step - 1));
+	    if (secondStepContainer) {
+	        secondStepContainer.style.display = 'none';
 	    }
 	    
-	    console.log(`${step}단계 items:`, items);
+	    // 기존 내용 찾기
+	    const firstStepList = firstStepContainer.querySelector('.first-step-list');
+	    if (firstStepList) {
+	        firstStepList.innerHTML = '';
+	    }
 	    
-	    if (!items || !Array.isArray(items) || items.length === 0) {
-	        list.innerHTML = '<li><div class="empty-state">옵션이 없습니다</div></li>';
+	    const items = this.categoryData[category];
+	    console.log('items:', items);
+	    
+	    if (!items || !Array.isArray(items)) {
+	        if (firstStepList) {
+	          //  firstStepList.innerHTML = '<li><div class="empty-state">옵션이 없습니다</div></li>';
+	        }
 	        return;
 	    }
 
-	    // 옵션들 추가
+	    // 1단계 옵션들 추가
 	    items.forEach(itemData => {
 	        const li = document.createElement('li');
 	        
@@ -274,197 +638,23 @@ class ODAFilterSystem {
 	        button.textContent = itemData.text;
 	        button.dataset.category = category;
 	        button.dataset.value = itemData.value;
-	        button.dataset.step = step;
-	        button.id = this.generateStepItemId(category, step, itemData.value);
+	        button.id = category + '-' + itemData.value;
 	        
 	        button.addEventListener('click', () => {
-	            this.selectStepItem(button, itemData, step);
+	            this.selectFirstStepItem(button, itemData);
 	        });
 	        
 	        li.appendChild(button);
-	        list.appendChild(li);
-	    });
-	}
-	
-	// 단계별 아이템 ID 생성
-	generateStepItemId(category, step, value) {
-	    const stepPrefix = this.stepSelections.slice(0, step - 1).join('-');
-	    return stepPrefix ? `${category}-${stepPrefix}-${value}` : `${category}-${value}`;
-	}
-	
-	async selectStepItem(button, itemData, currentStep) {
-	    const category = button.dataset.category;
-	    const value = button.dataset.value;
-	    
-	    console.log(`${currentStep}단계 선택:`, value, itemData.text);
-	    
-	    // 현재 단계의 선택 상태 업데이트
-	    this.updateStepSelection(currentStep, value, itemData.text, button);
-	    
-	    // 다음 단계 확인
-	    if (currentStep < this.maxSteps) {
-	        const nextStepData = await this.loadNextStepData(category, this.stepSelections);
-	        
-	        if (nextStepData && nextStepData.length > 0) {
-	            // 다음 단계가 있으면 표시
-	            this.currentStep = currentStep + 1;
-	            this.showStepContainer(this.currentStep, category, true);
-	        } else {
-	            // 다음 단계가 없으면 선택 완료
-	            this.completeMultiStepSelection(category);
+	        if (firstStepList) {
+	            firstStepList.appendChild(li);
 	        }
-	    } else {
-	        // 최대 단계에 도달하면 선택 완료
-	        this.completeMultiStepSelection(category);
-	    }
+	    });
+	    
+	    console.log('2단계 필터 옵션 생성 완료');
 	}
 
-	// 단계 선택 상태 업데이트
-	updateStepSelection(step, value, text, button) {
-	    // 해당 단계 이후의 선택들과 컨테이너들 초기화
-	    this.clearStepsAfter(step);
-	    
-	    // 현재 단계까지의 선택값과 텍스트 저장
-	    this.stepSelections[step - 1] = value;
-	    this.stepTexts[step - 1] = text;
-	    
-	    // UI 상태 업데이트
-	    this.updateStepButtonStates(step, button);
-	}
 	
-	// 특정 단계 이후의 모든 단계 초기화
-	clearStepsAfter(step) {
-	    // 선택값 배열 자르기
-	    this.stepSelections = this.stepSelections.slice(0, step);
-	    
-	    // 텍스트 배열 정리
-	    for (let i = step; i < this.maxSteps; i++) {
-	        delete this.stepTexts[i];
-	    }
-	    
-	    // 해당 단계 이후의 컨테이너들 숨기기
-	    const stepNames = ['', 'first', 'second', 'third', 'fourth', 'fifth'];
-	    for (let i = step + 1; i <= this.maxSteps; i++) {
-	        const container = document.querySelector(`.${stepNames[i]}-step-options`);
-	        if (container) {
-	            container.style.display = 'none';
-	            const list = container.querySelector(`.${stepNames[i]}-step-list`);
-	            if (list) {
-	                list.innerHTML = '';
-	            }
-	        }
-	    }
-	}
-	
-	// 단계별 버튼 상태 업데이트
-	updateStepButtonStates(step, selectedButton) {
-	    const stepNames = ['', 'first', 'second', 'third', 'fourth', 'fifth'];
-	    const stepName = stepNames[step];
-	    
-	    // 해당 단계의 모든 버튼 선택 해제
-	    document.querySelectorAll(`.${stepName}-step-list .filter-option-item`).forEach(btn => {
-	        btn.classList.remove('selected');
-	    });
-	    
-	    // 선택된 버튼만 활성화
-	    selectedButton.classList.add('selected');
-	}
-	
-	async loadNextStepData(category, parentSelections) {
-	    if (!parentSelections || parentSelections.length === 0) {
-	        return [];
-	    }
-	    
-	   
-	    
-	    const key = this.buildStepDataKey(category, parentSelections);
-	    
-	    
-	    if (this.stepData[key]) {
-	        return this.stepData[key];
-	    }
-	    
-	   
-	    const cdGroupSn = this.categoryCodeMapping[category];
-	    
-	    var isSearchNtcCd = '';
-	    if (category === 'schNtnCd') {
-	        isSearchNtcCd = 'Y';
-	    }
-	    
-	    var isBizFldCd='';
-	    if (category === 'schBizFldCd') {
-	    	isBizFldCd='Y';
-	    }
-	    
-	    try {
-	        const response = await $.ajax({
-	            url: '/common/selectCode',
-	            type: 'get',
-	            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-	            data: { 
-	            	cdGroupSn: cdGroupSn, // 가장 최근 선택값
-	                code: parentSelections[parentSelections.length - 1],
-	                isSearchNtcCd: isSearchNtcCd,
-	                isBizFldCd : isBizFldCd,
-	                parentSelections: parentSelections.join(','), // 모든 상위 선택값들
-	                step: parentSelections.length + 1 // 다음 단계 번호
-	            }
-	        });
-	        
-	        const transformedData = response.map(item => ({
-	            value: item.code,
-	            text: item.text,
-	            step: parentSelections.length + 1
-	        }));
-	        
-	        this.stepData[key] = transformedData;
-	        return transformedData;
-	        
-	    } catch (error) {
-	        console.error("Failed to load next step data:", error);
-	        this.stepData[key] = [];
-	        return [];
-	    }
-	}
-	
-	// 단계 데이터 키 생성
-	buildStepDataKey(category, parentSelections) {
-	    return `${category}-${parentSelections.join('-')}`;
-	}
-	
-	// 다단계 선택 완료
-	completeMultiStepSelection(category) {
-	    console.log('다단계 선택 완료:', this.stepSelections, this.stepTexts);
-	    
-	    // 모든 단계의 텍스트를 조합하여 표시 텍스트 생성
-	    const displayTexts = [];
-	    for (let i = 0; i < this.stepSelections.length; i++) {
-	        if (this.stepTexts[i]) {
-	            displayTexts.push(this.stepTexts[i]);
-	        }
-	    }
-	    
-	    const displayText = displayTexts.join(' > ');
-	    const finalValue = this.stepSelections[this.stepSelections.length - 1];
-	    const key = `${category}-${this.stepSelections.join('-')}`;
-	    
-	    if (this.selectedFilters.has(key)) {
-	        return;
-	    }
-	    
-	    this.selectedFilters.set(key, {
-	        category,
-	        value: finalValue,
-	        text: displayText,
-	        stepSelections: [...this.stepSelections],
-	        isMultiStep: true
-	    });
-	    
-	    this.updateSelectedDisplay();
-	}
-	
-	
+
 	// 2단계 필터 요소가 없을 때의 대체 메서드
 	updateFilterOptionsAsFallback(category) {
 	    console.log('2단계 필터 대체 메서드 실행');
@@ -505,7 +695,7 @@ class ODAFilterSystem {
 	    console.log('category:', category, 'items:', items);
 	    
 	    if (!items || !Array.isArray(items)) {
-	        container.innerHTML = '<div class="empty-state">옵션이 없습니다</div>';
+	      //  container.innerHTML = '<div class="empty-state">옵션이 없습니다</div>';
 	        return;
 	    }
 	    
@@ -813,7 +1003,6 @@ class ODAFilterSystem {
 	}
 	
 	// 1단계 항목 선택 (2단계 필터용)
-	/*
 	async selectFirstStepItem(button, itemData) {
 		const category = button.dataset.category;
 		const value = button.dataset.value;
@@ -832,9 +1021,8 @@ class ODAFilterSystem {
 		// 2단계 옵션 표시
 		this.showSecondStepOptions(category, value);
 	}
-*/
+
 	// 2단계 데이터 로드
-	/*
 	async loadSubCategoryData(category, parentValue) {
 		const key = `${category}-${parentValue}`;
 		
@@ -885,9 +1073,8 @@ class ODAFilterSystem {
 			return [];
 		}
 	}
-*/
+
 	// 2단계 옵션 표시 (기존 구조의 우측 영역 활용)
-	/*
 	showSecondStepOptions(category, parentValue) {
 	    const secondStepContainer = document.querySelector('.second-step-options');
 	    
@@ -935,18 +1122,26 @@ class ODAFilterSystem {
 	        });
 	    }
 	}
-*/
-	// 나머지 기존 메서드들...
+
+	// 카테고리 제목 반환
 	getCategoryTitle(category) {
 		return this.categoryTitles[category] || category;
 	}
-	
-	selectFilterItem(item) {
-		const category = item.dataset.category;
-		const value = item.dataset.value;
-		const text = item.textContent;
 
-		const key = `${category}-${value}`;
+	// 2단계 필터 항목 선택
+	selectSubFilterItem(button, subItem) {
+		const category = button.dataset.category;
+		const value = button.dataset.value;
+		const parentValue = button.dataset.parentValue;
+		const text = subItem.text;
+		
+		// 부모 항목 텍스트 찾기
+		const parentItem = this.categoryData[category].find(item => item.value === parentValue);
+		const parentText = parentItem ? parentItem.text : parentValue;
+		
+		const displayText = `${parentText} > ${text}`;
+		const key = `${category}-${parentValue}-${value}`;
+		
 		if (this.selectedFilters.has(key)) {
 			return;
 		}
@@ -954,7 +1149,9 @@ class ODAFilterSystem {
 		this.selectedFilters.set(key, {
 			category,
 			value,
-			text
+			text: displayText,
+			parentValue,
+			subValue: value
 		});
 
 		this.updateSelectedDisplay();
@@ -1009,6 +1206,7 @@ class ODAFilterSystem {
 
 	updateSelectedDisplay() {
 		const container = document.getElementById('selectedFilters');
+		const applyBtn = document.getElementById('applyFiltersBtn');
 		const resetBtn = document.getElementById('resetFiltersBtn');
 		
 		if (!container) return;
@@ -1037,34 +1235,66 @@ class ODAFilterSystem {
 
 
 	removeFilter(key) {
-		// 다단계 필터인지 확인
-		const filter = this.selectedFilters.get(key);
-		if (filter && filter.isMultiStep) {
-			// 다단계 필터의 모든 관련 버튼 상태 제거
-			this.clearMultiStepButtonStates(key);
-		} else {
-			// 단일 단계 필터
-			const $id = $('#' + key);
-			$id.removeClass('on');
-		}
-		
-		this.selectedFilters.delete(key);
-		this.updateSelectedDisplay();
-		this.applyFiltersAfterRemoval();
+	    // ✅ 추가: 트리 필터인지 확인하고 관련 DOM 상태도 완전히 초기화
+	    const filterData = this.selectedFilters.get(key);
+	    if (filterData && filterData.treeData) {
+	        // 트리 필터인 경우 관련된 모든 경로 버튼 상태 제거
+	        this.clearTreeFilterPath(filterData.category, filterData.treeData);
+	    }
+	    
+	    // 해당 필터 버튼의 선택 상태 제거
+	    const parts = key.split('-');
+	    if (parts.length >= 3) {
+	        // 2단계 필터인 경우
+	        const $id = $('#'+key);
+	        $id.removeClass('on selected final-selected in-path');
+	    } else {
+	        // 1단계 필터인 경우
+	        const $id = $('#'+key);
+	        $id.removeClass('on selected final-selected in-path');
+	    }
+	    
+	    // ✅ 중요: selectedFilters에서 완전히 삭제
+	    this.selectedFilters.delete(key);
+	    this.updateSelectedDisplay();
+	    
+	    // ✅ 추가: 필터 삭제 후 자동으로 재검색 실행
+	    this.applyFiltersAfterRemoval();
+	    
+	    // ✅ 추가: 디버깅용 로그
+	    console.log('필터 삭제 후 남은 필터들:', this.selectedFilters);
+	    console.log('필터 삭제 후 getSelectedFilters():', this.getSelectedFilters());
 	}
 	
-	// 다단계 필터 버튼 상태 제거
-	clearMultiStepButtonStates(key) {
-		const stepNames = ['first', 'second', 'third', 'fourth', 'fifth'];
-		stepNames.forEach(stepName => {
-			const buttons = document.querySelectorAll(`.${stepName}-step-list .filter-option-item.selected`);
-			buttons.forEach(btn => {
-				if (btn.id.includes(key.split('-')[0])) { // 같은 카테고리면
-					btn.classList.remove('selected');
-				}
-			});
-		});
+	// ✅ 새로 추가: 트리 필터 경로 완전 초기화
+	clearTreeFilterPath(category, treeData) {
+	    if (!treeData) return;
+	    
+	    // 선택된 항목부터 루트까지의 경로 구성
+	    const pathItems = [];
+	    let currentItem = treeData;
+	    
+	    while (currentItem) {
+	        pathItems.unshift(currentItem);
+	        
+	        if (currentItem.upOdaFldCd) {
+	            currentItem = this.treeData[category].find(item => 
+	                item.odaFldCd === currentItem.upOdaFldCd
+	            );
+	        } else {
+	            currentItem = null;
+	        }
+	    }
+	    
+	    // 경로상의 모든 버튼에서 선택 상태 제거
+	    pathItems.forEach(item => {
+	        const button = document.querySelector(`#${category}-${item.odaFldCd}`);
+	        if (button) {
+	            button.classList.remove('selected', 'final-selected', 'in-path');
+	        }
+	    });
 	}
+	
 	
 	// 필터 제거 후 그리드 검색을 재실행하는 메서드
 	applyFiltersAfterRemoval() {
@@ -1073,15 +1303,21 @@ class ODAFilterSystem {
 		const searchTerm = projectNameInput ? projectNameInput.value.trim() : '';
 		
 		console.log('필터 제거 후 재검색:', filters);
+		console.log('검색어:', searchTerm);
+		
 		this.executeSearch({ filters, searchTerm });
 	}
-	
 
 	resetFilters() {
 	    // 모든 선택된 필터 버튼들의 상태 제거
 	    this.selectedFilters.forEach((filter, key) => {
 	        const $id = $('#' + key);
-	        $id.removeClass('on selected');
+	        $id.removeClass('on selected final-selected in-path'); // ✅ 트리 필터 클래스도 추가
+	    });
+	    
+	    // ✅ 추가: 모든 트리 필터 버튼 상태 초기화
+	    document.querySelectorAll('.filter-option-item').forEach(btn => {
+	        btn.classList.remove('selected', 'on', 'final-selected', 'in-path', 'already-selected');
 	    });
 	    
 	    // 필터 데이터 초기화
@@ -1089,19 +1325,18 @@ class ODAFilterSystem {
 	    this.updateSelectedDisplay();
 	    this.clearActiveCategory();
 	    
-	    // 단계 상태 초기화
-	    this.resetStepState();
-	    
 	    // 텍스트 검색어 초기화
 	    const projectNameInput = document.getElementById('projectNameInput');
 	    if (projectNameInput) {
 	        projectNameInput.value = '';
 	    }
 	    
+	    // 그리드 검색 폼 초기화
 	    this.clearAllGridParams();
+	    
+	    // 빈 검색 실행 (모든 데이터 표시)
 	    this.executeSearch({ filters: {}, searchTerm: '' });
 	}
-	
 	
 	// 모든 그리드 파라미터 초기화
 	clearAllGridParams() {
@@ -1115,6 +1350,7 @@ class ODAFilterSystem {
 	            return;
 	        }
 	        
+	        // 모든 필터 관련 필드 초기화
 	        Object.keys(this.categoryData).forEach(category => {
 	            const field = searchForm.find(`[name="${category}"]`);
 	            if (field.length) {
@@ -1126,9 +1362,11 @@ class ODAFilterSystem {
 	            }
 	        });
 	        
+	        // 텍스트 검색 필드 초기화
 	        const searchTermFields = searchForm.find('[name="searchTerm"], [name="projectName"]');
 	        searchTermFields.val('');
 	        
+	        // gridData 초기화
 	        if (grid.gridData) {
 	            Object.keys(this.categoryData).forEach(category => {
 	                delete grid.gridData[category];
@@ -1136,9 +1374,11 @@ class ODAFilterSystem {
 	            delete grid.gridData.searchTerm;
 	            delete grid.gridData.projectName;
 	        }
+	        
+	        console.log(`그리드 ${index + 1}: 모든 파라미터 초기화 완료`);
 	    });
 	}
-
+	
 
 	performTextSearch() {
 		const projectNameInput = document.getElementById('projectNameInput');
@@ -1149,6 +1389,7 @@ class ODAFilterSystem {
 			return;
 		}
 
+		console.log('텍스트 검색:', searchTerm);
 		this.executeSearch({ searchTerm });
 	}
 
@@ -1157,39 +1398,57 @@ class ODAFilterSystem {
 		const projectNameInput = document.getElementById('projectNameInput');
 		const searchTerm = projectNameInput ? projectNameInput.value.trim() : '';
 		
+		console.log('필터 적용:', filters);
+		console.log('검색어:', searchTerm);
+		
 		this.executeSearch({ filters, searchTerm });
 	}
-	
 
 	getSelectedFilters() {
 	    const filters = {};
+	    
+	    // ✅ 디버깅용 로그 추가
+	    console.log('getSelectedFilters 실행 - selectedFilters Map:', this.selectedFilters);
+	    
 	    this.selectedFilters.forEach((filter, key) => {
+	        console.log('처리 중인 필터:', key, filter);
+	        
 	        if (!filters[filter.category]) {
 	            filters[filter.category] = [];
 	        }
 	        
+	        // 날짜 범위 필터의 경우
 	        if (filter.dateRange) {
 	            filters[filter.category].push(filter.dateRange);
 	        } else if (filter.budgetValue) {
 	            filters[filter.category].push(filter.budgetValue);
+	        } else if (filter.subValue) {
+	            filters[filter.category].push(filter.subValue);
 	        } else {
 	            filters[filter.category].push(filter.value);
 	        }
 	    });
+	    
+	    console.log('최종 반환될 filters:', filters);
 	    return filters;
 	}
 
+	// 그리드 검색 파라미터 생성
+	// 그리드 검색 파라미터 생성 (개선된 버전)
 	buildSearchParams(searchData) {
 	    const params = {};
 	    
+	    // 텍스트 검색어가 있으면 추가
 	    if (searchData.searchTerm) {
 	        params.searchTerm = searchData.searchTerm;
 	        params.projectName = searchData.searchTerm;
 	    }
 	    
+	    // 필터 조건들을 파라미터로 변환
 	    if (searchData.filters) {
 	        Object.entries(searchData.filters).forEach(([category, values]) => {
 	            if (values.length > 0) {
+	                // 빈 값들 제거
 	                const validValues = values.filter(v => v && v.toString().trim() !== '');
 	                if (validValues.length > 0) {
 	                    params[category] = validValues.length === 1 ? validValues[0] : validValues.join(',');
@@ -1198,10 +1457,11 @@ class ODAFilterSystem {
 	        });
 	    }
 	    
+	    console.log('최종 생성된 검색 파라미터:', params);
 	    return params;
 	}
 
-	
+
 	executeSearch(searchData) {
 	    console.log('검색 실행:', searchData);
 	    
@@ -1209,70 +1469,110 @@ class ODAFilterSystem {
 	        const searchParams = this.buildSearchParams(searchData);
 	        
 	        this.gridInstances.forEach((gridInstance, index) => {
+	            console.log(`그리드 ${index + 1} 검색 실행`);
 	            this.setGridSearchParams(searchParams, gridInstance);
 	            gridInstance.searchData();
 	        });
+	    } else {
+	        const filterCount = this.selectedFilters.size;
+	        const searchTerm = searchData.searchTerm || '';
+	        
+	        let message = '검색이 완료되었습니다.\n';
+	        if (searchTerm) {
+	            message += `검색어: ${searchTerm}\n`;
+	        }
+	        if (filterCount > 0) {
+	            message += `적용된 필터: ${filterCount}개`;
+	        }
+	        
+	        alert(message);
 	    }
 	}
 
 	setGridSearchParams(params, gridInstance = null) {
+	    console.log('설정할 파라미터:', params);
+	    
 	    const targetGrids = gridInstance ? [gridInstance] : this.gridInstances;
 	    
 	    targetGrids.forEach((grid, index) => {
 	        if (!grid || !grid.searchFormId) {
+	            console.log(`그리드 ${index + 1}: 그리드 인스턴스나 검색폼 ID가 없음`);
 	            return;
 	        }
 	        
 	        const searchForm = $(`#${grid.searchFormId}`);
 	        if (!searchForm.length) {
+	            console.log(`그리드 ${index + 1}: 검색폼을 찾을 수 없음:`, grid.searchFormId);
 	            return;
 	        }
 	        
+	        // ✅ 수정: 먼저 모든 필터 필드를 완전히 초기화
 	        this.clearGridFilterFields(searchForm);
 	        
-	        Object.entries(params).forEach(([key, value]) => {
-	            let field = searchForm.find(`[name="${key}"]`);
-	            
-	            if (field.length === 0) {
-	                field = $(`<input type="hidden" name="${key}" />`);
-	                searchForm.append(field);
-	            }
-	            
-	            if (field.length) {
-	                if (field.hasClass('select2-hidden-accessible') || field.data('select2')) {
-	                    field.val(value).trigger('change');
-	                } else {
-	                    field.val(value);
+	        // ✅ 추가: 잠깐 기다린 후 새로운 파라미터 설정 (DOM 업데이트 대기)
+	        setTimeout(() => {
+	            Object.entries(params).forEach(([key, value]) => {
+	                let field = searchForm.find(`[name="${key}"]`);
+	                
+	                if (field.length === 0) {
+	                    console.log(`그리드 ${index + 1}: 필드 ${key}가 없어서 동적 생성`);
+	                    field = $(`<input type="hidden" name="${key}" />`);
+	                    searchForm.append(field);
 	                }
-	            }
-	        });
+	                
+	                if (field.length) {
+	                    if (field.hasClass('select2-hidden-accessible') || field.data('select2')) {
+	                        field.val(value).trigger('change');
+	                    } else {
+	                        field.val(value);
+	                    }
+	                    console.log(`그리드 ${index + 1}: 필드 ${key} 최종 설정값:`, field.val());
+	                }
+	            });
+	        }, 100);
 	    });
 	}
 	
+	// 그리드 폼에서 필터 관련 필드들을 초기화하는 메서드
 	clearGridFilterFields(searchForm) {
+	    // 현재 선택된 필터 카테고리들 수집
 	    const filterCategories = new Set();
 	    this.selectedFilters.forEach(filter => {
 	        filterCategories.add(filter.category);
 	    });
 	    
+	    // 모든 필터 카테고리에 대해 필드 초기화
 	    Object.keys(this.categoryData).forEach(category => {
 	        const field = searchForm.find(`[name="${category}"]`);
 	        if (field.length) {
+	            // 현재 활성화된 필터가 아닌 경우 값 제거
 	            if (!filterCategories.has(category)) {
 	                if (field.hasClass('select2-hidden-accessible') || field.data('select2')) {
 	                    field.val('').trigger('change');
 	                } else {
 	                    field.val('');
 	                }
+	                console.log(`필드 ${category} 초기화됨`);
 	            }
 	        }
 	    });
 	    
+	    // 텍스트 검색어 관련 필드도 확인
 	    const projectNameInput = document.getElementById('projectNameInput');
 	    if (!projectNameInput || !projectNameInput.value.trim()) {
 	        const searchTermFields = searchForm.find('[name="searchTerm"], [name="projectName"]');
 	        searchTermFields.val('');
 	    }
+	    
+	 // gridData도 초기화 (만약 있다면)
+	    this.gridInstances.forEach(grid => {
+	        if (grid.gridData) {
+	            Object.keys(this.categoryData).forEach(category => {
+	                delete grid.gridData[category];
+	            });
+	        }
+	    });
+	    
 	}
 	
 	// 테스트용 2단계 데이터 생성 메서드

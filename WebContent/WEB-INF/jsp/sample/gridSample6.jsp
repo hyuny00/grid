@@ -2,19 +2,25 @@
 <%@ include file="/WEB-INF/jsp/framework/_includes/includeTags.jspf" %>
 <script type="text/javascript">
 $(document).ready(function() {
-
+	
 	
 	// Ajax로 카테고리 데이터를 가져오는 함수
 	function loadCategoryData(category) {
 	    return new Promise((resolve, reject) => {
 	        const cdGroupSn = categoryCodeMapping[category];
 	        
+	        var isBizFldCd='';
+	        if(cdGroupSn==-1){
+	        	isBizFldCd='Y';
+	        }
+	        
 	        $.ajax({
 	            url: '/common/selectCode',
 	            type: 'get',
 	            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
 	            data: { 
-	                cdGroupSn: cdGroupSn 
+	                cdGroupSn: cdGroupSn ,
+	                isBizFldCd : isBizFldCd
 	            },
 	            success: function(data) {
 	                // 받은 데이터를 categoryData 구조로 변환
@@ -71,77 +77,79 @@ $(document).ready(function() {
 	}
 	
 	
-	
-	  
-	const dynamicCategories = ['schNtnCd', 'schBizTpCd'];
+	const dynamicCategories = ['schNtnCd', 'schBizFldCd','schAidTpCd'];
 
 	// 각 카테고리별 코드 그룹 매핑 (실제 값에 맞게 수정 필요)
 	const categoryCodeMapping = {
 			schNtnCd: '16',
-			schBizTpCd: '3'
+			schBizFldCd: '-1',
+			schAidTpCd :'21'
 	   
 	};
 	
+	//2단계이상코드의 첫단계 타이틀
 	const categoryTitles = {
 		    'schNtnCd': '대륙',
+		    'schBizFldCd': '사업분야'
 	};
-	  // 2단계 필터가 필요한 카테고리들을 정의
-  	const multiStepCategories = ['schNtnCd'];
+	  // 2단계이상 필터가 필요한 카테고리들을 정의
+  	const multiStepCategories = ['schNtnCd','schBizFldCd'];
 	
 	
 	let categoryData;
 	initializeCategoryData().then(categoryData => {
-	    console.log('All category data loaded:', categoryData);
+	        console.log('All category data loaded:', categoryData);
 	    
-	    const gridInstance1 = initTreeGrid({
-		     gridId: 'grid1',
-		     searchFormId: 'searchForm',
-		     templateId: 'node-row-template-1',
-		     urls: {
-		    	 mainUrl: '/sample/newSampleList2',
-		     }, 
-		     pageSize: 10,
-		     
-		     onRowClick: function(rowData, $row) {
-		         console.log('선택된 행:', rowData);
-		     },
-		     
-		     onRowDoubleClick: function(rowData, $row) {
-		         console.log('더블클릭된 행:', rowData);
-		         // 여기에 더블클릭 시 실행할 로직 추가
-		         // 예: 상세 페이지 이동, 수정 모달 열기 등
-		     }
-		 });
-	    
-	    const gridInstance2 = initTreeGrid({
-		     gridId: 'grid2',
-		     searchFormId: 'searchForm',
-		     templateId: 'node-row-template-1',
-		     urls: {
-		    	 mainUrl: '/sample/newSampleList2',
-		     }, 
-		     pageSize: 10,
-		     
-		     onRowClick: function(rowData, $row) {
-		         console.log('선택된 행:', rowData);
-		     },
-		     
-		     onRowDoubleClick: function(rowData, $row) {
-		         console.log('더블클릭된 행:', rowData);
-		         // 여기에 더블클릭 시 실행할 로직 추가
-		         // 예: 상세 페이지 이동, 수정 모달 열기 등
-		     }
-		 });
-	    
-	    
-		//검색조건으로 그리드 2개이상 검색시		
-		 const filterSystem = new ODAFilterSystem(categoryData, [gridInstance1,gridInstance2],multiStepCategories,categoryTitles);
-		
-		//검색조건으로 그리드  검색시		
-		 //const filterSystem = new ODAFilterSystem(categoryData, gridInstance1 ,multiStepCategories,categoryTitles);
-		
-		
-		 window.odaFilterSystem = filterSystem;
+	        
+	        const gridInstance1 = initTreeGrid({
+			     gridId: 'grid1',
+			     searchFormId: 'searchForm',
+			     templateId: 'node-row-template-1',
+			     urls: {
+			    	 mainUrl: '/sample/newSampleList2',
+			     }, 
+			     pageSize: 10,
+			     
+			     onRowClick: function(rowData, $row) {
+			         console.log('선택된 행:', rowData);
+			     },
+			     onRowDoubleClick: function(rowData, $row) {
+			         console.log('더블클릭된 행:', rowData);
+			         // 여기에 더블클릭 시 실행할 로직 추가
+			         // 예: 상세 페이지 이동, 수정 모달 열기 등
+			     }
+			 });
+		    
+		    const gridInstance2 = initTreeGrid({
+			     gridId: 'grid2',
+			     searchFormId: 'searchForm',
+			     templateId: 'node-row-template-1',
+			     urls: {
+			    	 mainUrl: '/sample/newSampleList2',
+			     }, 
+			     pageSize: 10,
+			     
+			     onRowClick: function(rowData, $row) {
+			         console.log('선택된 행:', rowData);
+			     },
+			     
+			     onRowDoubleClick: function(rowData, $row) {
+			         console.log('더블클릭된 행:', rowData);
+			         // 여기에 더블클릭 시 실행할 로직 추가
+			         // 예: 상세 페이지 이동, 수정 모달 열기 등
+			     }
+			 });
+		    
+		    
+			//검색조건으로 그리드 2개이상 검색시		
+			 const filterSystem = new ODAFilterSystem(categoryData, [gridInstance1,gridInstance2],multiStepCategories,categoryTitles,categoryCodeMapping);
+			
+			//검색조건으로 그리드  검색시		
+			 //const filterSystem = new ODAFilterSystem(categoryData, gridInstance1 ,multiStepCategories,categoryTitles);
+			
+			
+			 window.odaFilterSystem = filterSystem;
+	        
 
 
 	});
@@ -261,9 +269,9 @@ $(document).ready(function() {
 				                <li><button type="button" class="filter-category-btn" data-category="period">사업기간</button></li>
 				                <li><button type="button" class="filter-category-btn" data-category="schBizTpCd">시행기관</button></li>
 				                <li><button type="button" class="filter-category-btn" data-category="schNtnCd">수원국</button></li>
-				                <li><button type="button" class="filter-category-btn" data-category="field">사업분야</button></li>
+				                <li><button type="button" class="filter-category-btn" data-category="schBizFldCd">사업분야</button></li>
 				                <li><button type="button" class="filter-category-btn" data-category="status">진행상태</button></li>
-				                <li><button type="button" class="filter-category-btn" data-category="aid_type">원조유형</button></li>
+				                <li><button type="button" class="filter-category-btn" data-category="schAidTpCd">원조유형</button></li>
 				                 <li><button type="button" class="filter-category-btn" data-category="budget">사업예산</button></li>
 				            </ul>
 				        </div>
@@ -285,6 +293,20 @@ $(document).ready(function() {
 						                        <!-- 2단계 옵션들 -->
 						                    </ul>
 						                </div>
+						                <!-- 3단계 이상 추가 -->
+					    <div class="third-step-options" style="display: none;">
+					        <p>세부 선택</p>
+					        <ul class="third-step-list"></ul>
+					    </div>
+					    <div class="fourth-step-options" style="display: none;">
+					        <p>최종 선택</p>
+					        <ul class="fourth-step-list"></ul>
+					    </div>
+					    
+					    <div class="fifth-step-options" style="display: none;">
+						    <p>최종 세부 선택</p>
+						    <ul class="fifth-step-list"></ul>
+						</div>
 						            </div>
 						            
 						            	

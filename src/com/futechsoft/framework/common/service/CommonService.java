@@ -49,6 +49,16 @@ public class CommonService extends EgovAbstractServiceImpl {
 		return commonMapper.selectNtcCodeList(params);
 	}
 	
+	/**
+	 * 사업분야를 가져온다
+	 * @param params
+	 * @return
+	 * @throws Exception
+	 */
+	public List<FtMap> selectBizFldCdList(FtMap params) throws Exception {
+		return commonMapper.selectBizFldCdList(params);
+	}
+	
 	
 	
 

@@ -71,7 +71,62 @@
 	 
 	 
 	 </select>
-	 
+
+
+
+
+	<select id="selectBizFldCdList22" parameterType="ftMap"
+		resultType="ftMap">
+
+		WITH RECURSIVE fld_tree AS (
+			SELECT
+			cd_ver_sn, 
+			oda_fld_cd,
+			up_oda_fld_cd,
+			fld_cd_nm,
+			1 AS node_level, -- level → node_level 로 변경
+			CAST(oda_fld_cd AS VARCHAR(1000)) AS path
+			FROM FTCORE.tcm_biz_fld_cd
+			WHERE cd_ver_sn = 1
+			AND (up_oda_fld_cd IS NULL OR up_oda_fld_cd = '-' OR up_oda_fld_cd = '')
+	
+			UNION ALL
+	
+			SELECT
+			c.cd_ver_sn,
+			c.oda_fld_cd,
+			c.up_oda_fld_cd,
+			c.fld_cd_nm,
+			p.node_level + 1 AS node_level,
+			CONCAT(p.path, ' > ', c.oda_fld_cd)
+			FROM FTCORE.tcm_biz_fld_cd c
+			JOIN fld_tree p
+			ON c.cd_ver_sn = p.cd_ver_sn
+			AND c.up_oda_fld_cd = p.oda_fld_cd
+		)
+		SELECT *
+		FROM fld_tree
+		ORDER BY path
+	</select>
+	
+	<select id="selectBizFldCdList" parameterType="ftMap"
+		resultType="ftMap">
+	SELECT
+			 oda_fld_cd code,
+		     fld_cd_nm "value",
+		     fld_cd_nm text,
+		     up_oda_fld_cd up_cd
+		FROM
+		tcm_biz_fld_cd
+	
+		WHERE 1=1
+		    
+		AND   NVL(up_oda_fld_cd,'') =  NVL( #{upCd},'')
+		
+		ORDER BY oda_fld_cd
+		
+	</select>
+	
 
 
 

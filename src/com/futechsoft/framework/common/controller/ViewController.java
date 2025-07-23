@@ -72,10 +72,30 @@ public class ViewController  extends AbstractController {
 	public List<FtMap> selectCode(HttpServletRequest request) throws Exception {
 
 		FtMap params = super.getFtMap(request);
-
-		LOGGER.debug("code.." + params.getString("code"));
+		
+		List<FtMap> codeList = null;
+		
 
 		String code= params.getString("code");
+		
+		String isBizFldCd= params.getString("isBizFldCd");
+		
+		if(CommonUtil.nvl(isBizFldCd).equals("Y")) {
+			
+			
+			if( params.getString("code").equals("")) {
+				params.put("upCd", "-");
+			}else {
+				params.put("upCd", code);
+			}
+			
+			codeList = getCommonService().selectBizFldCdList(params);
+			return codeList;
+		}
+		
+		
+
+	
 		
 		int cdGroupSn= params.getInt("cdGroupSn");
 		
@@ -94,10 +114,10 @@ public class ViewController  extends AbstractController {
 			
 		}
 		
-		List<FtMap> codeList = null;
+	
 		if(CommonUtil.nvl(isSearchNtcCd).equals("Y")) {
 			
-			params.put("schUpNtnCd", cdGroupSn);
+			params.put("schUpNtnCd", code);
 			
 			
 			codeList = getCommonService().selectNtcCodeList(params);
@@ -107,6 +127,18 @@ public class ViewController  extends AbstractController {
 		
 
 
+		return codeList;
+
+	}
+	
+	@RequestMapping(value = "/common/selectBizFldCdList")
+	@ResponseBody
+	public List<FtMap> selectBizFldCdList(HttpServletRequest request) throws Exception {
+
+		FtMap params = super.getFtMap(request);
+		
+		List<FtMap> codeList= getCommonService().selectBizFldCdList(params);
+		
 		return codeList;
 
 	}
