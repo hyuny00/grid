@@ -1,0 +1,12 @@
+.filter-option-item.selected,
+.filter-option-item.active {
+    background-color: #007bff !important;
+    color: white !important;
+    border-color: #007bff !important;
+}
+
+.filter-option-item.selected:hover,
+.filter-option-item.active:hover {
+    background-color: #0056b3 !important;
+    border-color: #0056b3 !important;
+}

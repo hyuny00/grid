@@ -1,6 +1,10 @@
 <%@ page language="java" pageEncoding="UTF-8" contentType="text/html; charset=UTF-8"%>
 <%@ include file="/WEB-INF/jsp/framework/_includes/includeTags.jspf" %>
+
+
 <script type="text/javascript">
+
+
 $(document).ready(function() {
 	
 	

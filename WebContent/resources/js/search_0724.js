@@ -149,7 +149,7 @@ class ODAFilterSystem {
 	
 	// 모든 필터 옵션 정리하는 새로운 메서드
 	clearAllFilterOptions() {
-	  //  console.log('=== clearAllFilterOptions 실행 ===');
+	    console.log('=== clearAllFilterOptions 실행 ===');
 	    
 	    // 모든 단계 컨테이너 숨기기
 	    this.hideAllStepContainers();
@@ -199,8 +199,8 @@ class ODAFilterSystem {
 
 	// 2단계 필터 옵션 업데이트 (기존 구조 활용)
 	updateMultiStepFilterOptions(category) {
-	   // console.log('=== updateMultiStepFilterOptions 시작 ===');
-	  //  console.log('category:', category);
+	    console.log('=== updateMultiStepFilterOptions 시작 ===');
+	    console.log('category:', category);
 	    
 	    // 모든 단계 컨테이너 숨기기
 	    this.hideAllStepContainers();
@@ -257,7 +257,7 @@ class ODAFilterSystem {
 	        items = await this.loadNextStepData(category, this.stepSelections.slice(0, step - 1));
 	    }
 	    
-	 //   console.log(`${step}단계 items:`, items);
+	    console.log(`${step}단계 items:`, items);
 	    
 	    if (!items || !Array.isArray(items) || items.length === 0) {
 	        list.innerHTML = '<li><div class="empty-state">옵션이 없습니다</div></li>';
@@ -265,6 +265,7 @@ class ODAFilterSystem {
 	    }
 
 	    // 옵션들 추가
+	 // 옵션들 추가
 	    items.forEach(itemData => {
 	        const li = document.createElement('li');
 	        
@@ -277,8 +278,22 @@ class ODAFilterSystem {
 	        button.dataset.step = step;
 	        button.id = this.generateStepItemId(category, step, itemData.value);
 	        
+	        // 선택 상태 스타일 추가
 	        button.addEventListener('click', () => {
 	            this.selectStepItem(button, itemData, step);
+	        });
+	        
+	        // 호버 효과 추가
+	        button.addEventListener('mouseenter', () => {
+	            if (!button.classList.contains('selected')) {
+	                button.style.backgroundColor = '#e9ecef';
+	            }
+	        });
+	        
+	        button.addEventListener('mouseleave', () => {
+	            if (!button.classList.contains('selected')) {
+	                button.style.backgroundColor = '';
+	            }
 	        });
 	        
 	        li.appendChild(button);
@@ -296,7 +311,7 @@ class ODAFilterSystem {
 	    const category = button.dataset.category;
 	    const value = button.dataset.value;
 	    
-	  //  console.log(`${currentStep}단계 선택:`, value, itemData.text);
+	    console.log(`${currentStep}단계 선택:`, value, itemData.text);
 	    
 	    // 현재 단계의 선택 상태 업데이트
 	    this.updateStepSelection(currentStep, value, itemData.text, button);
@@ -357,18 +372,20 @@ class ODAFilterSystem {
 	}
 	
 	// 단계별 버튼 상태 업데이트
+	// 단계별 버튼 상태 업데이트
 	updateStepButtonStates(step, selectedButton) {
 	    const stepNames = ['', 'first', 'second', 'third', 'fourth', 'fifth'];
 	    const stepName = stepNames[step];
 	    
 	    // 해당 단계의 모든 버튼 선택 해제
 	    document.querySelectorAll(`.${stepName}-step-list .filter-option-item`).forEach(btn => {
-	        btn.classList.remove('selected');
+	        btn.classList.remove('selected', 'active'); // 'active' 클래스도 제거
 	    });
 	    
 	    // 선택된 버튼만 활성화
-	    selectedButton.classList.add('selected');
+	    selectedButton.classList.add('selected', 'active'); // 'active' 클래스도 추가
 	}
+	
 	
 	async loadNextStepData(category, parentSelections) {
 	    if (!parentSelections || parentSelections.length === 0) {
@@ -397,8 +414,15 @@ class ODAFilterSystem {
 	    	isBizFldCd='Y';
 	    }
 	    
+	    console.log("isSearchNtcCd..."+isSearchNtcCd);
+	    console.log("cdGroupSn..."+cdGroupSn);
+	    console.log("isBizFldCd..."+isBizFldCd);
+	    console.log("step..."+parentSelections.length);
+	    console.log("code..."+parentSelections[parentSelections.length - 1]);
+	    
+	    
 	    if(cdGroupSn == 16  && isSearchNtcCd=='Y' && parentSelections.length == 2){
-	    	return [];
+	    	return {};
 	    } 
 	    
 	    try {
@@ -439,7 +463,7 @@ class ODAFilterSystem {
 	
 	// 다단계 선택 완료
 	completeMultiStepSelection(category) {
-	    //console.log('다단계 선택 완료:', this.stepSelections, this.stepTexts);
+	    console.log('다단계 선택 완료:', this.stepSelections, this.stepTexts);
 	    
 	    // 모든 단계의 텍스트를 조합하여 표시 텍스트 생성
 	    const displayTexts = [];
@@ -471,7 +495,7 @@ class ODAFilterSystem {
 	
 	// 2단계 필터 요소가 없을 때의 대체 메서드
 	updateFilterOptionsAsFallback(category) {
-	    //console.log('2단계 필터 대체 메서드 실행');
+	    console.log('2단계 필터 대체 메서드 실행');
 	    
 	    // 1단계 필터 컨테이너 사용 시도
 	    const container = document.querySelector('.filter-options-content');
@@ -485,8 +509,8 @@ class ODAFilterSystem {
 
 	// 기존 단일 단계 필터 옵션 업데이트
 	updateFilterOptions(category) {
-	    //console.log('=== updateFilterOptions 시작 ===');
-	    //console.log('category:', category);
+	    console.log('=== updateFilterOptions 시작 ===');
+	    console.log('category:', category);
 	    
 	    // DOM 요소 확인
 	    const elements = this.checkDOMElements();
@@ -501,12 +525,12 @@ class ODAFilterSystem {
 	    // 컨테이너 표시
 	    container.style.display = 'block';
 	    
-	   // console.log('category:::: ', category);
+	    console.log('category:::: ', category);
 	    
 	    container.innerHTML = '';
 
 	    const items = this.categoryData[category];
-	   // console.log('category:', category, 'items:', items);
+	    console.log('category:', category, 'items:', items);
 	    
 	    if (!items || !Array.isArray(items)) {
 	        container.innerHTML = '<div class="empty-state">옵션이 없습니다</div>';
@@ -632,7 +656,7 @@ class ODAFilterSystem {
 	    });
 	    
 	    container.appendChild(ul);
-	   // console.log('1단계 필터 옵션 생성 완료');
+	    console.log('1단계 필터 옵션 생성 완료');
 	}
 	
 	validateAndUpdateDateRange(startInput, endInput, itemData) {
@@ -728,7 +752,7 @@ class ODAFilterSystem {
 	}
 	
 	createFallbackContainer(category) {
-	    //console.log('대체 컨테이너 생성 시도');
+	    console.log('대체 컨테이너 생성 시도');
 	    
 	    // 필터 영역 찾기
 	    const filterArea = document.getElementById('searchFilterArea');
@@ -1003,7 +1027,7 @@ class ODAFilterSystem {
 	}
 
 	clearFilterOptions() {
-	   // console.log('=== clearFilterOptions 실행 ===');
+	    console.log('=== clearFilterOptions 실행 ===');
 	    
 	    // clearAllFilterOptions 호출
 	    this.clearAllFilterOptions();
@@ -1076,7 +1100,7 @@ class ODAFilterSystem {
 		const projectNameInput = document.getElementById('projectNameInput');
 		const searchTerm = projectNameInput ? projectNameInput.value.trim() : '';
 		
-		//console.log('필터 제거 후 재검색:', filters);
+		console.log('필터 제거 후 재검색:', filters);
 		this.executeSearch({ filters, searchTerm });
 	}
 	
@@ -1207,7 +1231,7 @@ class ODAFilterSystem {
 
 	
 	executeSearch(searchData) {
-	   // console.log('검색 실행:', searchData);
+	    console.log('검색 실행:', searchData);
 	    
 	    if (this.gridInstances && this.gridInstances.length > 0) {
 	        const searchParams = this.buildSearchParams(searchData);
@@ -1310,7 +1334,7 @@ class ODAFilterSystem {
 	}
 	
 	checkDOMElements() {
-	   // console.log('=== DOM 요소 확인 ===');
+	    console.log('=== DOM 요소 확인 ===');
 	    
 	    // 2단계 필터 요소들
 	    const firstStepContainer = document.querySelector('.first-step-options');
@@ -1318,22 +1342,22 @@ class ODAFilterSystem {
 	    const firstStepList = document.querySelector('.first-step-list');
 	    const secondStepList = document.querySelector('.second-step-list');
 	    
-	   // console.log('first-step-options:', firstStepContainer);
-	   // console.log('second-step-options:', secondStepContainer);
-	   // console.log('first-step-list:', firstStepList);
-	   // console.log('second-step-list:', secondStepList);
+	    console.log('first-step-options:', firstStepContainer);
+	    console.log('second-step-options:', secondStepContainer);
+	    console.log('first-step-list:', firstStepList);
+	    console.log('second-step-list:', secondStepList);
 	    
 	    // 1단계 필터 요소들
 	    const singleStepContainer = document.querySelector('.filter-options-content');
-	  //  console.log('filter-options-content:', singleStepContainer);
+	    console.log('filter-options-content:', singleStepContainer);
 	    
 	    // 전체 필터 영역
 	    const filterArea = document.getElementById('searchFilterArea');
-	   // console.log('searchFilterArea:', filterArea);
+	    console.log('searchFilterArea:', filterArea);
 	    
 	    // 모든 가능한 컨테이너 확인
 	    const allContainers = document.querySelectorAll('[class*="filter"], [class*="step"], [class*="options"]');
-	   // console.log('모든 필터 관련 요소들:', allContainers);
+	    console.log('모든 필터 관련 요소들:', allContainers);
 	    
 	    return {
 	        firstStepContainer,
@@ -1344,77 +1368,4 @@ class ODAFilterSystem {
 	        filterArea
 	    };
 	}
-}
-
-
-//Ajax로 카테고리 데이터를 가져오는 함수
-function loadCategoryData(category) {
-    return new Promise((resolve, reject) => {
-        const cdGroupSn = categoryCodeMapping[category];
-        
-        var isBizFldCd='';
-        if(cdGroupSn==-1){
-        	isBizFldCd='Y';
-        }
-        
-        $.ajax({
-            url: '/common/selectCode',
-            type: 'get',
-            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-            data: { 
-                cdGroupSn: cdGroupSn ,
-                isBizFldCd : isBizFldCd
-            },
-            success: function(data) {
-                // 받은 데이터를 categoryData 구조로 변환
-                const transformedData = data.map(item => ({
-                    value: item.code,  // 또는 item.value (실제 응답 구조에 따라)
-                    text: item.text
-                }));
-                resolve(transformedData);
-                
-                console.log("transformedData.."+JSON.stringify(transformedData));
-            },
-            error: function(xhr, status, error) {
-                console.error("Failed to loaddata:");
-                reject(error);
-            }
-        });
-    });
-}
-
-
-// 모든 동적 카테고리 데이터를 로드하는 함수
-async function initializeCategoryData() {
-    const categoryData = {
-    		 'period': [
-    		        { 
-    		            value: 'period_range', 
-    		            text: '',
-    		            type: 'date'
-    		        }
-    		    ],
-    		    
-    		    'budget': [
-    		        { 
-    		            value: 'current_year_budget', 
-    		            text: '',
-    		            type: 'budget' 
-    		        }
-    		    ]
-    };
-
-    // 동적 카테고리들을 순차적으로 로드
-    for (const category of dynamicCategories) {
-        try {
-            categoryData[category] = await loadCategoryData(category);
-            console.log("data loaded successfully");
-        } catch (error) {
-            console.error("Failed to load");
-            // 실패 시 빈 배열로 초기화
-            categoryData[category] = [];
-        }
-    }
-
-    return categoryData;
 }
