@@ -134,11 +134,24 @@
         const map = L.map('map').setView([0, 0], 2);
         
         // OpenStreetMap 타일 레이어 추가
+        /*
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 18
         }).addTo(map);
 
+*/
+/*
+			L.tileLayer('http://localhost:8080/tiles/{z}/{x}/{y}.png', {
+			    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+			    maxZoom: 18
+			}).addTo(map);		 
+*/
+			L.tileLayer('http://localhost:8080/tiles/maptiler/openstreetmap/{z}/{x}/{y}', {
+			    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+			    maxZoom: 18
+			}).addTo(map);		
+			
         let currentFilter = 'all';
 
         // 국가 이름 매핑 (ISO 코드 -> 한글 이름)

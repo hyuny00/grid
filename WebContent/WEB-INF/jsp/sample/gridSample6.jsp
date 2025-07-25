@@ -87,8 +87,14 @@ $(document).ready(function() {
     const result = gridManager.initializeAllData(pageConfig)
         .then(result => {
             console.log('초기화 완료:', result);
-            // 필요시 초기화 완료 후 추가 작업 수행
+            
+            // 전역 변수에 저장
             initializedData = result;
+            filterSystem = result.filterSystem;
+            gridInstances = result.gridInstances;
+            
+            // 초기화 완료 후 초기 필터 설정필요시
+            setupInitialFilters();
           
         })
         .catch(error => {
@@ -99,21 +105,31 @@ $(document).ready(function() {
         
 });
 
-function someOtherFunction() {
-	 if (initializedData) {
-	        const targetGrid = initializedData.gridInstances.find(grid => grid.gridId === 'grid1');
-	        
-	        if (targetGrid) {
-	            alert('grid1이 초기화되어 있음!');
-	            var a= targetGrid.getSearchParams(); 
-	            console.log("..."+JSON.stringify(a));
-	        } else {
-	            alert('gridInstances에 grid1 없음!');
-	        }
 
-	    } else {
-	        alert('초기화 아직 안 됨!');
-	    }
+
+/**
+ * 초기 필터 설정 함수
+ */
+function setupInitialFilters() {
+    if (!filterSystem) {
+        console.error('필터 시스템이 초기화되지 않았습니다.');
+        return;
+    }
+    
+    // 여러 필터 동시 설정
+    filterSystem.setSimpleInitialFilters({
+        "schNtnCd": { value: "229", text: "시행기관 229" },
+        "period": { value: "2024-01-01,2024-01-03", text: "시작일: 2024-01-01 - 2024-01-03" }
+    });
+    
+    console.log('초기 필터 설정 완료');
+}
+
+
+function someOtherFunction() {
+	  var a=getGridById('grid1');
+	  
+	 a.setPageSize(5);
 }
 </script>
 
@@ -149,13 +165,13 @@ function someOtherFunction() {
 				    <div class="searchFlt" id="searchFilterArea">
 				        <div class="fltList">
 				            <ul>
-				                <li><button type="button" class="filter-category-btn" data-category="period">사업기간</button></li>
+				                <li><button type="button" class="filter-category-btn" data-category="schPeriod">사업기간</button></li>
 				                <li><button type="button" class="filter-category-btn" data-category="schInstCd">시행기관</button></li>
 				                <li><button type="button" class="filter-category-btn" data-category="schNtnCd">수원국</button></li>
 				                <li><button type="button" class="filter-category-btn" data-category="schBizFldCd">사업분야</button></li>
 				                <li><button type="button" class="filter-category-btn" data-category="status">진행상태</button></li>
 				                <li><button type="button" class="filter-category-btn" data-category="schAidTpCd">원조유형</button></li>
-				                 <li><button type="button" class="filter-category-btn" data-category="budget">사업예산</button></li>
+				                 <li><button type="button" class="filter-category-btn" data-category="schBudget">사업예산</button></li>
 				            </ul>
 				        </div>
 						        

@@ -84,7 +84,7 @@ class CommonGridManager {
      */
     async initializeCategoryData(dynamicCategories, categoryCodeMapping) {
         const categoryData = {
-            'period': [
+            'schPeriod': [
                 { 
                     value: 'period_range', 
                     text: '',
@@ -92,7 +92,7 @@ class CommonGridManager {
                 }
             ],
             
-            'budget': [
+            'schBudget': [
                 { 
                     value: 'current_year_budget', 
                     text: '',
@@ -324,6 +324,10 @@ class CommonGridManager {
                 cleanedCategoryCodeMapping
             );
             
+         
+
+           
+            
             // 전역 변수로 필터 시스템 저장
             window.odaFilterSystem = filterSystem;
             
@@ -410,3 +414,30 @@ class CommonGridManager {
 
 // 전역 인스턴스 생성
 window.CommonGridManager = CommonGridManager;
+
+
+function getGridById(gridId) {
+    if (!gridInstances || gridInstances.length === 0) {
+        return null;
+    }
+    
+    return gridInstances.find(grid => {
+        // 그리드 인스턴스에서 ID를 찾는 방법은 그리드 구현에 따라 다를 수 있음
+        return grid.gridId === gridId || 
+               grid.config?.gridId === gridId ||
+               grid.element?.attr('id') === gridId;
+    });
+}
+
+function getCurrentFilters() {
+    if (!filterSystem) {
+        console.error('필터 시스템이 초기화되지 않았습니다.');
+        return {};
+    }
+    
+    if (typeof filterSystem.getCurrentFilters === 'function') {
+        return filterSystem.getCurrentFilters();
+    }
+    
+    return {};
+}

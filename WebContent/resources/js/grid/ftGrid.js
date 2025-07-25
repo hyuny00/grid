@@ -84,7 +84,7 @@ class TreeGridManager {
     
     setPageSize(newPageSize) {
         this.pageSize = newPageSize;
-        searchData();
+        this.searchData();
     }
     
     setGridData(gridData) {

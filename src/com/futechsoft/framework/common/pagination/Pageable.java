@@ -27,8 +27,7 @@ public class Pageable {
 
 		if (sortField != null && sortDirection != null &&
 		    !sortField.trim().isEmpty() && !sortDirection.trim().isEmpty() &&
-		    sortField.matches("^[A-Za-z_]{1,20}$")) {
-
+		    sortField.matches("^[A-Za-z_][A-Za-z0-9_.]{0,19}$")) {
 		    String direction = sortDirection.toUpperCase();
 
 		    if (allowedDirections.contains(direction)) {

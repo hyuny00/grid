@@ -1,58 +1,72 @@
-package com.futechsoft.gis.controller;
+package kr.go.odakorea.gis.controller;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.gateway.mvc.ProxyExchange;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.futechsoft.gis.service.TileService;
+import kr.go.odakorea.gis.service.TileService;
 
 @RestController
 @RequestMapping("/tiles")
 public class TileController {
-/*
+
 	@Autowired
     private  TileService tileService;
 
   
-/*
+
     @GetMapping("/{zoom}/{x}/{y}.png")
     public ResponseEntity<byte[]> getTile(@PathVariable int zoom, @PathVariable int x, @PathVariable int y) {
         // B 서버에서 타일을 가져옵니다.
         byte[] tile = tileService.getTile(zoom, x, y);
+        
+        System.out.println("KKKKKKKKKKKKKKKKKKKKKKKK");
 
         // 타일 이미지 파일을 클라이언트에게 반환합니다.
         return ResponseEntity.ok()
                              .header("Content-Type", "image/png")
                              .body(tile);
     }
-    */
-    
-	/*
-    @GetMapping("/{zoom}/{x}/{y}.png")
-    public ResponseEntity<byte[]> getTile(@PathVariable int zoom, @PathVariable int x, @PathVariable int y) {
-    	
-    	test();
-        // B 서버에서 타일을 가져옵니다.
-        byte[] tile = tileService.getMap("a",zoom, x, y);
-
-        // 타일 이미지 파일을 클라이언트에게 반환합니다.
-        return ResponseEntity.ok()
-                             .header("Content-Type", "image/png")
-                             .body(tile);
+  
+   
+    @GetMapping("/maptiler/{style}/{zoom}/{x}/{y}")
+    public ResponseEntity<byte[]> getMapTilerTileWithStyle(
+    		 @PathVariable String style,
+             @PathVariable int zoom,
+             @PathVariable int x,
+             @PathVariable int y) {
+        
+        try {
+        	  System.out.println("Style: " + style + ", Zoom: " + zoom + ", X: " + x + ", Y: " + y);
+        	 System.out.println("ffffffffffffffffffffffffff");
+            byte[] tileData = tileService.getMaptilerTile(zoom, x, y, style);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.IMAGE_JPEG);
+            headers.setCacheControl("max-age=86400"); // 24시간
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(tileData);
+                    
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
     
     
+ 
+    
+    
+   /* 
     public void test() {
     	
         try {

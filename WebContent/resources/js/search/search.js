@@ -26,10 +26,55 @@ class ODAFilterSystem {
 		this.bindEvents();
 		this.updateSelectedDisplay();
 	}
-
-	init() {
-		this.bindEvents();
-		this.updateSelectedDisplay();
+	
+	// 초기 필터 설정 - 데이터 검증 없이 바로 추가
+	setSimpleInitialFilters(initialFilters) {
+	    console.log('간단한 초기 검색조건 설정:', initialFilters);
+	    
+	    // 기존 필터 초기화
+	    this.selectedFilters.clear();
+	    
+	    // 초기 필터 적용
+	    Object.entries(initialFilters).forEach(([category, valueData]) => {
+	        if (Array.isArray(valueData)) {
+	            // 배열인 경우 각각 추가
+	            valueData.forEach(item => {
+	                if (typeof item === 'string' || typeof item === 'number') {
+	                    // 단순 값인 경우 기본 텍스트 생성
+	                    this.addSimpleFilter(category, item, `${category}: ${item}`);
+	                } else if (item.value) {
+	                    // 객체인 경우
+	                    this.addSimpleFilter(category, item.value, item.text || `${category}: ${item.value}`);
+	                }
+	            });
+	        } else if (typeof valueData === 'string' || typeof valueData === 'number') {
+	            // 단순 값인 경우
+	            this.addSimpleFilter(category, valueData, `${category}: ${valueData}`);
+	        } else if (valueData.value) {
+	            // 객체인 경우
+	            this.addSimpleFilter(category, valueData.value, valueData.text || `${category}: ${valueData.value}`);
+	        }
+	    });
+	    
+	    // 화면 업데이트
+	    this.updateSelectedDisplay();
+	    
+	    // 검색 실행
+	    this.executeSearch({ filters: this.getSelectedFilters() });
+	}
+	
+	// 개별 필터 추가 - 데이터 검증 없음
+	addSimpleFilter(category, value, text) {
+	    const key = `${category}-${value}`;
+	    
+	    this.selectedFilters.set(key, {
+	        category: category,
+	        value: value,
+	        text: text,
+	        isSimpleFilter: true  // 간단한 필터임을 표시
+	    });
+	    
+	    console.log(`간단한 필터 추가: ${category} = ${value} (${text})`);
 	}
 
 	setGridInstance(gridInstance) {
@@ -1038,7 +1083,7 @@ class ODAFilterSystem {
 	}
 
 
-	removeFilter(key) {
+	removeFilter2(key) {
 		// 다단계 필터인지 확인
 		const filter = this.selectedFilters.get(key);
 		if (filter && filter.isMultiStep) {
@@ -1054,6 +1099,52 @@ class ODAFilterSystem {
 		this.updateSelectedDisplay();
 		this.applyFiltersAfterRemoval();
 	}
+	
+	removeFilter(key) {
+	    console.log('필터 제거 시도:', key);
+	    
+	    // 필터 데이터 가져오기
+	    const filter = this.selectedFilters.get(key);
+	    
+	    if (!filter) {
+	        console.log('제거할 필터를 찾을 수 없음:', key);
+	        return;
+	    }
+	    
+	    console.log('제거할 필터:', filter);
+	    
+	    // 간단한 필터인 경우
+	    if (filter.isSimpleFilter) {
+	        console.log('간단한 필터 제거:', key);
+	        this.selectedFilters.delete(key);
+	        this.updateSelectedDisplay();
+	        this.applyFiltersAfterRemoval();
+	        return;
+	    }
+	    
+	    // 다단계 필터인지 확인
+	    if (filter && filter.isMultiStep) {
+	        // 다단계 필터의 모든 관련 버튼 상태 제거
+	        this.clearMultiStepButtonStates(key);
+	    } else {
+	        // 단일 단계 필터 - DOM에서 버튼 찾아서 상태 제거
+	        const button = document.getElementById(key);
+	        if (button) {
+	            button.classList.remove('on', 'selected');
+	        } else {
+	            // jQuery로도 시도
+	            const $button = $('#' + key);
+	            if ($button.length) {
+	                $button.removeClass('on selected');
+	            }
+	        }
+	    }
+	    
+	    this.selectedFilters.delete(key);
+	    this.updateSelectedDisplay();
+	    this.applyFiltersAfterRemoval();
+	}
+	
 	
 	// 다단계 필터 버튼 상태 제거
 	clearMultiStepButtonStates(key) {
@@ -1251,7 +1342,7 @@ class ODAFilterSystem {
 	    });
 	}
 	
-	clearGridFilterFields(searchForm) {
+	clearGridFilterFields2(searchForm) {
 	    const filterCategories = new Set();
 	    this.selectedFilters.forEach(filter => {
 	        filterCategories.add(filter.category);
@@ -1270,6 +1361,45 @@ class ODAFilterSystem {
 	        }
 	    });
 	    
+	    const projectNameInput = document.getElementById('projectNameInput');
+	    if (!projectNameInput || !projectNameInput.value.trim()) {
+	        const searchTermFields = searchForm.find('[name="searchTerm"], [name="projectName"]');
+	        searchTermFields.val('');
+	    }
+	}
+	
+	clearGridFilterFields(searchForm) {
+	    console.log('그리드 필터 필드 초기화');
+	    
+	    // 현재 선택된 필터의 카테고리들
+	    const activeCategories = new Set();
+	    this.selectedFilters.forEach(filter => {
+	        activeCategories.add(filter.category);
+	    });
+	    
+	    console.log('활성 카테고리들:', Array.from(activeCategories));
+	    
+	    // categoryData에 있는 모든 카테고리와 추가로 자주 사용되는 필드들 초기화
+	    const allCategories = new Set([
+	        ...Object.keys(this.categoryData),
+	        'schNtnCd', 'schBgnDe', 'schEndDe', 'searchTerm', 'projectName' // 공통 필드들 추가
+	    ]);
+	    
+	    allCategories.forEach(category => {
+	        if (!activeCategories.has(category)) {
+	            const field = searchForm.find(`[name="${category}"]`);
+	            if (field.length) {
+	                console.log(`필드 초기화: ${category}`);
+	                if (field.hasClass('select2-hidden-accessible') || field.data('select2')) {
+	                    field.val('').trigger('change');
+	                } else {
+	                    field.val('');
+	                }
+	            }
+	        }
+	    });
+	    
+	    // 텍스트 검색어도 확인
 	    const projectNameInput = document.getElementById('projectNameInput');
 	    if (!projectNameInput || !projectNameInput.value.trim()) {
 	        const searchTermFields = searchForm.find('[name="searchTerm"], [name="projectName"]');
