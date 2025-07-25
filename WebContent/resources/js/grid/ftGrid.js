@@ -1710,6 +1710,9 @@ class TreeGridManager {
     }
     
     renderTemplate(templateId, data, mapData, selectOption, reverseIndex) {
+    	
+    	console.log('..................'+JSON.stringify(selectOption));
+    	
         const template = document.getElementById(templateId).innerHTML;
         
         // Format 헬퍼 함수들

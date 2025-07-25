@@ -244,6 +244,122 @@ class CommonGridManager {
             });
         });
     }
+    
+    
+    loadMultipleCodeListData(requests = null) {
+        return new Promise((resolve, reject) => {
+            // 기본 요청이 없거나 빈 배열이면 빈 객체 반환
+            if (!requests || !Array.isArray(requests) || requests.length === 0) {
+                console.log("No requests provided for loadMultipleCodeData, returning empty object");
+                resolve({});
+                return;
+            }
+            
+            // 요청 데이터에서 null 값 제거 및 유효성 검사
+            const validRequests = requests.filter(req => {
+                if (!req) return false;
+                
+                // 필수 필드 체크
+                const hasCodeDiv = req.schCodeDiv !== null && req.schCodeDiv !== undefined && req.schCodeDiv !== '';
+                const hasCdGroupSn = req.cdGroupSn !== null && req.cdGroupSn !== undefined;
+                
+                if (!hasCodeDiv || !hasCdGroupSn) {
+                    console.warn("Invalid request item:", req);
+                    return false;
+                }
+                
+                return true;
+            }).map(req => {
+                // 안전한 객체 생성
+                const cleanReq = {
+                    schCodeDiv: String(req.schCodeDiv).trim(),
+                    code: req.code || '',
+                    cdGroupSn: req.cdGroupSn
+                };
+                
+                // code 필드가 빈 문자열이 아닐 때만 포함
+                if (req.code && String(req.code).trim() !== '') {
+                    cleanReq.code = String(req.code).trim();
+                } else {
+                    cleanReq.code = '';
+                }
+                
+                return cleanReq;
+            });
+            
+            if (validRequests.length === 0) {
+                console.warn("No valid requests after filtering, returning empty object");
+                resolve({});
+                return;
+            }
+            
+            // 요청 데이터 로깅
+            console.log("Sending requests to /common/selectCodeMultiple:", validRequests);
+            
+            // 요청 객체를 완전히 깨끗하게 만들기
+            const requestPayload = {
+                requests: validRequests
+            };
+            
+            // JSON 문자열로 변환하여 null 키 문제 방지
+            let jsonString;
+            try {
+                jsonString = JSON.stringify(requestPayload);
+                console.log("Request JSON:", jsonString);
+            } catch (stringifyError) {
+                console.error("Failed to stringify request:", stringifyError);
+                reject(new Error("Failed to create request JSON"));
+                return;
+            }
+            
+       
+         
+        	
+        	
+            $.ajax({
+                url: '/common/selectCodeListMultiple',
+                type: 'post',
+                contentType: "application/json; charset=UTF-8",
+                data:  JSON.stringify({ requests: requests }),
+                success: function(data) {
+                    console.log("Multiple code list data response:", data);
+                    
+                    // 응답 데이터 처리
+                    let cleanData = {};
+                    
+                    if (data && typeof data === 'object') {
+                        // 응답이 객체인 경우 null 키 제거
+                        Object.keys(data).forEach(key => {
+                            if (key && key !== null && key !== undefined && key !== 'null' && key.trim() !== '') {
+                                cleanData[key] = data[key];
+                            } else {
+                                console.warn("Removing invalid key from response:", key);
+                            }
+                        });
+                    } else if (Array.isArray(data)) {
+                        // 응답이 배열인 경우 (예상치 못한 경우)
+                        console.warn("Unexpected array response, converting to object");
+                        cleanData = { result: data };
+                    } else {
+                        console.warn("Unexpected response format:", data);
+                        cleanData = {};
+                    }
+                    
+                    resolve(cleanData);
+                },
+                error: function(xhr, status, error) {
+                    console.error("Failed to load multiple code data:");
+                    console.error("Status:", status);
+                    console.error("Error:", error);
+                    console.error("Response:", xhr.responseText);
+                    
+                    // 에러 발생 시 빈 객체 반환하여 전체 프로세스가 중단되지 않도록 함
+                    console.warn("Returning empty object due to error");
+                    resolve({});
+                }
+            });
+        });
+    }
 
     /**
      * 모든 데이터를 로드하고 그리드를 초기화하는 함수
@@ -263,7 +379,8 @@ class CommonGridManager {
             multiStepCategories,
             categoryTitles,
             gridConfigs,
-            codeRequests
+            codeRequests,
+            codeListRequests
         } = config;
 
         // 설정 유효성 검사
@@ -293,8 +410,20 @@ class CommonGridManager {
                 codeMap = {};
             }
             
+            // 다중 코드 데이터 로드 (실패해도 진행)
+            let codeList = {};
+            try {
+            	codeList = await this.loadMultipleCodeListData(codeListRequests);
+                console.log('Code list  map loaded successfully:', codeList);
+            } catch (codeError) {
+                console.warn('Failed to load multiple code data, continuing with empty codeMap:', codeError);
+                codeList = {};
+            }
+            
+            
             // 코드맵 저장 (정리된 버전)
             this.codeMap = this.cleanNullKeys(codeMap);
+            this.codeList = this.cleanNullKeys(codeList);
             
             // 그리드 인스턴스들 초기화
             const gridInstances = [];
@@ -303,9 +432,11 @@ class CommonGridManager {
                 // 각 그리드 설정에 codeMap 추가
                 const configWithCodeMap = {
                     ...gridConfig,
-                    codeMap: this.codeMap
+                    codeMap: this.codeMap,
+                    selectOption: this.codeList
                 };
                 
+                console.log('configWithCodeMap........'+JSON.stringify(configWithCodeMap));
                 try {
                     const gridInstance = initTreeGrid(configWithCodeMap);
                     gridInstances.push(gridInstance);

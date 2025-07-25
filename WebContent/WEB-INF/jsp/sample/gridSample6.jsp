@@ -54,7 +54,7 @@ $(document).ready(function() {
             {
                 gridId: 'grid2',
                 searchFormId: 'searchForm',
-                templateId: 'node-row-template-1',
+                templateId: 'node-row-template-2',
                 urls: {
                     mainUrl: '/sample/newSampleList2',
                 }, 
@@ -74,7 +74,12 @@ $(document).ready(function() {
         codeRequests: [
             {schCodeDiv:'sss', code: '', cdGroupSn: '1' },
             {schCodeDiv:'fff', code: '', cdGroupSn: '1' }
-        ]
+        ],
+        
+        codeListRequests : [
+    	    {schCodeDiv:'statusOptions', code: '', cdGroupSn: '1' },
+    	    {schCodeDiv:'statusOptions2', code: '', cdGroupSn: '1' }
+    	]
         
         // 다중 코드가 필요 없는 경우 아래와 같이 빈 배열이나 null로 설정
         // codeRequests: null  // 또는 []
@@ -288,7 +293,9 @@ function someOtherFunction() {
 		        
 		    </div>
 		    
-		    
+		    </div>
+		    </div>
+		    <div id="grid2-container">
 		    
 		     <div class="tblBox">
 		    
@@ -333,7 +340,6 @@ function someOtherFunction() {
 		        
 		    </div>
 		</div>
-	</div>
 	
 	
 <!-- 첫 번째 그리드용 템플릿 -->
@@ -351,7 +357,12 @@ function someOtherFunction() {
     </td>
     <td class="tC">{{period}}</td>
     <td>{{department}}</td>
-    <td>{{country}}</td>
+    <td>{{country}} <select class="form-control form-control-sm" data-field="statusCd" data-value="{{statusCd}}">
+        <option value="">선택하세요</option>
+        {{#each statusOptions}}
+        <option value="{{this.value}}" {{#if this.value equals statusCd}}selected{{/if}}>{{this.text}}</option>
+        {{/each}}
+    </select></td>
     <td>{{sector}}{{ntnCd['192']}}</td>
     <td><span class="badge pt">{{status}}</span></td>
 </tr>

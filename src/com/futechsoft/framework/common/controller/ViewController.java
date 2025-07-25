@@ -196,7 +196,9 @@ public class ViewController  extends AbstractController {
 	        for (Map<String, Object> request : requests) {
 	            String code = (String) request.get("code");
 	            String cdGroupSn = (String) request.get("cdGroupSn");
-	            String codeDiv = (String) request.get("codeDiv");
+	            String codeDiv = (String) request.get("schCodeDiv");
+	            
+	        
 	            
 	            params.put("upCd", code);
 	    		params.put("cdGroupSn", cdGroupSn);
