@@ -11,11 +11,15 @@ public interface CommonMapper{
 	List<FtMap> selectCommonCodeList(FtMap params) throws Exception;
 	
 	
+	List<FtMap>  selectNtnSubCodeList(FtMap params) throws Exception;
+	
+	List<FtMap>  selectBizFldCdList(FtMap params) throws Exception;
+	
+	List<FtMap>  selectInstCdList(FtMap params) throws Exception;
 	
 	
-	List<FtMap>  selectNtcCodeList(FtMap params) throws Exception;
+	List<FtMap>  selectNtnCodeList(FtMap params) throws Exception;
 	
-	List<FtMap> selectBizFldCdList(FtMap params) throws Exception;
 	
 	
 	void insertUserAuth(FtMap params) throws Exception;

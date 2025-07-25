@@ -21,6 +21,8 @@
 	<script defer src="${basePath}/js/popupManager.js"></script>
 	
 	<script defer src="${basePath}/js/search/search.js"></script>
+	<script defer src="${basePath}/js/search/searchGridUtil.js"></script>
+	
 
 <script >
 

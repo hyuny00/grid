@@ -375,29 +375,28 @@ class ODAFilterSystem {
 	        return [];
 	    }
 	    
-	   
 	    
 	    const key = this.buildStepDataKey(category, parentSelections);
-	    
 	    
 	    if (this.stepData[key]) {
 	        return this.stepData[key];
 	    }
-	    
 	   
-	    const cdGroupSn = this.categoryCodeMapping[category];
+	    var cdGroupSn = this.categoryCodeMapping[category];
 	    
-	    var isSearchNtcCd = '';
-	    if (category === 'schNtnCd') {
-	        isSearchNtcCd = 'Y';
+	    
+	    var schCodeDiv;
+	    if (category == 'schNtnCd') {
+	        schCodeDiv='ntnCd';
 	    }
 	    
-	    var isBizFldCd='';
-	    if (category === 'schBizFldCd') {
-	    	isBizFldCd='Y';
+	    if (category == 'schBizFldCd') {
+	    	 schCodeDiv='bizFldCd';
+	    	 cdGroupSn=-1;
 	    }
 	    
-	    if(cdGroupSn == 16  && isSearchNtcCd=='Y' && parentSelections.length == 2){
+	    
+	    if(cdGroupSn == 16  && schCodeDiv=='ntnCd' && parentSelections.length == 2){
 	    	return [];
 	    } 
 	    
@@ -409,8 +408,7 @@ class ODAFilterSystem {
 	            data: { 
 	            	cdGroupSn: cdGroupSn, // 가장 최근 선택값
 	                code: parentSelections[parentSelections.length - 1],
-	                isSearchNtcCd: isSearchNtcCd,
-	                isBizFldCd : isBizFldCd,
+	                schCodeDiv: schCodeDiv,
 	                parentSelections: parentSelections.join(','), // 모든 상위 선택값들
 	                step: parentSelections.length + 1 // 다음 단계 번호
 	            }
@@ -1345,5 +1343,3 @@ class ODAFilterSystem {
 	    };
 	}
 }
-
-

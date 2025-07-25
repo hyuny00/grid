@@ -45,9 +45,15 @@ public class CommonService extends EgovAbstractServiceImpl {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<FtMap> selectNtcCodeList(FtMap params) throws Exception {
-		return commonMapper.selectNtcCodeList(params);
+	public List<FtMap> selectNtnSubCodeList(FtMap params) throws Exception {
+		return commonMapper.selectNtnSubCodeList(params);
 	}
+	
+	
+	public List<FtMap> selectNtnCodeList(FtMap params) throws Exception {
+		return commonMapper.selectNtnCodeList(params);
+	}
+	
 	
 	/**
 	 * 사업분야를 가져온다
@@ -60,7 +66,15 @@ public class CommonService extends EgovAbstractServiceImpl {
 	}
 	
 	
-	
+	/**
+	 * 기관코드를 가져온다
+	 * @param params
+	 * @return
+	 * @throws Exception
+	 */
+	public List<FtMap> selectInstCdList(FtMap params) throws Exception {
+		return commonMapper.selectInstCdList(params);
+	}
 
 	/**
 	 * 공통코드 목록을 ftmap형식으로 바꾼다
@@ -115,8 +129,8 @@ public class CommonService extends EgovAbstractServiceImpl {
 	public FtMap selectCommonCodeMap(FtMap params) throws Exception {
 		List<FtMap> codeList = commonMapper.selectCommonCodeList(params);
 		return selectCommonCodeMap(codeList);
-		//return null;
 	}
+	
 	
 	/**
 	 * 데이터에 숫자만 남김 . - / , . 등 제거 . 소숫점도 제거됨 cleanData(params, "phoneNumber", "birthDate", "amount");

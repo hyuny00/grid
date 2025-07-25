@@ -1,246 +1,125 @@
 <%@ page language="java" pageEncoding="UTF-8" contentType="text/html; charset=UTF-8"%>
 <%@ include file="/WEB-INF/jsp/framework/_includes/includeTags.jspf" %>
-
-
 <script type="text/javascript">
 
-
+let initializedData = null;
 $(document).ready(function() {
-	
-	
-	// Ajax로 카테고리 데이터를 가져오는 함수
-	function loadCategoryData(category) {
-	    return new Promise((resolve, reject) => {
-	        const cdGroupSn = categoryCodeMapping[category];
-	        
-	        var isBizFldCd='';
-	        if(cdGroupSn==-1){
-	        	isBizFldCd='Y';
-	        }
-	        
-	        $.ajax({
-	            url: '/common/selectCode',
-	            type: 'get',
-	            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-	            data: { 
-	                cdGroupSn: cdGroupSn ,
-	                isBizFldCd : isBizFldCd
-	            },
-	            success: function(data) {
-	                // 받은 데이터를 categoryData 구조로 변환
-	                const transformedData = data.map(item => ({
-	                    value: item.code,  // 또는 item.value (실제 응답 구조에 따라)
-	                    text: item.text
-	                }));
-	                resolve(transformedData);
-	                
-	                console.log("transformedData.."+JSON.stringify(transformedData));
-	            },
-	            error: function(xhr, status, error) {
-	                console.error("Failed to loaddata:");
-	                reject(error);
-	            }
-	        });
-	    });
-	}
-	
-
-	// 모든 동적 카테고리 데이터를 로드하는 함수
-	async function initializeCategoryData() {
-	    const categoryData = {
-	    		 'period': [
-	    		        { 
-	    		            value: 'period_range', 
-	    		            text: '',
-	    		            type: 'date'
-	    		        }
-	    		    ],
-	    		    
-	    		    'budget': [
-	    		        { 
-	    		            value: 'current_year_budget', 
-	    		            text: '',
-	    		            type: 'budget' 
-	    		        }
-	    		    ]
-	    };
-
-	    // 동적 카테고리들을 순차적으로 로드
-	    for (const category of dynamicCategories) {
-	        try {
-	            categoryData[category] = await loadCategoryData(category);
-	            console.log("data loaded successfully");
-	        } catch (error) {
-	            console.error("Failed to load");
-	            // 실패 시 빈 배열로 초기화
-	            categoryData[category] = [];
-	        }
-	    }
-
-	    return categoryData;
-	}
-	
-	
-	const dynamicCategories = ['schNtnCd', 'schBizFldCd','schAidTpCd'];
-
-	// 각 카테고리별 코드 그룹 매핑 (실제 값에 맞게 수정 필요)
-	const categoryCodeMapping = {
-			schNtnCd: '16',
-			schBizFldCd: '-1',
-			schAidTpCd :'21'
-	   
-	};
-	
-	//2단계이상코드의 첫단계 타이틀
-	const categoryTitles = {
-		    'schNtnCd': '대륙',
-		    'schBizFldCd': '사업분야'
-	};
-	  // 2단계이상 필터가 필요한 카테고리들을 정의
-  	const multiStepCategories = ['schNtnCd','schBizFldCd'];
-	
-	
-	let categoryData;
-	initializeCategoryData().then(categoryData => {
-	        console.log('All category data loaded:', categoryData);
-	    
-	        
-	        const gridInstance1 = initTreeGrid({
-			     gridId: 'grid1',
-			     searchFormId: 'searchForm',
-			     templateId: 'node-row-template-1',
-			     urls: {
-			    	 mainUrl: '/sample/newSampleList2',
-			     }, 
-			     pageSize: 10,
-			     
-			     onRowClick: function(rowData, $row) {
-			         console.log('선택된 행:', rowData);
-			     },
-			     onRowDoubleClick: function(rowData, $row) {
-			         console.log('더블클릭된 행:', rowData);
-			         // 여기에 더블클릭 시 실행할 로직 추가
-			         // 예: 상세 페이지 이동, 수정 모달 열기 등
-			     }
-			 });
-		    
-		    const gridInstance2 = initTreeGrid({
-			     gridId: 'grid2',
-			     searchFormId: 'searchForm',
-			     templateId: 'node-row-template-1',
-			     urls: {
-			    	 mainUrl: '/sample/newSampleList2',
-			     }, 
-			     pageSize: 10,
-			     
-			     onRowClick: function(rowData, $row) {
-			         console.log('선택된 행:', rowData);
-			     },
-			     
-			     onRowDoubleClick: function(rowData, $row) {
-			         console.log('더블클릭된 행:', rowData);
-			         // 여기에 더블클릭 시 실행할 로직 추가
-			         // 예: 상세 페이지 이동, 수정 모달 열기 등
-			     }
-			 });
-		    
-		    
-			//검색조건으로 그리드 2개이상 검색시		
-			 const filterSystem = new ODAFilterSystem(categoryData, [gridInstance1,gridInstance2],multiStepCategories,categoryTitles,categoryCodeMapping);
-			
-			//검색조건으로 그리드  검색시		
-			 //const filterSystem = new ODAFilterSystem(categoryData, gridInstance1 ,multiStepCategories,categoryTitles);
-			
-			
-			 window.odaFilterSystem = filterSystem;
-	        
-
-
-	});
-	
-	
-	//console.log("..."+categoryData);
-	
-	/*
-	const categoryData = {
-		period: [
-			{ value: 'start-date', text: '시작일 선택', type: 'date' },
-			{ value: 'end-date', text: '종료일 선택', type: 'date' },
-			{ value: '2023', text: '2023년' },
-			{ value: '2024', text: '2024년' },
-			{ value: '2025', text: '2025년' }
-		],
-		agency: [
-			{ value: 'koica', text: 'KOICA' },
-			{ value: 'moe', text: '교육부' },
-			{ value: 'nrf', text: '국무조정실' },
-			{ value: 'mof', text: '기획재정부' },
-			{ value: 'mofa', text: '외교부' }
-		],
-		country: [
-			{ value: 'bangladesh', text: '방글라데시' },
-			{ value: 'vietnam', text: '베트남' },
-			{ value: 'cambodia', text: '캄보디아' },
-			{ value: 'laos', text: '라오스' },
-			{ value: 'mongolia', text: '몽골' },
-			{ value: 'nepal', text: '네팔' },
-			{ value: 'ghana', text: '가나' },
-			{ value: 'rwanda', text: '르완다' }
-		],
-		field: [
-			{ value: 'education', text: '교육' },
-			{ value: 'health', text: '보건' },
-			{ value: 'agriculture', text: '농업' },
-			{ value: 'environment', text: '환경' },
-			{ value: 'governance', text: '거버넌스' },
-			{ value: 'infrastructure', text: '인프라' },
-			{ value: 'public_admin', text: '일반 공공행정 및 시민사회' }
-		],
-		status: [
-			{ value: 'confirmed', text: '확정' },
-			{ value: 'planning', text: '계획' },
-			{ value: 'ongoing', text: '진행중' },
-			{ value: 'completed', text: '완료' },
-			{ value: 'suspended', text: '중단' }
-		],
-		aid_type: [
-			{ value: 'grant', text: '무상원조' },
-			{ value: 'loan', text: '유상원조' },
-			{ value: 'technical', text: '기술협력' },
-			{ value: 'scholarship', text: '장학사업' },
-			{ value: 'training', text: '연수사업' },
-			{ value: 'package', text: '패키지사업' }
-		]
-	};
-	*/
-	
-	/*
-	 // 첫 번째 그리드 초기화
-	 const gridInstance = initTreeGrid({
-	     gridId: 'grid1',
-	     searchFormId: 'searchForm',
-	     templateId: 'node-row-template-1',
-	     urls: {
-	    	 mainUrl: '/sample/newSampleList2',
-	     }, 
-	     pageSize: 10,
-	     
-	     onRowClick: function(rowData, $row) {
-	         console.log('선택된 행:', rowData);
-	     }
-	 });
-
-	
-	 const filterSystem = new ODAFilterSystem(categoryData, gridInstance);
-	 window.odaFilterSystem = filterSystem;
-	*/ 
-	 
+    
+    // 공통 그리드 매니저 인스턴스 생성
+    const gridManager = new CommonGridManager();
+    
+    // 개별 페이지별 설정
+    const pageConfig = {
+        // 동적 카테고리 설정
+        dynamicCategories: ['schNtnCd', 'schBizFldCd','schAidTpCd','schInstCd'],
+        
+        // 각 카테고리별 코드 그룹 매핑
+        categoryCodeMapping: {
+            schNtnCd: '16',
+            schAidTpCd :'21',
+            schBizFldCd: 'bizFldCd',  //4단계사업분야 고정값
+            schInstCd: 'instCd'//기관코드고정값
+        },
+        
+        // 2단계이상코드의 첫단계 타이틀
+        categoryTitles: {
+            'schNtnCd': '대륙',
+            'schBizFldCd': '사업분야'
+        },
+        
+        // 2단계이상 필터가 필요한 카테고리들을 정의
+        multiStepCategories: ['schNtnCd','schBizFldCd'],
+        
+      
+        
+        // 그리드 설정들
+        gridConfigs: [
+            {
+                gridId: 'grid1',
+                searchFormId: 'searchForm',
+                templateId: 'node-row-template-1',
+                urls: {
+                    mainUrl: '/sample/newSampleList2',
+                }, 
+                pageSize: 10,
+                onRowClick: function(rowData, $row) {
+                    console.log('선택된 행:', rowData);
+                },
+                onRowDoubleClick: function(rowData, $row) {
+                    console.log('더블클릭된 행:', rowData);
+                    // 여기에 더블클릭 시 실행할 로직 추가
+                    // 예: 상세 페이지 이동, 수정 모달 열기 등
+                }
+            },
+            {
+                gridId: 'grid2',
+                searchFormId: 'searchForm',
+                templateId: 'node-row-template-1',
+                urls: {
+                    mainUrl: '/sample/newSampleList2',
+                }, 
+                pageSize: 10,
+                onRowClick: function(rowData, $row) {
+                    console.log('선택된 행:', rowData);
+                },
+                onRowDoubleClick: function(rowData, $row) {
+                    console.log('더블클릭된 행:', rowData);
+                    // 여기에 더블클릭 시 실행할 로직 추가
+                    // 예: 상세 페이지 이동, 수정 모달 열기 등
+                }
+            }
+        ],
+        
+        // 다중 코드 요청 설정 (선택사항 - 필요 없으면 주석 처리 또는 삭제)
+        codeRequests: [
+            {schCodeDiv:'sss', code: '', cdGroupSn: '1' },
+            {schCodeDiv:'fff', code: '', cdGroupSn: '1' }
+        ]
+        
+        // 다중 코드가 필요 없는 경우 아래와 같이 빈 배열이나 null로 설정
+        // codeRequests: null  // 또는 []
+    };
+    
+    
+   
+    
+    // 모든 초기화 작업 시작
+    const result = gridManager.initializeAllData(pageConfig)
+        .then(result => {
+            console.log('초기화 완료:', result);
+            // 필요시 초기화 완료 후 추가 작업 수행
+            initializedData = result;
+          
+        })
+        .catch(error => {
+            console.error('초기화 실패:', error);
+        });
+    
+    
+        
 });
+
+function someOtherFunction() {
+	 if (initializedData) {
+	        const targetGrid = initializedData.gridInstances.find(grid => grid.gridId === 'grid1');
+	        
+	        if (targetGrid) {
+	            alert('grid1이 초기화되어 있음!');
+	            var a= targetGrid.getSearchParams(); 
+	            console.log("..."+JSON.stringify(a));
+	        } else {
+	            alert('gridInstances에 grid1 없음!');
+	        }
+
+	    } else {
+	        alert('초기화 아직 안 됨!');
+	    }
+}
 </script>
 
 <div class="pgtBox">
 					<div class="lt">
-						<h2>요청 중인 연계</h2>
+						<h2><a href="javascript:someOtherFunction()">요청 중인 연계</a></h2>
 					</div>
 					
 					<ul class="breadcrumb">
@@ -271,7 +150,7 @@ $(document).ready(function() {
 				        <div class="fltList">
 				            <ul>
 				                <li><button type="button" class="filter-category-btn" data-category="period">사업기간</button></li>
-				                <li><button type="button" class="filter-category-btn" data-category="schBizTpCd">시행기관</button></li>
+				                <li><button type="button" class="filter-category-btn" data-category="schInstCd">시행기관</button></li>
 				                <li><button type="button" class="filter-category-btn" data-category="schNtnCd">수원국</button></li>
 				                <li><button type="button" class="filter-category-btn" data-category="schBizFldCd">사업분야</button></li>
 				                <li><button type="button" class="filter-category-btn" data-category="status">진행상태</button></li>
@@ -457,7 +336,7 @@ $(document).ready(function() {
     <td class="tC">{{period}}</td>
     <td>{{department}}</td>
     <td>{{country}}</td>
-    <td>{{sector}}</td>
+    <td>{{sector}}{{ntnCd['192']}}</td>
     <td><span class="badge pt">{{status}}</span></td>
 </tr>
 
@@ -479,9 +358,9 @@ $(document).ready(function() {
     </td>
     <td class="tC">{{period}}</td>
     <td>{{department}}</td>
-    <td>{{country}}</td>
+    <td>{{country}}         </td>
     <td>{{sector}}</td>
-    <td><span class="badge pt">{{status}}</span></td>
+    <td><span class="badge pt">{{status}}   </span></td>
 </tr>
 
 

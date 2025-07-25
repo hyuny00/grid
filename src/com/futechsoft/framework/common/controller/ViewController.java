@@ -72,64 +72,46 @@ public class ViewController  extends AbstractController {
 	public List<FtMap> selectCode(HttpServletRequest request) throws Exception {
 
 		FtMap params = super.getFtMap(request);
+		params.put("userNo", SecurityUtil.getUserNo());
+		
 		
 		List<FtMap> codeList = null;
 		
 
 		String code= params.getString("code");
+		int cdGroupSn= params.getInt("cdGroupSn");
+		params.put("upCd", code);
+		params.put("cdGroupSn", cdGroupSn);
 		
-		String isBizFldCd= params.getString("isBizFldCd");
 		
-		if(CommonUtil.nvl(isBizFldCd).equals("Y")) {
-			
+		String schCodeDiv= params.getString("schCodeDiv");
+		
+		
+		if(CommonUtil.nvl(schCodeDiv).equals("bizFldCd")) {
 			
 			if( params.getString("code").equals("")) {
 				params.put("upCd", "-");
 			}else {
 				params.put("upCd", code);
 			}
-			
 			codeList = getCommonService().selectBizFldCdList(params);
-			return codeList;
-		}
-		
-		
-
-	
-		
-		int cdGroupSn= params.getInt("cdGroupSn");
-		
-		String isSearchNtcCd= params.getString("isSearchNtcCd");
-		
-
-		params.put("userNo", SecurityUtil.getUserNo());
-
-		params.put("upCd", code);
-		params.put("cdGroupSn", cdGroupSn);
-		
-		
-		//대륙검색시만 해당
-		if(cdGroupSn==16) {
+			
+		}else if(CommonUtil.nvl(schCodeDiv).equals("ntnCd")) {
 			params.put("schCntnt", "Y");
-			
-		}
-		
-	
-		if(CommonUtil.nvl(isSearchNtcCd).equals("Y")) {
-			
 			params.put("schUpNtnCd", code);
+			codeList = getCommonService().selectNtnSubCodeList(params);
 			
+		}else if(CommonUtil.nvl(schCodeDiv).equals("instCd")) {
+			codeList = getCommonService().selectInstCdList(params);
 			
-			codeList = getCommonService().selectNtcCodeList(params);
 		}else {
 			codeList = getCommonService().selectCommonCodeList(params);
 		}
-		
-
 
 		return codeList;
 
 	}
+	
 	
 	@RequestMapping(value = "/common/selectBizFldCdList")
 	@ResponseBody
@@ -157,9 +139,10 @@ public class ViewController  extends AbstractController {
 	    
 	    if (requests != null) {
 	        for (Map<String, Object> request : requests) {
-	            String code = (String) request.get("code");
+	           
+	        	String code = (String) request.get("code");
 	            String cdGroupSn = (String) request.get("cdGroupSn");
-	            String codeDiv = (String) request.get("codeDiv");
+	            String schCodeDiv = (String) request.get("schCodeDiv");
 	            
 	            
 	            
@@ -168,13 +151,28 @@ public class ViewController  extends AbstractController {
 	    		
 	            
 	            // 기존 selectCode 서비스 로직 재사용
-	            List<FtMap> codeList = getCommonService().selectCommonCodeList(params);
+	           // List<FtMap> codeList = getCommonService().selectCommonCodeList(params);
+	            
+	          
+	            
+	            List<FtMap> codeList =null;
+	            
+	            if(CommonUtil.nvl(schCodeDiv).equals("bizFldCd")) {
+	    			codeList = getCommonService().selectBizFldCdList(params);
+	    		}else if(CommonUtil.nvl(schCodeDiv).equals("instCd")) {
+	    			codeList = getCommonService().selectInstCdList(params);
+	    		}else if(CommonUtil.nvl(schCodeDiv).equals("ntnCd")) {
+	    			codeList = getCommonService().selectNtnCodeList(params);
+	    		}else {
+	    			codeList = getCommonService().selectCommonCodeList(params);
+	    		}
 	            
 	            FtMap codeMap = super.getCommonService().selectCommonCodeMap(codeList);
 	            
+	            
 	           
 	            
-	            resultMap.put(codeDiv, codeMap);
+	            resultMap.put(schCodeDiv, codeMap);
 	        }
 	    }
 	    
