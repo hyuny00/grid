@@ -14,7 +14,7 @@ public interface WorldBankMapper {
 	 * @param params
 	 * @throws Exception
 	 */
-	void insertNtnIdct(FtMap params) throws Exception;
+	void createNtnIdct(FtMap params) throws Exception;
 	
 	
 	/**
@@ -32,6 +32,6 @@ public interface WorldBankMapper {
 	 * @return
 	 * @throws Exception
 	 */
-	List<String> getNtnCdList() throws Exception;
+	List<String> listNtnCd() throws Exception;
 
 }

@@ -24,7 +24,7 @@ public interface IatiMapper {
 	 * @param params
 	 * @throws Exception
 	 */
-	void inserNtnRgn(FtMap params) throws Exception;
+	void createNtnRgn(FtMap params) throws Exception;
 	
 	
 	/**

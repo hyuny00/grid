@@ -89,7 +89,7 @@ public class IatiService {
 	    		 
 	    		 try {
 		    		 if(map ==  null) {
-		    			 iatiMapper.inserNtnRgn(param);
+		    			 iatiMapper.createNtnRgn(param);
 		    		 } else if( CommonUtil.nvl(map.getString("bizRgnPstnLotVl")).equals("") ||  CommonUtil.nvl(map.getString("bizRgnPstnLatVl")).equals("")) {
 			    		iatiMapper.updateNtnRgn(param);
 		    		 }

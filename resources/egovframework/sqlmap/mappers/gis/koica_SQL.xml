@@ -26,7 +26,7 @@
  
   
 
-<insert id="insertKoicaScrpInfo" parameterType="ftMap">
+<insert id="createKoicaScrpInfo" parameterType="ftMap">
     INSERT INTO tcm_biz_file_scrp_ls (
         file_id,
         enfc_inst_unq_biz_no,

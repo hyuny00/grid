@@ -17,7 +17,7 @@
 
 
 
-	<insert id="inserNtnRgn" parameterType="ftMap">
+	<insert id="createNtnRgn" parameterType="ftMap">
 
 		INSERT INTO FTCORE.tcm_ntn_rgn_cd (
 			rgn_no, ntn_no,

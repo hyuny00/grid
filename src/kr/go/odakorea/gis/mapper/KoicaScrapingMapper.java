@@ -7,7 +7,7 @@ import com.futechsoft.framework.util.FtMap;
 @Mapper("gis.mapper.KoicaInfoMapper")
 public interface KoicaScrapingMapper {
 	
-	void insertKoicaScrpInfo(FtMap params) throws Exception;
+	void createKoicaScrpInfo(FtMap params) throws Exception;
 	
 	
 	String getEnfcInstUnqBizNo() throws Exception;

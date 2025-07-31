@@ -4,7 +4,7 @@
 <mapper namespace="kr.go.odakorea.gis.mapper.ReliefWebMapper">
 
 
-	<insert id="insertRcntnClmty" parameterType="ftMap">
+	<insert id="createRcntnClmty" parameterType="ftMap">
 
 
 			INSERT tcm_rcntn_clmty_ls

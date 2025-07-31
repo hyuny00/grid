@@ -53,6 +53,10 @@ public class KoicaScrapingService {
     
 	@Value("${oda.download.dir}")
 	private String downloadDir;
+	
+	
+	@Value("${ap.koicaScrapingYn}")
+	private String koicaScrapingYn;
     
     // 다운로드 디렉토리 초기화
     static {
@@ -169,13 +173,14 @@ public class KoicaScrapingService {
         HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
     }
     
+  
+    //@Scheduled(fixedRate = 30000) 
     // 매일 오전 2시에 실행되는 스케줄러
-    //@Scheduled(cron = "0 0 2 * * *")
-  //  @Scheduled(fixedRate = 30000) 
+    @Scheduled(cron = "0 0 2 * * *")
     public void scheduledScraping() {
         logger.info("ODA 스크래핑 스케줄 시작");
         
-     
+        if(koicaScrapingYn.equals("N")) return;
         
         try {
             List<BusinessInfo> businesses = extractAllBusinessesWithFiles();
@@ -525,7 +530,7 @@ public class KoicaScrapingService {
  	            	param.put("mdfcnUserId", "system");
  	            	
  	            	
- 	            	 koicaScrapingMapper.insertKoicaScrpInfo(param);
+ 	            	 koicaScrapingMapper.createKoicaScrpInfo(param);
 
  	            	
  	            	 logger.info("사업번호: {}", businesses.getBsnsNo());

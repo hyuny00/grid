@@ -196,19 +196,36 @@ function test2(){
 		                <col style="width: 13%;">
 		            </colgroup>
 		            <thead>
-		                <tr>
-		                    <th scope="col">
-		                        <div class="tblChk">
-		                            <input type="checkbox" id="chk01" class="check-all"><label for="chk01"></label>
-		                        </div>
-		                    </th>
-		                    <th scope="col">사업번호</th>
-		                    <th scope="col">사업명</th>
-		                    <th scope="col">수원국</th>
-		                    <th scope="col">등록일</th>
-		                    <th scope="col">사업상태</th>
-		                </tr>
-		            </thead>
+					<tr>
+						<th scope="col">
+							<div class="tblChk">
+								<input type="checkbox" id="chk01" class="check-all"><label
+									for="chk01"></label>
+							</div>
+						</th>
+						<th scope="col" class="sortable" data-sort="bizNo">사업번호 <span
+							class="sort-icon"></span>
+						</th>
+						<th scope="col" class="sortable" data-sort="bizName">사업명 <span
+							class="sort-icon"></span>
+						</th>
+						<th scope="col" class="sortable" data-sort="bizPeriod">사업기간 <span
+							class="sort-icon"></span>
+						</th>
+						<th scope="col" class="sortable" data-sort="agency">시행기관 <span
+							class="sort-icon"></span>
+						</th>
+						<th scope="col" class="sortable" data-sort="country">수원국 <span
+							class="sort-icon"></span>
+						</th>
+						<th scope="col" class="sortable" data-sort="regDate">등록일 <span
+							class="sort-icon"></span>
+						</th>
+						<th scope="col" class="sortable" data-sort="status">사업상태 <span
+							class="sort-icon"></span>
+						</th>
+					</tr>
+				</thead>
 		            <tbody id="grid1-body">
 		            </tbody>
 		        </table>

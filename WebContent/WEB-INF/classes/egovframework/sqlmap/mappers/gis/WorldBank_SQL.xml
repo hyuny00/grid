@@ -5,7 +5,7 @@
 
 
 
-	<insert id="insertNtnIdct" parameterType="ftMap">
+	<insert id="createNtnIdct" parameterType="ftMap">
 	    INSERT INTO FTCORE."tcm_ntn_idct_dt"
 	    (
 	        "edcf_ntn_cd",
@@ -51,7 +51,7 @@
 
 
 
-	<select id="getNtnCdList"  resultType="String">
+	<select id="listNtnCd"  resultType="String">
 		SELECT
 			ntn_cd
 		FROM tcm_ntn_cd

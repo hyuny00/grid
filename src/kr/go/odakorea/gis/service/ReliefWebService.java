@@ -51,8 +51,9 @@ public class ReliefWebService {
 	@Value("${reliefweb.baseUrl}")
 	private String reliefwebBaseUrl;
 	
-	@Value("${ap.externalRelayYn}")
-	private String externalRelayYn;
+	
+	@Value("${ap.reliefWebRelayYn}")
+	private String reliefWebRelayYn;
 	
 	
 	@Resource(name = "gis.mapper.ReliefWebMapper")
@@ -63,10 +64,10 @@ public class ReliefWebService {
 	
     //@Scheduled(fixedRate = 30000) 
 	//3시간 마다 실행
-  //  @Scheduled(cron = "0 0 0/3 * * *")
+    @Scheduled(cron = "0 0 0/3 * * *")
 	public void saveDisaster() throws Exception {
     	
-		if(externalRelayYn.equals("N")) return;
+		if(reliefWebRelayYn.equals("N")) return;
     	
     	LOGGER.debug("reliefwebBaseUrl  get: " +reliefwebBaseUrl);
 		
@@ -189,7 +190,7 @@ public class ReliefWebService {
             
             try {
 	             if(count == 0) {
-	            	 reliefWebMapper.insertRcntnClmty(param);
+	            	 reliefWebMapper.createRcntnClmty(param);
 		       	 } else {
 		       		reliefWebMapper.updateClmtyPrgrsStcd(param);
 		       	 }

@@ -11,7 +11,7 @@ public interface ReliefWebMapper {
 	 * @param params
 	 * @throws Exception
 	 */
-	void insertRcntnClmty(FtMap params) throws Exception;
+	void createRcntnClmty(FtMap params) throws Exception;
 	
 	/**
 	 * 수원국 재난상태를 수정한다

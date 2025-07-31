@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import kr.go.odakorea.gis.service.WorldBankService;
+
 @RestController
 public class OdaInfoController {
 	
@@ -25,6 +28,10 @@ public class OdaInfoController {
 	@Value("${indicator.template.path}")
 	private String indicatorTemplatePath;
 
+	@Autowired
+	WorldBankService worldBankService;
+	
+	
     @GetMapping("/api/indicators/flat")
     public ResponseEntity<Map<String, Object>> getFlatIndicatorMap() {
         ObjectMapper mapper = new ObjectMapper();
@@ -153,6 +160,21 @@ public class OdaInfoController {
     }
     
     
+    
+
+    @GetMapping("/api/test")
+    public ResponseEntity<Map<String, Object>> test() {
+    	
+    	try {
+		//	worldBankService.fetchWorldBankData();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+    	
+    	
+    }
    
     
     

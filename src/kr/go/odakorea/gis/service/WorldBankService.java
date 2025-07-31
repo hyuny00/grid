@@ -46,16 +46,15 @@ public class WorldBankService {
 	@Value("${indicator.template.path}")
 	private String indicatorTemplatePath;
 	
-	@Value("${ap.externalRelayYn}")
-	private String externalRelayYn;
 	
+	@Value("${ap.worldBankRelayYn}")
+	private String worldBankRelayYn;
 	
 
 	@Resource(name = "gis.mapper.WorldBankMapper")
 	private WorldBankMapper worldBankMapper;
 	
 	
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(WorldBankService.class);
 	
 	
@@ -71,21 +70,20 @@ public class WorldBankService {
 	@PostConstruct
 	public void init() throws Exception {
 		comprehensiveIndicators = loadIndicators("indicators.json");
-		
-		//테스트
-		//fetchWorldBankData();
 	}
 	
 	
 	// 테스트용 - 실제 운영에서는 cron으로 변경
 	// @Scheduled(cron = "0 0 3 * * *")
 	//@Scheduled(fixedRate = 60000) // 1분마다 실행 (테스트용)
+	
+	//매년 1월, 4월, 7월, 10월의 1일 오전 3시 정각
+	@Scheduled(cron = "0 0 3 1 1,4,7,10 *") 
 	public void fetchWorldBankData() throws Exception {
 		
-		if(externalRelayYn.equals("N")) return;
+		if(worldBankRelayYn.equals("N")) return;
 		
-		List<String> odaCountries = worldBankMapper.getNtnCdList(); 
-		
+		List<String> odaCountries = worldBankMapper.listNtnCd(); 
 		
 		
 		File file = new File(indicatorTemplatePath+File.separator+"indicator-result.json");
@@ -374,7 +372,8 @@ public class WorldBankService {
              */
           
             FtMap param = new FtMap();
-            param.put("edcfNtnCd",  CountryCodeUtil.toAlpha2(country) );
+            //param.put("edcfNtnCd",  CountryCodeUtil.toAlpha2(country) );
+            param.put("edcfNtnCd", country);
             param.put("idctCdVl", indicatorInfo.getCode());
             param.put("crtrYr", date);
             param.put("idctNm", indicatorInfo.getName());
@@ -387,7 +386,7 @@ public class WorldBankService {
             //DB저장.
             try {
 	            worldBankMapper.deletetNtnIdct(param);
-	            worldBankMapper.insertNtnIdct(param);
+	            worldBankMapper.createNtnIdct(param);
             }catch(Exception e) {
             	
             	LOGGER.error(e.toString());
