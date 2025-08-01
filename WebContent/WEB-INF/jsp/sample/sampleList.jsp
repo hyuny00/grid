@@ -273,4 +273,60 @@ html<!-- 대문자로 변환 -->
 
 <!-- 제목 형태로 변환 -->
 {{format name "string" case="title"}}
+
+
+
+
+
+
+// 그리드 매니저 인스턴스에서 사용
+const gridManager = gridManagers['your-grid-id'];
+
+// 1. 특정 행의 데이터 가져오기
+const rowData = gridManager.getRowData('row-id-123');
+
+// 2. 특정 행의 여러 필드 업데이트
+gridManager.updateRowData('row-id-123', {
+    name: '새로운 이름',
+    email: 'new@email.com',
+    status: 'active'
+});
+
+// 3. 특정 행의 단일 필드 업데이트
+gridManager.updateRowField('row-id-123', 'name', '수정된 이름');
+
+
+
+
+const gridManager = gridManagers['your-grid-id'];
+
+// 1. 인덱스로 행 데이터 가져오기 (0부터 시작)
+const firstRowData = gridManager.getRowDataByIndex(0);
+const thirdRowData = gridManager.getRowDataByIndex(2);
+
+// 2. 인덱스로 행 데이터 업데이트
+gridManager.updateRowDataByIndex(0, {
+    name: '첫 번째 행 수정',
+    status: 'updated'
+});
+
+// 3. 인덱스로 특정 필드만 업데이트
+gridManager.updateRowFieldByIndex(1, 'name', '두 번째 행 이름 수정');
+
+//템플릿수정
+ <span data-field="name">{{name}}</span>
+
+// 4. 상호 변환
+const nodeId = gridManager.getNodeIdByIndex(2); // 3번째 행의 nodeId
+const index = gridManager.getIndexByNodeId('some-node-id'); // nodeId의 인덱스
+
+// 5. 전역 함수로 사용
+const rowData = getGridRowDataByIndex('your-grid-id', 0);
+updateGridRowFieldByIndex('your-grid-id', 1, 'status', 'active');
+
+
+
+
+
+
 </code></pre>

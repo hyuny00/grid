@@ -25,6 +25,15 @@ class ODAFilterSystem {
 	init() {
 		this.bindEvents();
 		this.updateSelectedDisplay();
+		
+		
+		const filterArea = document.getElementById('searchFilterArea');
+		filterArea.style.display = 'none';
+		
+		const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+		applyFiltersBtn.style.display = 'none';
+		
+		
 	}
 	
 	// 초기 필터 설정 - 데이터 검증 없이 바로 추가
@@ -128,12 +137,14 @@ class ODAFilterSystem {
 		// 초기화 버튼
 		const resetFiltersBtn = document.getElementById('resetFiltersBtn');
 		if (resetFiltersBtn) {
+		
 			resetFiltersBtn.addEventListener('click', () => {
 				this.resetFilters();
 			});
 		}
 
 		// 텍스트 입력 엔터키 처리
+		/*
 		const projectNameInput = document.getElementById('projectNameInput');
 		if (projectNameInput) {
 			projectNameInput.addEventListener('keypress', (e) => {
@@ -142,6 +153,7 @@ class ODAFilterSystem {
 				}
 			});
 		}
+		*/
 	}
 
 	toggleFilterArea() {
@@ -152,12 +164,27 @@ class ODAFilterSystem {
 		
 		this.isFilterOpen = !this.isFilterOpen;
 		
+		const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+		
+		
+		const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+		
+		
 		if (this.isFilterOpen) {
 			filterArea.style.display = 'block';
 			toggleBtn.textContent = '검색 필터 닫기';
+			
+			resetFiltersBtn.disabled = false;
+			
+			applyFiltersBtn.style.display = 'inline-flex';
+			
 		} else {
 			filterArea.style.display = 'none';
 			toggleBtn.textContent = '검색 필터 열기';
+			
+			
+			
+			applyFiltersBtn.style.display = 'none';
 			this.clearActiveCategory();
 		}
 	}
@@ -859,130 +886,7 @@ class ODAFilterSystem {
 	    container.appendChild(ul);
 	}
 	
-	// 1단계 항목 선택 (2단계 필터용)
-	/*
-	async selectFirstStepItem(button, itemData) {
-		const category = button.dataset.category;
-		const value = button.dataset.value;
-		
-		// 1단계 선택 표시
-		document.querySelectorAll('.first-step-list .filter-option-item').forEach(btn => {
-			btn.classList.remove('selected');
-		});
-		button.classList.add('selected');
-		
-		this.activeSubCategory = value;
-		
-		// 2단계 데이터 로드
-		await this.loadSubCategoryData(category, value);
-		
-		// 2단계 옵션 표시
-		this.showSecondStepOptions(category, value);
-	}
-*/
-	// 2단계 데이터 로드
-	/*
-	async loadSubCategoryData(category, parentValue) {
-		const key = `${category}-${parentValue}`;
-		
-		
-		var isSearchNtcCd='';
-		if(category=='schNtnCd'){
-			isSearchNtcCd='Y';
-		}
-		
-		// 이미 로드된 데이터가 있으면 재사용
-		if (this.subCategoryData[key]) {
-			return this.subCategoryData[key];
-		}
-		
-		try {
-			// 여기서 2단계 데이터를 Ajax로 로드
-			// 예: 시행기관 선택 후 해당 시행기관의 세부 항목들 로드
-			
-			
-			const response = await $.ajax({
-				url: '/common/selectCode', // 2단계 데이터 로드 API
-				type: 'get',
-				contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-				data: { 
-					cdGroupSn: parentValue,
-					code: '',
-					isSearchNtcCd: isSearchNtcCd
-				}
-			});
-			
-			
-			//// 테스트용 하드코딩 데이터
-			//const response = this.getTestSubCategoryData(category, parentValue);
-			
-			// 받은 데이터를 변환
-			const transformedData = response.map(item => ({
-				value: item.code,
-				text: item.text,
-				parentValue: parentValue
-			}));
-			
-			this.subCategoryData[key] = transformedData;
-			return transformedData;
-			
-		} catch (error) {
-			console.error("Failed to load sub category data:", error);
-			this.subCategoryData[key] = [];
-			return [];
-		}
-	}
-*/
-	// 2단계 옵션 표시 (기존 구조의 우측 영역 활용)
-	/*
-	showSecondStepOptions(category, parentValue) {
-	    const secondStepContainer = document.querySelector('.second-step-options');
-	    
-	    if (!secondStepContainer) {
-	        console.log('2단계 컨테이너를 찾을 수 없음');
-	        return;
-	    }
-	    
-	    const key = `${category}-${parentValue}`;
-	    const subItems = this.subCategoryData[key] || [];
-	    
-	    // 2단계 옵션 영역 표시
-	    secondStepContainer.style.display = 'flex';
-	    
-	    // 기존 2단계 옵션들 제거
-	    const secondStepList = secondStepContainer.querySelector('.second-step-list');
-	    if (secondStepList) {
-	        secondStepList.innerHTML = '';
-	    
-	        if (subItems.length === 0) {
-	            secondStepList.innerHTML = '<li><div class="empty-state">하위 옵션이 없습니다</div></li>';
-	            return;
-	        }
-	        
-	        // 2단계 옵션들 추가
-	        subItems.forEach(subItem => {
-	            const li = document.createElement('li');
-	            
-	            const button = document.createElement('button');
-	            button.type = 'button';
-	            button.className = 'filter-option-item sub-option';
-	            button.textContent = subItem.text;
-	            button.dataset.category = category;
-	            button.dataset.value = subItem.value;
-	            button.dataset.parentValue = parentValue;
-	            button.id = `${category}-${parentValue}-${subItem.value}`;
-	            
-	            button.addEventListener('click', () => {
-	                button.classList.add('on');
-	                this.selectSubFilterItem(button, subItem);
-	            });
-	            
-	            li.appendChild(button);
-	            secondStepList.appendChild(li);
-	        });
-	    }
-	}
-*/
+	
 	// 나머지 기존 메서드들...
 	getCategoryTitle(category) {
 		return this.categoryTitles[category] || category;
@@ -1007,25 +911,7 @@ class ODAFilterSystem {
 		this.updateSelectedDisplay();
 	}
 
-	/*
-	selectDateItem(input, labelText) {
-		const category = input.dataset.category;
-		const value = input.dataset.value;
-		const dateValue = input.value;
-		const text = `${labelText}: ${dateValue}`;
-
-		const key = `${category}-${value}`;
-		
-		this.selectedFilters.set(key, {
-			category,
-			value,
-			text,
-			dateValue
-		});
-
-		this.updateSelectedDisplay();
-	}
-*/
+	
 	selectFilterItem(item) {
 		const category = item.dataset.category;
 		const value = item.dataset.value;
@@ -1083,22 +969,7 @@ class ODAFilterSystem {
 	}
 
 
-	removeFilter2(key) {
-		// 다단계 필터인지 확인
-		const filter = this.selectedFilters.get(key);
-		if (filter && filter.isMultiStep) {
-			// 다단계 필터의 모든 관련 버튼 상태 제거
-			this.clearMultiStepButtonStates(key);
-		} else {
-			// 단일 단계 필터
-			const $id = $('#' + key);
-			$id.removeClass('on');
-		}
-		
-		this.selectedFilters.delete(key);
-		this.updateSelectedDisplay();
-		this.applyFiltersAfterRemoval();
-	}
+	
 	
 	removeFilter(key) {
 	    console.log('필터 제거 시도:', key);
@@ -1162,15 +1033,19 @@ class ODAFilterSystem {
 	// 필터 제거 후 그리드 검색을 재실행하는 메서드
 	applyFiltersAfterRemoval() {
 		const filters = this.getSelectedFilters();
+		/*
 		const projectNameInput = document.getElementById('projectNameInput');
 		const searchTerm = projectNameInput ? projectNameInput.value.trim() : '';
-		
+		*/
 		//console.log('필터 제거 후 재검색:', filters);
-		this.executeSearch({ filters, searchTerm });
+		this.executeSearch({ filters, searchTerm: '' });
 	}
 	
 
 	resetFilters() {
+		
+	
+		
 	    // 모든 선택된 필터 버튼들의 상태 제거
 	    this.selectedFilters.forEach((filter, key) => {
 	        const $id = $('#' + key);
@@ -1186,10 +1061,10 @@ class ODAFilterSystem {
 	    this.resetStepState();
 	    
 	    // 텍스트 검색어 초기화
-	    const projectNameInput = document.getElementById('projectNameInput');
-	    if (projectNameInput) {
-	        projectNameInput.value = '';
-	    }
+	   // const projectNameInput = document.getElementById('projectNameInput');
+	   // if (projectNameInput) {
+	       // projectNameInput.value = '';
+	   // }
 	    
 	    this.clearAllGridParams();
 	    this.executeSearch({ filters: {}, searchTerm: '' });
@@ -1234,23 +1109,26 @@ class ODAFilterSystem {
 
 
 	performTextSearch() {
-		const projectNameInput = document.getElementById('projectNameInput');
+		/*
+		const projectNa
+		meInput = document.getElementById('projectNameInput');
 		const searchTerm = projectNameInput ? projectNameInput.value.trim() : '';
 		
 		if (!searchTerm) {
 			alert('검색어를 입력하세요.');
 			return;
 		}
-
-		this.executeSearch({ searchTerm });
+		 */
+		this.executeSearch({ searchTerm:'' });
 	}
 
 	applyFilters() {
 		const filters = this.getSelectedFilters();
+		/*
 		const projectNameInput = document.getElementById('projectNameInput');
 		const searchTerm = projectNameInput ? projectNameInput.value.trim() : '';
-		
-		this.executeSearch({ filters, searchTerm });
+		*/
+		this.executeSearch({ filters, searchTerm:'' });
 	}
 	
 
@@ -1342,31 +1220,7 @@ class ODAFilterSystem {
 	    });
 	}
 	
-	clearGridFilterFields2(searchForm) {
-	    const filterCategories = new Set();
-	    this.selectedFilters.forEach(filter => {
-	        filterCategories.add(filter.category);
-	    });
-	    
-	    Object.keys(this.categoryData).forEach(category => {
-	        const field = searchForm.find(`[name="${category}"]`);
-	        if (field.length) {
-	            if (!filterCategories.has(category)) {
-	                if (field.hasClass('select2-hidden-accessible') || field.data('select2')) {
-	                    field.val('').trigger('change');
-	                } else {
-	                    field.val('');
-	                }
-	            }
-	        }
-	    });
-	    
-	    const projectNameInput = document.getElementById('projectNameInput');
-	    if (!projectNameInput || !projectNameInput.value.trim()) {
-	        const searchTermFields = searchForm.find('[name="searchTerm"], [name="projectName"]');
-	        searchTermFields.val('');
-	    }
-	}
+
 	
 	clearGridFilterFields(searchForm) {
 	    console.log('그리드 필터 필드 초기화');
@@ -1380,9 +1234,14 @@ class ODAFilterSystem {
 	    console.log('활성 카테고리들:', Array.from(activeCategories));
 	    
 	    // categoryData에 있는 모든 카테고리와 추가로 자주 사용되는 필드들 초기화
+	    /*
 	    const allCategories = new Set([
 	        ...Object.keys(this.categoryData),
 	        'schNtnCd', 'schBgnDe', 'schEndDe', 'searchTerm', 'projectName' // 공통 필드들 추가
+	    ]);
+	    */
+	    const allCategories = new Set([
+	        ...Object.keys(this.categoryData)
 	    ]);
 	    
 	    allCategories.forEach(category => {
@@ -1400,11 +1259,13 @@ class ODAFilterSystem {
 	    });
 	    
 	    // 텍스트 검색어도 확인
+	    /*
 	    const projectNameInput = document.getElementById('projectNameInput');
 	    if (!projectNameInput || !projectNameInput.value.trim()) {
 	        const searchTermFields = searchForm.find('[name="searchTerm"], [name="projectName"]');
 	        searchTermFields.val('');
 	    }
+	    */
 	}
 	
 	// 테스트용 2단계 데이터 생성 메서드

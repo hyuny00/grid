@@ -9,6 +9,8 @@ import java.util.Map;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +19,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.futechsoft.framework.common.controller.AbstractController;
 import com.futechsoft.framework.common.page.Pageable;
 import com.futechsoft.framework.util.FtMap;
-import com.inswave.wrm.util.Result;
 
 import kr.go.odakorea.pdftLink.service.PdfrLinkService;
 
@@ -33,6 +34,8 @@ import kr.go.odakorea.pdftLink.service.PdfrLinkService;
  */
 @Controller
 public class PdfrLinkController  extends AbstractController{
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(PdfrLinkController.class);
 	
 	
 	@Resource(name = "pdftLink.service.PdfrLinkService")

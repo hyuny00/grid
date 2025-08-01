@@ -370,7 +370,7 @@ class TreeGridManager {
             this.totalPages = 1;
         }
         
-        console.log(responseData);
+       // console.log(responseData);
         // 데이터를 responseData.data에서 꺼냄
         const rows = responseData.data || [];  // responseData.data가 undefined/null이면 빈 배열로 대체
         
@@ -491,6 +491,9 @@ class TreeGridManager {
     }
     
     renderTable() {
+    	
+
+    	
         const tbody = $(`#${this.gridId}-body`);
         tbody.empty();
         
@@ -669,8 +672,7 @@ class TreeGridManager {
             toggleClass: toggleClass,
             isTreeMode: this.isTreeMode
         };
-        
-        
+      
         
         // 템플릿 렌더링 후 tr 요소에 data-id 속성 추가
         const rowHtml = this.renderTemplate(this.templateId, rowData, this.codeMap, this.selectOption, reverseIndex);
@@ -985,7 +987,6 @@ class TreeGridManager {
             const result = this.findNodeById(id);
             const paramValue = result && result.node ? result.node[this.urlParamKey] : null;
             
-            console.log(paramValue);
             
             nodesToDelete.push({ 
                 id: id, 
@@ -1051,7 +1052,7 @@ class TreeGridManager {
             });
             
             
-            console.log("nodesToDelete..."+JSON.stringify(nodesToDelete));
+           // console.log("nodesToDelete..."+JSON.stringify(nodesToDelete));
             
             $.ajax({
                 url: this.urls.deleteUrl,
@@ -1377,7 +1378,7 @@ class TreeGridManager {
             */
             
             // 개수 제한 정보 표시
-            console.log(`체크된 항목: ${checkedCount}개 / 최대 ${this.checkCount}개`);
+         //   console.log(`체크된 항목: ${checkedCount}개 / 최대 ${this.checkCount}개`);
            // $(`#${this.gridId}-checked-count`).text(`선택: ${checkedCount}/${this.checkCount}`);
         } else {
             // 기존 로직 (개수 제한 없음)
@@ -1389,7 +1390,7 @@ class TreeGridManager {
                 $headerCheckbox.prop('checked', false).prop('indeterminate', true);
             }
             
-            console.log(`체크된 항목: ${checkedCount}개 / 전체 ${totalCount}개`);
+           // console.log(`체크된 항목: ${checkedCount}개 / 전체 ${totalCount}개`);
            // $(`#${this.gridId}-checked-count`).text(`선택된 항목: ${checkedCount}개`);
         }
     }
@@ -1677,8 +1678,8 @@ class TreeGridManager {
         });
         
        // console.log(`[${this.gridId}] 추가된 노드:`, nodesToAdd);
-        console.log(`[${this.gridId}] 수정된 노드:`, nodesToUpdate);
-        console.log(`[${this.gridId}] 삭제된 노드:`, nodesToDelete);
+       // console.log(`[${this.gridId}] 수정된 노드:`, nodesToUpdate);
+       // console.log(`[${this.gridId}] 삭제된 노드:`, nodesToDelete);
         
         // 실제 서버 전송
         const payload = { 
@@ -1711,7 +1712,6 @@ class TreeGridManager {
     
     renderTemplate(templateId, data, mapData, selectOption, reverseIndex) {
     	
-    	console.log('..................'+JSON.stringify(selectOption));
     	
         const template = document.getElementById(templateId).innerHTML;
         
@@ -1872,7 +1872,7 @@ class TreeGridManager {
         // 2단계: if-else 블록 처리 (더 정확한 패턴)
         result = result.replace(/\{\{#if\s+(\w+)\s+equals\s+['"]?([^'"}\s]+)['"]?\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g, 
             function(match, key, value, trueContent, falseContent) {
-                console.log('Matching:', key, value, data[key]); // 디버깅용
+              //  console.log('Matching:', key, value, data[key]); // 디버깅용
                 return data[key] == value ? trueContent : falseContent;
             });
         
@@ -1885,7 +1885,7 @@ class TreeGridManager {
         // 4단계: format 함수 처리 (먼저 처리)
         result = result.replace(/\{\{format\s+([a-zA-Z_$][a-zA-Z0-9_$.]*)\s+["']([a-zA-Z]+)["'](?:\s+([^}]+))?\}\}/g, 
             function(match, variable, formatType, formatOptions) {
-                console.log('Format 처리:', variable, formatType, formatOptions);
+               // console.log('Format 처리:', variable, formatType, formatOptions);
                 
                 // 변수 값 가져오기
                 let value = data[variable];
@@ -1906,7 +1906,7 @@ class TreeGridManager {
                 
                 if (value === undefined || value === null) return '';
                 
-                console.log('Format 값:', value);
+               // console.log('Format 값:', value);
                 
                 // 포맷 옵션 파싱
                 let options = {};
@@ -1916,7 +1916,7 @@ class TreeGridManager {
                         formatOptions.replace(/(\w+)=["']([^"']+)["']/g, function(match, key, val) {
                             options[key] = val;
                         });
-                        console.log('Format 옵션:', options);
+                      //  console.log('Format 옵션:', options);
                     } catch (e) {
                         console.warn('포맷 옵션 파싱 오류:', formatOptions, e);
                     }
@@ -1936,7 +1936,7 @@ class TreeGridManager {
                     } else if (formatType === 'string') {
                         result = formatHelpers[formatType](value, options.case || 'default');
                     }
-                    console.log('Format 결과:', result);
+                 //   console.log('Format 결과:', result);
                     return result;
                 }
                 
@@ -2038,6 +2038,8 @@ class TreeGridManager {
                 return '';
             }
         });
+        
+        
         
         return result;
     }
@@ -2382,6 +2384,165 @@ class TreeGridManager {
      }
      return null;
  }
+ 
+ 
+//특정 행의 데이터를 업데이트하는 메서드
+ updateRowData(nodeId, fieldUpdates) {
+     const result = this.findNodeById(nodeId);
+     if (result && result.node) {
+         // 필드별 업데이트
+         Object.keys(fieldUpdates).forEach(field => {
+             result.node[field] = fieldUpdates[field];
+         });
+         
+         // 저장 기능이 활성화된 경우만 수정된 행 추적
+         if (this.isSaveEnabled) {
+             const nodeKey = this.getNodeKey(result.node);
+             this.modifiedRows.add(nodeKey);
+         }
+         
+         // 테이블 다시 렌더링
+         this.renderTable();
+         
+         return true;
+     }
+     return false;
+ }
+
+ // 특정 행의 특정 필드만 업데이트하는 메서드
+ updateRowField(nodeId, field, value) {
+     const result = this.findNodeById(nodeId);
+     if (result && result.node) {
+         result.node[field] = value;
+         
+         // 저장 기능이 활성화된 경우만 수정된 행 추적
+         if (this.isSaveEnabled) {
+             const nodeKey = this.getNodeKey(result.node);
+             this.modifiedRows.add(nodeKey);
+         }
+         
+         // 해당 셀만 업데이트 (전체 테이블 렌더링 대신)
+         const $row = $(`#${this.gridId}-body tr[data-id="${nodeId}"]`);
+         const $field = $row.find(`[data-field="${field}"]`);
+         
+         if ($field.length) {
+             if ($field.is('input, textarea, select')) {
+                 $field.val(value);
+             } else if ($field.is('[contenteditable]')) {
+                 $field.text(value);
+             }
+         }
+         
+         
+         // ★ 추가: 자동으로 테이블 다시 렌더링
+        // this.renderTable();
+         // ★ renderTable() 대신 해당 행만 업데이트
+         this.updateSingleRow(nodeId);
+         
+         return true;
+     }
+     return false;
+ }
+ 
+//단일 행만 업데이트하는 메서드
+ updateSingleRow(nodeId) {
+     const result = this.findNodeById(nodeId);
+     if (!result || !result.node) return;
+     
+     const $existingRow = $(`#${this.gridId}-body tr[data-id="${nodeId}"]`);
+     if (!$existingRow.length) return;
+     
+     const node = result.node;
+     const rowIndex = $existingRow.index();
+     const isVisible = $existingRow.is(':visible');
+     
+     // 새 행 HTML 생성
+     const reverseIndex = this.totalCount - (this.currentPage - 1) * this.pageSize - rowIndex;
+     const newRowHtml = this.createNodeRow(node, isVisible, rowIndex, reverseIndex);
+     
+     // 기존 행을 새 행으로 교체
+     $existingRow.replaceWith(newRowHtml);
+     
+     // 새 행에만 이벤트 바인딩 (전체 테이블 이벤트 재바인딩 방지)
+     this.bindSingleRowEvents($(`#${this.gridId}-body tr[data-id="${nodeId}"]`));
+ }
+
+ // 단일 행 이벤트 바인딩 (data-value 설정 제외)
+ bindSingleRowEvents($row) {
+     const self = this;
+     
+     // 편집 이벤트만 바인딩 (data-value 설정 안 함)
+     $row.off('input change blur keyup').on('input change blur keyup', 
+         'input[data-field]:not([type="radio"]), textarea[data-field], select[data-field], [contenteditable][data-field]', 
+         function() {
+             const $this = $(this);
+             const nodeId = String($this.closest('tr').data('id'));
+             const field = $this.data('field');
+             
+             if (nodeId && field) {
+                 self.trackEdit(nodeId, this, field);
+             }
+         }
+     );
+     
+   
+ }
+ 
+//인덱스로 행 데이터 가져오기 (평면 인덱스 - 화면에 보이는 순서)
+ getRowDataByIndex(index) {
+     const flatData = this.getFlatDataList();
+     if (index >= 0 && index < flatData.length) {
+         return flatData[index];
+     }
+     return null;
+ }
+
+ // 인덱스로 nodeId 가져오기
+ getNodeIdByIndex(index) {
+     const rowData = this.getRowDataByIndex(index);
+     return rowData ? rowData.id : null;
+ }
+
+ // 평면화된 데이터 리스트 가져오기 (트리 구조를 순서대로 펼친 리스트)
+ getFlatDataList() {
+     const flatList = [];
+     
+     const flattenNode = (node) => {
+         flatList.push(node);
+         if (this.isTreeMode && node.children && node.children.length > 0 && node.treeExpanded) {
+             node.children.forEach(child => flattenNode(child));
+         }
+     };
+     
+     this.data.forEach(node => flattenNode(node));
+     return flatList;
+ }
+
+ // 반대로 nodeId로 인덱스 찾기
+ getIndexByNodeId(nodeId) {
+     const flatData = this.getFlatDataList();
+     return flatData.findIndex(node => String(node.id) === String(nodeId));
+ }
+ 
+ 
+//인덱스로 행 데이터 업데이트
+ updateRowDataByIndex(index, fieldUpdates) {
+     const nodeId = this.getNodeIdByIndex(index);
+     if (nodeId) {
+         return this.updateRowData(nodeId, fieldUpdates);
+     }
+     return false;
+ }
+
+ // 인덱스로 특정 필드 업데이트
+ updateRowFieldByIndex(index, field, value) {
+     const nodeId = this.getNodeIdByIndex(index);
+     if (nodeId) {
+         return this.updateRowField(nodeId, field, value);
+     }
+     return false;
+ }
+ 
 
  //  행 선택 표시 메서드 (선택사항)
  selectRow($row) {
@@ -2449,8 +2610,6 @@ class TreeGridManager {
      const headers = jsonData[0]; // 첫 번째 행은 헤더
      const rows = jsonData.slice(1); // 나머지는 데이터
      
-    // console.log('엑셀 헤더:', headers);
-    // console.log('엑셀 데이터:', rows);
      
      
      // 유효성 검사 실행
@@ -3100,4 +3259,68 @@ function initTreeGrid(config) {
     const manager = new TreeGridManager(config);
     gridManagers[config.gridId] = manager;
     return manager;
+}
+
+
+//행 데이터 업데이트 전역 함수
+function updateGridRowData(gridId, nodeId, fieldUpdates) {
+    if (gridManagers[gridId]) {
+        return gridManagers[gridId].updateRowData(nodeId, fieldUpdates);
+    }
+    return false;
+}
+
+// 행 필드 업데이트 전역 함수
+function updateGridRowField(gridId, nodeId, field, value) {
+    if (gridManagers[gridId]) {
+        return gridManagers[gridId].updateRowField(nodeId, field, value);
+    }
+    return false;
+}
+
+// 행 데이터 가져오기 전역 함수
+function getGridRowData(gridId, nodeId) {
+    if (gridManagers[gridId]) {
+        return gridManagers[gridId].getRowData(nodeId);
+    }
+    return null;
+}
+
+//인덱스로 행 데이터 가져오기 전역 함수
+function getGridRowDataByIndex(gridId, index) {
+    if (gridManagers[gridId]) {
+        return gridManagers[gridId].getRowDataByIndex(index);
+    }
+    return null;
+}
+
+// 인덱스로 행 데이터 업데이트 전역 함수
+function updateGridRowDataByIndex(gridId, index, fieldUpdates) {
+    if (gridManagers[gridId]) {
+        return gridManagers[gridId].updateRowDataByIndex(index, fieldUpdates);
+    }
+    return false;
+}
+
+// 인덱스로 행 필드 업데이트 전역 함수
+function updateGridRowFieldByIndex(gridId, index, field, value) {
+    if (gridManagers[gridId]) {
+        return gridManagers[gridId].updateRowFieldByIndex(index, field, value);
+    }
+    return false;
+}
+
+// nodeId와 인덱스 상호 변환 전역 함수
+function getGridNodeIdByIndex(gridId, index) {
+    if (gridManagers[gridId]) {
+        return gridManagers[gridId].getNodeIdByIndex(index);
+    }
+    return null;
+}
+
+function getGridIndexByNodeId(gridId, nodeId) {
+    if (gridManagers[gridId]) {
+        return gridManagers[gridId].getIndexByNodeId(nodeId);
+    }
+    return -1;
 }

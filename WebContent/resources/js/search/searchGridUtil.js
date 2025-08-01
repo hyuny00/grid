@@ -182,7 +182,6 @@ class CommonGridManager {
             }
             
             // 요청 데이터 로깅
-            console.log("Sending requests to /common/selectCodeMultiple:", validRequests);
             
             // 요청 객체를 완전히 깨끗하게 만들기
             const requestPayload = {
@@ -193,7 +192,6 @@ class CommonGridManager {
             let jsonString;
             try {
                 jsonString = JSON.stringify(requestPayload);
-                console.log("Request JSON:", jsonString);
             } catch (stringifyError) {
                 console.error("Failed to stringify request:", stringifyError);
                 reject(new Error("Failed to create request JSON"));
@@ -206,7 +204,6 @@ class CommonGridManager {
                 contentType: "application/json; charset=UTF-8",
                 data: jsonString,
                 success: function(data) {
-                    console.log("Multiple code data response:", data);
                     
                     // 응답 데이터 처리
                     let cleanData = {};
@@ -294,7 +291,6 @@ class CommonGridManager {
             }
             
             // 요청 데이터 로깅
-            console.log("Sending requests to /common/selectCodeMultiple:", validRequests);
             
             // 요청 객체를 완전히 깨끗하게 만들기
             const requestPayload = {
@@ -305,7 +301,6 @@ class CommonGridManager {
             let jsonString;
             try {
                 jsonString = JSON.stringify(requestPayload);
-                console.log("Request JSON:", jsonString);
             } catch (stringifyError) {
                 console.error("Failed to stringify request:", stringifyError);
                 reject(new Error("Failed to create request JSON"));
@@ -322,7 +317,6 @@ class CommonGridManager {
                 contentType: "application/json; charset=UTF-8",
                 data:  JSON.stringify({ requests: requests }),
                 success: function(data) {
-                    console.log("Multiple code list data response:", data);
                     
                     // 응답 데이터 처리
                     let cleanData = {};
@@ -393,18 +387,14 @@ class CommonGridManager {
             const cleanedCategoryCodeMapping = this.cleanNullKeys(categoryCodeMapping);
             const cleanedCategoryTitles = categoryTitles ? this.cleanNullKeys(categoryTitles) : {};
             
-            console.log('Cleaned categoryCodeMapping:', cleanedCategoryCodeMapping);
-            console.log('Cleaned categoryTitles:', cleanedCategoryTitles);
             
             // 카테고리 데이터 로드
             const categoryData = await this.initializeCategoryData(dynamicCategories, cleanedCategoryCodeMapping);
-            console.log('Category data loaded:', categoryData);
             
             // 다중 코드 데이터 로드 (실패해도 진행)
             let codeMap = {};
             try {
                 codeMap = await this.loadMultipleCodeData(codeRequests);
-                console.log('Code map loaded successfully:', codeMap);
             } catch (codeError) {
                 console.warn('Failed to load multiple code data, continuing with empty codeMap:', codeError);
                 codeMap = {};
@@ -414,7 +404,6 @@ class CommonGridManager {
             let codeList = {};
             try {
             	codeList = await this.loadMultipleCodeListData(codeListRequests);
-                console.log('Code list  map loaded successfully:', codeList);
             } catch (codeError) {
                 console.warn('Failed to load multiple code data, continuing with empty codeMap:', codeError);
                 codeList = {};
@@ -436,7 +425,6 @@ class CommonGridManager {
                     selectOption: this.codeList
                 };
                 
-                console.log('configWithCodeMap........'+JSON.stringify(configWithCodeMap));
                 try {
                     const gridInstance = initTreeGrid(configWithCodeMap);
                     gridInstances.push(gridInstance);

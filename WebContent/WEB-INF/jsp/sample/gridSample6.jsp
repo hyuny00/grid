@@ -132,9 +132,36 @@ function setupInitialFilters() {
 
 
 function someOtherFunction() {
-	  var a=getGridById('grid1');
+	//  var a=getGridById('grid1');
 	  
-	 a.setPageSize(5);
+	// a.setPageSize(5);
+	 
+	 
+
+
+	 const gridManager = gridManagers['grid1'];
+	 
+
+	 // 1. 인덱스로 행 데이터 가져오기 (0부터 시작)
+	 const firstRowData = gridManager.getRowDataByIndex(0);
+	 
+	 console.log("..........................>>>>>>>>>>>>>>>>"+JSON.stringify(firstRowData));
+	 
+	 
+	// 3. 인덱스로 특정 필드만 업데이트
+	// gridManager.updateRowFieldByIndex(1, 'projectId', '1111');
+	
+	
+	 gridManager.updateRowDataByIndex(3, {
+		   projectId: '첫 번째 행 수정',
+		   projectTitle: '2222'
+		});
+	
+	// const thirdRowData = gridManager.getRowDataByIndex(2);
+	 
+	 
+	 
+	 
 }
 </script>
 
@@ -351,7 +378,7 @@ function someOtherFunction() {
             <input type="checkbox"  {{checkedAttr}}  id="chk-{{id}}"  class="row-check"><label for="chk-{{id}}"></label>
         </div>
     </td>
-    <td class="tC">{{projectId}}</td>
+   <td class="tC">{{projectId}}</td>
     <td>
         <a href="#"><span class="span orange">{{projectType}}</span>{{projectTitle}}</a>
     </td>

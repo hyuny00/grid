@@ -32,7 +32,7 @@ import kr.go.odakorea.pdftLink.mapper.PdfrLinkMapper;
 public class PdfrLinkService extends EgovAbstractServiceImpl {
 	
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(SampleService.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(PdfrLinkService.class);
 
 	@Resource(name = "pdftLink.mapper.PdfrLinkMapper")
 	private PdfrLinkMapper pdfrLinkMapper;
