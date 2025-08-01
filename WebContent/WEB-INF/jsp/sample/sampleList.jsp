@@ -279,6 +279,30 @@ html<!-- 대문자로 변환 -->
 
 
 
+var gridManager=gridManagers["gridId"];
+
+//그리드 체크갯수 구하기
+const a=gridManager.getCheckedCount();
+
+/ 체크된 행의 전체 데이터 가져오기
+const checkedRows = gridManager.getCheckedRowsData();
+console.log('체크된 행 데이터:', checkedRows);
+
+// 체크된 행의 특정 필드만 가져오기
+const checkedProjectIds = gridManager.getCheckedRowsField('projectId');
+console.log('체크된 프로젝트 ID들:', checkedProjectIds);
+
+const checkedTitles = gridManager.getCheckedRowsField('projectTitle');
+console.log('체크된 프로젝트 제목들:', checkedTitles);
+
+// ID만 가져오기
+const checkedIds = gridManager.getCheckedRowIds();
+console.log('체크된 행 ID들:', checkedIds);
+
+
+
+
+
 // 그리드 매니저 인스턴스에서 사용
 const gridManager = gridManagers['your-grid-id'];
 
@@ -325,7 +349,13 @@ const rowData = getGridRowDataByIndex('your-grid-id', 0);
 updateGridRowFieldByIndex('your-grid-id', 1, 'status', 'active');
 
 
-
+//체크박스 행선택용 checkedAttr : "checked"
+ gridManager.updateRowDataByIndex(3, {
+		   projectTitle: '2222',
+		   regDate:'20000101',
+		   statusCd:'01',
+		   checkedAttr:""
+		});
 
 
 

@@ -2402,7 +2402,9 @@ class TreeGridManager {
          }
          
          // 테이블 다시 렌더링
-         this.renderTable();
+        // this.renderTable();
+         // ★ renderTable() 대신 해당 행만 업데이트
+         this.updateSingleRow(nodeId);
          
          return true;
      }
@@ -2435,7 +2437,7 @@ class TreeGridManager {
          
          
          // ★ 추가: 자동으로 테이블 다시 렌더링
-        // this.renderTable();
+         //this.renderTable();
          // ★ renderTable() 대신 해당 행만 업데이트
          this.updateSingleRow(nodeId);
          
@@ -2445,48 +2447,194 @@ class TreeGridManager {
  }
  
 //단일 행만 업데이트하는 메서드
+//TreeGridManager 클래스에 추가
  updateSingleRow(nodeId) {
-     const result = this.findNodeById(nodeId);
-     if (!result || !result.node) return;
-     
-     const $existingRow = $(`#${this.gridId}-body tr[data-id="${nodeId}"]`);
-     if (!$existingRow.length) return;
-     
-     const node = result.node;
-     const rowIndex = $existingRow.index();
-     const isVisible = $existingRow.is(':visible');
-     
-     // 새 행 HTML 생성
-     const reverseIndex = this.totalCount - (this.currentPage - 1) * this.pageSize - rowIndex;
-     const newRowHtml = this.createNodeRow(node, isVisible, rowIndex, reverseIndex);
-     
-     // 기존 행을 새 행으로 교체
-     $existingRow.replaceWith(newRowHtml);
-     
-     // 새 행에만 이벤트 바인딩 (전체 테이블 이벤트 재바인딩 방지)
-     this.bindSingleRowEvents($(`#${this.gridId}-body tr[data-id="${nodeId}"]`));
- }
+	    
+	    const result = this.findNodeById(nodeId);
+	    if (!result || !result.node) {
+	        console.error('노드를 찾을 수 없습니다:', nodeId);
+	        return;
+	    }
+	    
+	    const $existingRow = $(`#${this.gridId}-body tr[data-id="${nodeId}"]`);
+	    if (!$existingRow.length) {
+	        console.error('기존 행을 찾을 수 없습니다:', nodeId);
+	        return;
+	    }
+	    
+	    const node = result.node;
+	    const rowIndex = $existingRow.index();
+	    const isVisible = $existingRow.is(':visible');
+	    
+	    //console.log('행 재생성 중... Node data:', node);
+	    
+	    // 새 행 HTML 생성
+	    const reverseIndex = this.totalCount - (this.currentPage - 1) * this.pageSize - rowIndex;
+	    const newRowHtml = this.createNodeRow(node, isVisible, rowIndex, reverseIndex);
+	    
+	   // console.log("기존 행 HTML (교체 전):", $existingRow.html());
+	   // console.log("새 행 HTML:", newRowHtml);
+	    
+	    // 기존 행을 새 행으로 교체
+	    $existingRow.replaceWith(newRowHtml);
+	    
+	    // ⚠️ 이 시점에서 $existingRow는 더 이상 DOM에 존재하지 않는 요소를 참조함
+	  //  console.log("$existingRow는 이제 DOM에서 분리됨:", $existingRow.html());
+	    
+	    // 새로 DOM에 삽입된 행을 다시 선택
+	    const $newRowInDOM = $(`#${this.gridId}-body tr[data-id="${nodeId}"]`);
+	  //  console.log("DOM에서 새로 선택한 행:", $newRowInDOM.html());
+	    
+	    // 행 선택 체크박스 상태 설정 (node 데이터의 checkedAttr 기반)
+	    const shouldBeChecked = node.checkedAttr === 'checked' || node.checkedAttr === true;
+	    $newRowInDOM.find('.row-check').prop('checked', shouldBeChecked);
+	  //  console.log(`행 선택 체크박스: checkedAttr="${node.checkedAttr}" -> checked=${shouldBeChecked}`);
+	    
+	    // data-value 속성과 실제 input 값 비교
+	    $newRowInDOM.find('[data-field]').each(function() {
+	        const $this = $(this);
+	        const field = $this.data('field');
+	        const dataValue = $this.data('value');
+	        let actualValue;
+	        
+	        if ($this.is('input[type="checkbox"]')) {
+	            actualValue = $this.is(':checked');
+	        } else if ($this.is('input[type="radio"]')) {
+	            actualValue = $this.is(':checked') ? $this.val() : '';
+	        } else if ($this.is('input, textarea')) {
+	            actualValue = $this.val();
+	        } else if ($this.is('select')) {
+	            actualValue = $this.val();
+	        } else if ($this.is('[contenteditable]')) {
+	            actualValue = $this.html();
+	        }
+	        
+	       // console.log(`필드 ${field}: data-value="${dataValue}", 실제값="${actualValue}", 타입: ${$this.attr('type') || $this.prop('tagName')}`);
+	        
+	        // data-value가 있으면 실제 input에 설정
+	        if (dataValue !== undefined && dataValue !== '') {
+	            if ($this.is('input[type="checkbox"]')) {
+	                // 체크박스: data-value가 'true', '1', 'checked', 또는 실제 boolean true이면 체크
+	                const shouldCheck = dataValue === true || dataValue === 'true' || dataValue === '1' || dataValue === 'checked';
+	                $this.prop('checked', shouldCheck);
+	             //   console.log(`checkbox ${field} 값 설정: ${dataValue} -> 체크상태: ${shouldCheck}`);
+	            } else if ($this.is('input[type="radio"]')) {
+	                // 라디오버튼: data-value와 value가 같으면 선택
+	                if ($this.val() === String(dataValue)) {
+	                    $this.prop('checked', true);
+	                    console.log(`radio ${field} 값 설정: ${dataValue} -> 선택됨`);
+	                } else {
+	                    $this.prop('checked', false);
+	                }
+	            } else if ($this.is('select')) {
+	                $this.val(dataValue);
+	               // console.log(`select ${field} 값 설정: ${dataValue} -> 결과: ${$this.val()}`);
+	            } else if ($this.is('input, textarea')) {
+	                $this.val(dataValue);
+	               // console.log(`input ${field} 값 설정: ${dataValue} -> 결과: ${$this.val()}`);
+	            } else if ($this.is('[contenteditable]')) {
+	                $this.html(dataValue);
+	               // console.log(`contenteditable ${field} 값 설정: ${dataValue}`);
+	            }
+	        }
+	    });
+	    
+	    // 새 행 찾아서 이벤트 바인딩
+	    if ($newRowInDOM.length) {
+	        // 라디오버튼 그룹 별도 처리 (같은 name의 모든 라디오버튼)
+	        const radioGroups = {};
+	        $newRowInDOM.find('input[type="radio"][data-field]').each(function() {
+	            const field = $(this).data('field');
+	            if (!radioGroups[field]) {
+	                radioGroups[field] = [];
+	            }
+	            radioGroups[field].push($(this));
+	        });
+	        
+	        // 각 라디오 그룹에서 data-value에 맞는 것만 선택
+	        Object.keys(radioGroups).forEach(field => {
+	            const $firstRadio = radioGroups[field][0];
+	            const dataValue = $firstRadio.data('value');
+	            
+	            if (dataValue !== undefined && dataValue !== '') {
+	                // 해당 그룹의 모든 라디오버튼 체크 해제
+	                radioGroups[field].forEach($radio => $radio.prop('checked', false));
+	                
+	                // data-value와 일치하는 라디오버튼만 선택
+	                const $targetRadio = radioGroups[field].find($radio => $radio.val() === String(dataValue));
+	                if ($targetRadio) {
+	                    $targetRadio.prop('checked', true);
+	                  //  console.log(`라디오 그룹 ${field}: ${dataValue} 선택됨`);
+	                }
+	            }
+	        });
+	        
+	        this.bindSingleRowEvents($newRowInDOM);
+	       // console.log('단일 행 업데이트 완료');
+	    } else {
+	        console.error('새로 생성된 행을 찾을 수 없습니다');
+	    }
+	}
 
  // 단일 행 이벤트 바인딩 (data-value 설정 제외)
  bindSingleRowEvents($row) {
-     const self = this;
-     
-     // 편집 이벤트만 바인딩 (data-value 설정 안 함)
-     $row.off('input change blur keyup').on('input change blur keyup', 
-         'input[data-field]:not([type="radio"]), textarea[data-field], select[data-field], [contenteditable][data-field]', 
-         function() {
-             const $this = $(this);
-             const nodeId = String($this.closest('tr').data('id'));
-             const field = $this.data('field');
-             
-             if (nodeId && field) {
-                 self.trackEdit(nodeId, this, field);
-             }
-         }
-     );
-     
-   
- }
+	    const self = this;
+	    
+	    //console.log('=== bindSingleRowEvents 호출 ===');
+	   // console.log('대상 행:', $row.data('id'));
+	    
+	    // 기존 이벤트 모두 제거
+	    $row.off();
+	    
+	    // 편집 이벤트 바인딩
+	    $row.on('input change blur keyup', 
+	        'input[data-field]:not([type="radio"]), textarea[data-field], select[data-field], [contenteditable][data-field]', 
+	        function() {
+	            const $this = $(this);
+	            const nodeId = String($this.closest('tr').data('id'));
+	            const field = $this.data('field');
+	            
+	           // console.log('편집 이벤트 발생:', nodeId, field, $this.val());
+	            
+	            if (nodeId && field) {
+	                self.trackEdit(nodeId, this, field);
+	            }
+	        }
+	    );
+	    
+	    // 라디오버튼 이벤트
+	    $row.on('change', 'input[type="radio"][data-field]', function () {
+	        const $this = $(this);
+	        const nodeId = String($this.closest('tr').data('id'));
+	        const field = $this.data('field');
+	        if (nodeId && field) {
+	            self.trackEdit(nodeId, this, field);
+	        }
+	    });
+	    
+	    // 체크박스 이벤트 (row-check)
+	    $row.on('change', '.row-check', function() {
+	        self.updateHeaderCheckbox();
+	    });
+	    
+	    // 트리 토글 이벤트
+	    $row.on('click', '.tree-toggle', function(e) {
+	        e.preventDefault();
+	        const nodeId = String($(this).closest('tr').data('id'));
+	        if (nodeId) {
+	            self.toggleTree(nodeId, e);
+	        }
+	    });
+	    
+	    // 날짜 입력 필드 초기화
+	    $row.find('.date-input').flatpickr({
+	        locale: 'ko',
+	        dateFormat: 'Y-m-d'
+	    });
+	    
+	   // console.log('단일 행 이벤트 바인딩 완료');
+	}
+ 
  
 //인덱스로 행 데이터 가져오기 (평면 인덱스 - 화면에 보이는 순서)
  getRowDataByIndex(index) {

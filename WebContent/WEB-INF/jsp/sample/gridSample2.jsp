@@ -30,12 +30,32 @@ $(document).ready(function() {
  
 
 });
+
+
+
+function someOtherFunction() {
+	
+
+	 const gridManager = gridManagers['grid1'];
+	 
+
+	 gridManager.updateRowDataByIndex(3, {
+		   projectTitle: '2222',
+		   regDate:'20000101',
+		   statusCd:'01',
+		   checkedAttr:""
+		});
+	
+	// const thirdRowData = gridManager.getRowDataByIndex(2);
+	 
+}
+
  
 </script>
 
 <div class="pgtBox">
     <div class="lt">
-        <h2>요청 중인 연계</h2>
+        <h2><a href="javascript:someOtherFunction();">요청 중인 연계</a></h2>
     </div>
     
     <ul class="breadcrumb">

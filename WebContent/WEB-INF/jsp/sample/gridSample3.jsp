@@ -111,6 +111,11 @@ function test2(){
 	console.log('체크된 행 ID들:', checkedIds);
 	
 }
+
+function test3(id){
+	alert(id);
+	
+}
  
 </script>
 
@@ -251,7 +256,7 @@ function test2(){
             <input type="checkbox"  {{checkedAttr}}  id="chk-{{id}}"  class="row-check"><label for="chk-{{id}}"></label>
         </div>
     </td>
-    <td class="tC">{{projectId}}</td>
+    <td class="tC"><a href="javascript:test3('{{id}}')">{{projectId}}</a></td>
      <td style="{{indentStyle}}">
 
       <span class="{{toggleClass}}" >{{toggleSymbol}}</span><input type="text" name="projectTitle" style="width:95%" data-field="projectTitle" data-value="{{projectTitle}}">

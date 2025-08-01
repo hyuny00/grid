@@ -35,6 +35,12 @@ $(document).ready(function() {
 
 });
  
+ 
+function test3(id){
+	alert(id);
+	
+}
+
 </script>
 
 <div class="pgtBox">
@@ -159,7 +165,7 @@ $(document).ready(function() {
             <input type="checkbox"  {{checkedAttr}}  id="chk-{{id}}"  class="row-check"><label for="chk-{{id}}"></label>
         </div>
     </td>
-    <td class="tC">{{projectId}}</td>
+    <td class="tC"><a href="javascript:test3('{{id}}')">{{projectId}}</a></td>
     <td>
         <a href="#"><span class="span orange">{{projectType}}</span>{{projectTitle}}</a>
     </td>

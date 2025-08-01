@@ -145,7 +145,6 @@ function someOtherFunction() {
 	 // 1. 인덱스로 행 데이터 가져오기 (0부터 시작)
 	 const firstRowData = gridManager.getRowDataByIndex(0);
 	 
-	 console.log("..........................>>>>>>>>>>>>>>>>"+JSON.stringify(firstRowData));
 	 
 	 
 	// 3. 인덱스로 특정 필드만 업데이트
