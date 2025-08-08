@@ -63,6 +63,7 @@ public class FtMap extends HashMap<String, Object> {
 	}
 
 	public void setFtMap(Map<String, Object> map) {
+		if(map==null) return;
 		for (String key : map.keySet()) {
 			Object values = map.get(key);
 			if (key.lastIndexOf("_") != -1) {

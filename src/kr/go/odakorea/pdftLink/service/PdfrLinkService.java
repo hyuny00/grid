@@ -4,15 +4,14 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
-import org.apache.ibatis.annotations.Param;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.futechsoft.framework.common.page.Pageable;
+import com.futechsoft.framework.common.pagination.Page;
+import com.futechsoft.framework.common.pagination.Pageable;
 import com.futechsoft.framework.util.FtMap;
-import com.futechsoft.sample.service.SampleService;
 
 import egovframework.rte.fdl.cmmn.EgovAbstractServiceImpl;
 import kr.go.odakorea.pdftLink.mapper.PdfrLinkMapper;
@@ -45,20 +44,18 @@ public class PdfrLinkService extends EgovAbstractServiceImpl {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<FtMap> listOdaBizInfo(@Param("pageable") Pageable pageable, @Param("params") FtMap params) throws Exception{
-		return null;
+	public Page<FtMap>  listOdaBizInfo(Pageable pageable,  FtMap params) throws Exception{
+		
+		
+		List<FtMap> list = pdfrLinkMapper.listOdaBizInfo(pageable, params);
+		long count = pdfrLinkMapper.countOdaBizInfo(params);
+
+		Page<FtMap> page = new Page<FtMap>(pageable, list, count);
+
+		return page;
 	}
 	
 	
-	/**
-	 *  ODA 사업목록을 카운트 한다
-	 * @param params
-	 * @return
-	 * @throws Exception
-	 */
-	long countListOdaBizInfo(@Param("params") FtMap params) throws Exception{
-		return 0;
-	}
 	
 	
 	/**
@@ -67,6 +64,8 @@ public class PdfrLinkService extends EgovAbstractServiceImpl {
 	 * @throws Exception
 	 */
 	public void createBizLinkDmnd(FtMap params) throws Exception{
+		
+		pdfrLinkMapper.createBizLinkDmnd(params);
 	}
 	
 	/**

@@ -29,91 +29,91 @@ import kr.go.odakorea.gis.mapper.IatiMapper;
 
 @Service("gis.service.IatiService")
 public class IatiService {
-	
+
 	@Resource(name = "framework.file.service.FileUploadService")
 	FileUploadService fileUploadService;
-	
-	
+
+
 	@Value("${file.uploadPath.lati}")
 	private String latiUploadPath;
-	
-	
+
+
 
 	@Resource(name = "gis.mapper.IatiMapper")
 	private IatiMapper iatiMapper;
-	
-	
+
+
 	//@Transactional
 	public void saveIatiInfo(FtMap params) throws Exception {
 		params.put("userId", SecurityUtil.getUserId());
 
 		//업무구분코드에 맞게 세팅
 		params.put("taskSecd", "0000");
-	
+
 		//파일저장 및 경로 세팅(한글경로 불가). AAAA디렉토리/yyyymm 폴더 아래 파일 저장
 		String attcDocId=fileUploadService.saveFile(params, "iati","attcDocId");
 		params.put("docId", attcDocId);
 
 	    List<FtMap> fileList= fileUploadService.selectFileList(params);
-	    
-	 
-	    
+
+
+
 	    if(fileList!=null && fileList.size()==1) {
-	    	
+
 	    	FileInfoVo fileInfoVo = fileUploadService.getFileInfo(fileList.get(0).getString("fileId"));
-	    	
+
 	    	String uploadPath= fileUploadService.getRealUploadPath();
-	    	
+
 	    	 Path source = Paths.get(uploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId()+".FILE");
 	         Path target = Paths.get(latiUploadPath,fileInfoVo.getFileId()+".xml");
-	         
+
 	         if (!Files.exists(target)) {
 	             Files.createDirectories(target);
 	         }
-	         
+
 	         Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-	    	
-	    	
+
+
 	    	 List<FtMap> resultList = parseIatiXml(target.toString());
-	    	 
+
 	    	 for(FtMap map : resultList) {
 		        	System.out.println(">>>>>>>>>"+map);
 		      }
-	    	 
+
 	    	 for(FtMap param :  resultList) {
-	    		 
-	    		 
+
+
 	    		 param.put("userId", SecurityUtil.getUserId());
-	    		 
+
 	    		 FtMap map = iatiMapper.getRgnNo(param);
-	    		 
+
 	    		 try {
 		    		 if(map ==  null) {
-		    			 iatiMapper.createNtnRgn(param);
+		    			// iatiMapper.createNtnRgn(param);
 		    		 } else if( CommonUtil.nvl(map.getString("bizRgnPstnLotVl")).equals("") ||  CommonUtil.nvl(map.getString("bizRgnPstnLatVl")).equals("")) {
-			    		iatiMapper.updateNtnRgn(param);
+			    		//iatiMapper.updateNtnRgn(param);
 		    		 }
 	    		 }catch(Exception e) {
 	    			 e.printStackTrace();
 	    		 }
-	    		
-	    		 
-	    		 
+
+
+
 	    	 }
-	    	
+
 	    }
-		
+
 	}
-	
+
 	public static void main(String[] args) throws Exception {
 		IatiService a= new IatiService();
 	      List<FtMap> list = a.parseIatiXml("C:/Users/Wakanda/Documents/iati/iati_act_KR-GOV-051_2023.xml");
-	      
+
 	      for(FtMap map : list) {
 	        	System.out.println(map);
 	      }
 	}
-	
+
 	public  List<FtMap> parseIatiXml(String filePath) throws Exception {
         List<FtMap> list = new ArrayList<>();
 

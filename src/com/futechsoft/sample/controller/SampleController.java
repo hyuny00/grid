@@ -58,18 +58,18 @@ public class SampleController extends AbstractController{
 
 	 @Value("${spring.profiles.active:default}")
      private String activeProfile;
-	 
-	 
-	 
-	 
+
+
+
+
 	 @RequestMapping("/sample/newSampleListForm")
 	public String newSampleList( HttpServletRequest request) throws Exception {
-		 
+
 		 return "tiles:sample/newSampleListForm";
-		 
-	 }	
-	 
-	 
+
+	 }
+
+
 	 @RequestMapping("/sample/popup1")
 	 public String popup1(HttpServletRequest request) throws Exception {
 
@@ -79,8 +79,8 @@ public class SampleController extends AbstractController{
 		return "sample/popup1";
 
 	}
-	 
-	 
+
+
 	 @RequestMapping("/sample/popup2")
 	 public String popup2(HttpServletRequest request) throws Exception {
 
@@ -91,14 +91,16 @@ public class SampleController extends AbstractController{
 
 	}
 
-	 
-	 
+
+
 	 @ResponseBody
 	 @RequestMapping("/sample/newSampleList2")
-	 public Map<String, Object> newGridSample() {
-		 
+	 public Map<String, Object> newGridSample(@RequestBody(required=false) Map<String, Object> map) {
+
 		 System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-		 
+
+		 System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"+map.get("schNtnCd"));
+
 		 List<Map<String, Object>> dataList = new ArrayList<>();
 
 		    for (int i = 1; i <= 12; i++) {
@@ -112,7 +114,7 @@ public class SampleController extends AbstractController{
 		        row.put("sector", "일반 공공행정 및 시민사회" + i);
 		        row.put("regDate", "2025050"+i);
 		        row.put("status", "확정" + i);
-		        
+
 		        //체크박스
 		        if(i<3) {
 		        	 row.put("checked", false);
@@ -123,22 +125,22 @@ public class SampleController extends AbstractController{
 		        	 row.put("statusCd", "02");
 		        	  row.put("childYn", "N");
 		        }
-		      
+
 		        dataList.add(row);
 		    }
 
 		Map<String, Object> response = new HashMap<>();
 	    response.put("data", dataList);
 	    response.put("total", dataList.size());
-	    
+
 	    return response;
 
 	 }
-	 
+
 	 @ResponseBody
 	 @RequestMapping("sample/newSampleList2/children/{projectId}")
 	 public Map<String, Object> getChildRows11(@PathVariable String projectId) {
-		 
+
 		 List<Map<String, Object>> dataList = new ArrayList<>();
 
 		    for (int i = 1; i <= 3; i++) {
@@ -152,7 +154,7 @@ public class SampleController extends AbstractController{
 		        row.put("sector", "일반 공공행정 및 시민사회" + i);
 		        row.put("regDate", "2025050"+i);
 		        row.put("status", "확정" + i);
-		        
+
 		        //체크박스
 		        if(i<2) {
 		        	 row.put("statusCd", "01");
@@ -160,22 +162,22 @@ public class SampleController extends AbstractController{
 		        	 row.put("statusCd", "02");
 		        }
 		        row.put("childYn", "N");
-		        
-		      
+
+
 		        dataList.add(row);
 		    }
 
 		Map<String, Object> response = new HashMap<>();
 	    response.put("data", dataList);
 	    response.put("total", dataList.size());
-	    
-	    return response;
-	     
-	 }
-	 
-	 
 
-	 
+	    return response;
+
+	 }
+
+
+
+
 	 @ResponseBody
 	 @RequestMapping("/sample/newSampleList3")
 	 public Map<String, Object> newGridSample3() {
@@ -240,76 +242,76 @@ public class SampleController extends AbstractController{
 	     return response;
 	 }
 
-	 
-	 
-	 
+
+
+
 	 @RequestMapping("/sample/gridSample0")
 		public String gridSample0( HttpServletRequest request) throws Exception {
-			 
+
 			 return "tiles:sample/gridSample0";
-			 
-		 }	
-	 
+
+		 }
+
 	 @RequestMapping("/sample/gridSample1")
 	public String gridSample1( HttpServletRequest request) throws Exception {
-		 
+
 		 return "tiles:sample/gridSample1";
-		 
-	 }	
-	 
+
+	 }
+
 	 @RequestMapping("/sample/gridSample2")
 		public String gridSample2( HttpServletRequest request) throws Exception {
-			 
+
 			 return "tiles:sample/gridSample2";
-			 
-		 }	
-	 
+
+		 }
+
 	 @RequestMapping("/sample/gridSample3")
 		public String gridSample3( HttpServletRequest request) throws Exception {
-			 
+
 			 return "tiles:sample/gridSample3";
-			 
-		 }	
-	 
+
+		 }
+
 	 @RequestMapping("/sample/gridSample4")
 		public String gridSample4( HttpServletRequest request) throws Exception {
-			 
+
 			 return "tiles:sample/gridSample4";
-			 
-		 }	
-	 
+
+		 }
+
 	 @RequestMapping("/sample/gridSample5")
 		public String gridSample5( HttpServletRequest request) throws Exception {
-			 
+
 			 return "tiles:sample/gridSample5";
-			 
-		 }	
-	 
+
+		 }
+
 	 @RequestMapping("/sample/gridSample6")
 		public String gridSample6( HttpServletRequest request) throws Exception {
-			 
+
 			 return "tiles:sample/gridSample6";
-			 
-		 }	
-	 
-	 
+
+		 }
+
+
 	 @ResponseBody
 	 @RequestMapping("/sample/grid/parent")
 	 public Map<String, Object> getParentRows() {
 	     List<Map<String, Object>> parents = Arrays.asList(
 	         createMap( "no","1", "name", "부서1", "date", "2025-06-01","childYn","Y", "parentNo",""),
 	         createMap( "no","2","name", "부서2", "date", "2025-06-05","childYn","N", "parentNo","")
-	       
+
 	     );
-	     
+
 		Map<String, Object> response = new HashMap<>();
 	    response.put("data", parents);
 	    response.put("total", 10);
-	    
+
 	    return response;
 
 	 }
-	 
+
 	 @ResponseBody
 	 @RequestMapping("/sample/grid/parent2")
 	 public Map<String, Object> getParentRows22() {
@@ -318,13 +320,13 @@ public class SampleController extends AbstractController{
 	         createMap( "no","101", "name", "팀1-1", "date", "2025-06-10","childYn","N", "parentNo","1"),
              createMap( "no","102",  "name", "팀1-2", "date", "2025-06-12","childYn","N", "parentNo","1"),
 	         createMap( "no","2","name", "부서2", "date", "2025-06-05","childYn","N", "parentNo","")
-	       
-	     ); 
-	     
+
+	     );
+
 		Map<String, Object> response = new HashMap<>();
 	    response.put("data", parents);
 	    response.put("total", 10);
-	    
+
 	    return response;
 
 	 }
@@ -341,18 +343,18 @@ public class SampleController extends AbstractController{
 	     } else {
 	         children = Collections.emptyList();
 	     }
-	     
+
 	 	Map<String, Object> response = new HashMap<>();
 	    response.put("data", children);
 	    response.put("total", 10);
-	    
+
 	    return response;
-	     
-	     
+
+
 	 }
-	 
-	 
-	 
+
+
+
 	 @ResponseBody
 	 @RequestMapping("/sample/grid2/parent")
 	 public  Map<String, Object>  getParentRows2() {
@@ -363,7 +365,7 @@ public class SampleController extends AbstractController{
 	     Map<String, Object> response = new HashMap<>();
 		    response.put("data", parents);
 		    response.put("total", 10);
-		    
+
 		    return response;
 	 }
 
@@ -382,10 +384,10 @@ public class SampleController extends AbstractController{
 	     Map<String, Object> response = new HashMap<>();
 		    response.put("data", children);
 		    response.put("total", 10);
-		    
+
 		    return response;
-	     
-	     
+
+
 	 }
 
 	 // Helper method to create Map
@@ -395,10 +397,10 @@ public class SampleController extends AbstractController{
 	     map.put(key2, value2);
 	     map.put(key3, value3);
 	     map.put(key4, value4);
-	   
+
 	     return map;
 	 }
-	 
+
 	 private Map<String, Object> createMap(String key1, Object value1, String key2, Object value2, String key3, Object value3, String key4, Object value4, String key5, Object value5) {
 	     Map<String, Object> map = new HashMap<>();
 	     map.put(key1, value1);
@@ -406,29 +408,29 @@ public class SampleController extends AbstractController{
 	     map.put(key3, value3);
 	     map.put(key4, value4);
 	     map.put(key5, value5);
-	   
+
 	     return map;
 	 }
 
 	@ResponseBody
 	@PostMapping("/sample/grid/delete")
 	public Map<String, Object> deleteGrid(@RequestBody Map<String, Object> requestData) throws Exception {
-		 
+
 		 Map<String, Object> response = new HashMap<>();
-		 
-		 FtMap params = getFtMap(requestData); 
-		 
+
+		 FtMap params = getFtMap(requestData);
+
 		sampleService.deleteGridSample(params);
-		
+
 		response.put("success", true);
 		response.put("message", "저장 완료");
 		response.put("receivedData", requestData); // 받은 데이터를 그대로 응답에 포함
-		
+
 		return response;
-		 
+
 	 }
-	
-	 
+
+
 	@ResponseBody
 	@PostMapping("/sample/grid/save")
 	public  Map<String, Object>  saveGrid(@RequestBody Map<String, Object> requestData) {
@@ -461,35 +463,35 @@ public class SampleController extends AbstractController{
 			return response;
 		}
 	}
-	 
+
 	@ResponseBody
 	@PostMapping("/sample/grid/saveExl")
 	public  Map<String, Object>  saveExl(@RequestBody Map<String, Object> requestData) throws Exception {
 
 		Map<String, Object> response = new HashMap<>();
 		FtMap params = getFtMap(requestData);
-		
+
 		 int savedCount=0;
         // 엑셀 데이터 저장인지 확인
         if (Boolean.TRUE.equals(params.getBoolean("isExcelData"))) {
         	   List<Map<String, Object>> excelData = (List<Map<String, Object>>) params.get("excelData");
         	   savedCount = sampleService.saveGridExcelSample(excelData);
-        } 
-	          
+        }
+
     	response.put("success", true);
 		response.put("message", "총 "+savedCount+"건 저장 완료");
 
 		return response;
-	     
+
 	}
 
-	 
+
 	@RequestMapping("/sample/selectSampleListForm")
 	public String selectSampleListForm( HttpServletRequest request) throws Exception {
-		
+
 		FtMap params = super.getFtMap(request);
 		params.put("userId", SecurityUtil.getUserId());
-		
+
 		/* 공통코드목록 가져오는 방법*/
 		params.put("cdGroupSn", 1);
 		List<FtMap> codeList = super.getCommonService().selectCommonCodeList(params);
@@ -504,26 +506,26 @@ public class SampleController extends AbstractController{
 		/*공통코드 목록을 map형식으로 변환 필요시*/
 		FtMap etcCode = super.getCommonService().selectCommonCodeMap(codeList);
 		request.setAttribute("etcCode", etcCode);
-		
+
 		return "tiles:sample/sampleList";
-		
+
 	}
 
 	@ResponseBody
 	@RequestMapping("/sample/selectSampleList1")
 	public  Map<String, Object> selectSampleList1(@RequestBody Map<String, Object> map) throws Exception {
-		
-		
+
+
 		FtMap params = getFtMap(map);
-		
+
 		Pageable pageable = new Pageable();
 		pageable.setParam(params);
-		
-		
+
+
 		params.put("userId", SecurityUtil.getUserId());
-		
-		
-		
+
+
+
 		Page<FtMap> page = sampleService.selectSampleList(pageable, params);
 
 		List resultList= page.getList();
@@ -534,8 +536,8 @@ public class SampleController extends AbstractController{
 
 	    return response;
 	}
-	
-	
+
+
 
 	/**
 	 * 샘플목록을 조회한다
@@ -546,23 +548,23 @@ public class SampleController extends AbstractController{
 	 */
 	@ResponseBody
 	@RequestMapping("/sample/selectSampleList")
-	public  Map<String, Object> selectSampleList(@RequestBody Map<String, Object> map) throws Exception {
-		
-		
-		
+	public  Map<String, Object> selectSampleList(@RequestBody(required = false) Map<String, Object> map) throws Exception {
+
+
+
 		FtMap params = getFtMap(map);
-		
+
 		Pageable pageable = new Pageable();
 		pageable.setParam(params);
-		
-		
+
+
 		params.put("userId", SecurityUtil.getUserId());
-		
-		
+
+
 	System.out.println("schCondition.."+params.getString("schCondition"));
 	System.out.println("schKeyword.."+params.getString("schKeyword"));
-	
-		
+
+
 		Page<FtMap> page = sampleService.selectSampleList(pageable, params);
 
 		List resultList= page.getList();
@@ -655,8 +657,8 @@ public class SampleController extends AbstractController{
 
 		FtMap params = super.getFtMap(request);
 		params.put("userId", SecurityUtil.getUserId());
-		
-		
+
+
 		System.out.println(params);
 
 		sampleService.deleteSample(params);

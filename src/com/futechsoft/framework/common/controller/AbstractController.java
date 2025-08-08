@@ -58,7 +58,7 @@ public abstract class AbstractController {
 	
 	
 	
-	protected FtMap getFtMap(@RequestBody Map<String, Object> map) throws Exception {
+	protected FtMap getFtMap(@RequestBody(required = false) Map<String, Object> map) throws Exception {
 		FtMap params = new FtMap();
 		params.setFtMap(map);
 		

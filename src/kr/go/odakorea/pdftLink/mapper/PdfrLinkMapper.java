@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import com.futechsoft.framework.annotation.Mapper;
-import com.futechsoft.framework.common.page.Pageable;
+import com.futechsoft.framework.common.pagination.Pageable;
 import com.futechsoft.framework.util.FtMap;
 
 

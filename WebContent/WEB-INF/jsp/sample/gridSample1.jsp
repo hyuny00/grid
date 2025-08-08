@@ -18,27 +18,39 @@ $(document).ready(function() {
     	 mainUrl: '/sample/newSampleList2',
     	 saveUrl: '/sample/grid/save',
     	 deleteUrl: '/sample/grid/delete'
-     }, 
+     },
      pageSize: 10,
-     
+
      onRowClick: function(rowData, $row) {
          console.log('선택된 행:', rowData);
      },
-     
+
      onRowDoubleClick: function(rowData, $row) {
          console.log('더블클릭된 행:', rowData);
          // 여기에 더블클릭 시 실행할 로직 추가
          // 예: 상세 페이지 이동, 수정 모달 열기 등
+     },
+     // ★ 추가: 초기화 완료 후 실행될 콜백
+     onInitComplete: function() {
+         console.log('그리드 초기화 완료!');
+         // 여기에 추가 작업 수행
+         doSomethingAfterInit();
      }
  });
- 
+
 
 });
- 
- 
+
+function doSomethingAfterInit(){
+	const gridInstance= gridManagers['grid1'];
+
+	console.log("kkkkkkkkkk",gridInstance.getData());
+
+}
+
 function test3(id){
 	alert(id);
-	
+
 }
 
 </script>
@@ -47,13 +59,13 @@ function test3(id){
     <div class="lt">
         <h2>요청 중인 연계</h2>
     </div>
-    
+
     <ul class="breadcrumb">
         <li class="home"><a href="javascript:;">홈</a></li>
         <li><a href="javascript:;">평가</a></li>
         <li><a href="javascript:;">자체평가</a></li>
     </ul>
-    
+
     <div class="rt"></div>
 </div>
 <form id="searchForm" method="post">
@@ -87,13 +99,13 @@ function test3(id){
 	            </ul>
 	        </div>
 	    </div>
-	    
+
 	    <div class="btn-wrap">
 	        <button type="button" class="btn-apply btn-search">조건검색</button>
 	        <button type="reset" class="btn-reset"><span class="sr-only">초기화</span></button>
 	    </div>
 	</div>
-</form>	
+</form>
 	<div id="grid1-container">
 		<div class="schList">
 		    <div class="titBox">
@@ -106,12 +118,12 @@ function test3(id){
 		            </div>
 		        </div>
 		    </div>
-		    
-					        
-					        
-		    
+
+
+
+
 		    <div class="tblBox">
-		 
+
 		        <table class="tbl col" id="grid1">
 		            <caption></caption>
 		            <colgroup>
@@ -143,14 +155,14 @@ function test3(id){
 		            <tbody id="grid1-body">
 		            </tbody>
 		        </table>
-		        
-		        
+
+
 			        <!-- pagination -->
 			        <div class="pagination" id="grid1-pagination">
-			           
+
 			        </div>
 			        <!-- //pagination -->
-		     
+
 		    </div>
 		</div>
 	</div>
@@ -158,7 +170,7 @@ function test3(id){
 
 <!-- 첫 번째 그리드용 템플릿 -->
 <script type="text/html" id="node-row-template-1">
-   
+
 <tr class="{{displayClass}}" data-level="{{level}}" data-parent-path="{{parentPath}}">
     <td>
         <div class="tblChk">

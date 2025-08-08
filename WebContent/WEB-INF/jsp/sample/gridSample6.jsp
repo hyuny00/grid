@@ -4,15 +4,15 @@
 
 let initializedData = null;
 $(document).ready(function() {
-    
+
     // 공통 그리드 매니저 인스턴스 생성
     const gridManager = new CommonGridManager();
-    
+
     // 개별 페이지별 설정
     const pageConfig = {
         // 동적 카테고리 설정
         dynamicCategories: ['schNtnCd', 'schBizFldCd','schAidTpCd','schInstCd'],
-        
+
         // 각 카테고리별 코드 그룹 매핑
         categoryCodeMapping: {
             schNtnCd: '16',
@@ -20,18 +20,18 @@ $(document).ready(function() {
             schBizFldCd: 'bizFldCd',  //4단계사업분야 고정값
             schInstCd: 'instCd'//기관코드고정값
         },
-        
+
         // 2단계이상코드의 첫단계 타이틀
         categoryTitles: {
             'schNtnCd': '대륙',
             'schBizFldCd': '사업분야'
         },
-        
+
         // 2단계이상 필터가 필요한 카테고리들을 정의
         multiStepCategories: ['schNtnCd','schBizFldCd'],
-        
-      
-        
+
+
+
         // 그리드 설정들
         gridConfigs: [
             {
@@ -40,15 +40,27 @@ $(document).ready(function() {
                 templateId: 'node-row-template-1',
                 urls: {
                     mainUrl: '/sample/newSampleList2',
-                }, 
+                },
                 pageSize: 10,
-                onRowClick: function(rowData, $row) {
+                onRowClick: function(rowData, $row,event) {
+
+                	// event가 전달되지 않을 수도 있으므로 안전하게 체크
+                    if (event && $(event.target).closest('.tblChk').length > 0) {
+                        return false;
+                    }
+
+
                     console.log('선택된 행:', rowData);
                 },
                 onRowDoubleClick: function(rowData, $row) {
                     console.log('더블클릭된 행:', rowData);
                     // 여기에 더블클릭 시 실행할 로직 추가
                     // 예: 상세 페이지 이동, 수정 모달 열기 등
+                },
+                // 병합할 필드들 설정
+                mergeCells: {
+
+                    'statusCd': true       // status 필드 병합
                 }
             },
             {
@@ -57,7 +69,7 @@ $(document).ready(function() {
                 templateId: 'node-row-template-2',
                 urls: {
                     mainUrl: '/sample/newSampleList2',
-                }, 
+                },
                 pageSize: 10,
                 onRowClick: function(rowData, $row) {
                     console.log('선택된 행:', rowData);
@@ -69,45 +81,46 @@ $(document).ready(function() {
                 }
             }
         ],
-        
+
         // 다중 코드 요청 설정 (선택사항 - 필요 없으면 주석 처리 또는 삭제)
         codeRequests: [
-            {schCodeDiv:'sss', code: '', cdGroupSn: '1' },
-            {schCodeDiv:'fff', code: '', cdGroupSn: '1' }
+            {schCodeDiv:'fff', code: '', cdGroupSn: '1' },
+            {schCodeDiv:'ntnCd', code: '', cdGroupSn: '' }
         ],
-        
+
         codeListRequests : [
     	    {schCodeDiv:'statusOptions', code: '', cdGroupSn: '1' },
-    	    {schCodeDiv:'statusOptions2', code: '', cdGroupSn: '1' }
+    	    {schCodeDiv:'statusOptions2', code: '', cdGroupSn: '1' },
+    	    {schCodeDiv:'ntnCd', code: '', cdGroupSn: '' }
     	]
-        
+
         // 다중 코드가 필요 없는 경우 아래와 같이 빈 배열이나 null로 설정
         // codeRequests: null  // 또는 []
     };
-    
-    
-   
-    
+
+
+
+
     // 모든 초기화 작업 시작
     const result = gridManager.initializeAllData(pageConfig)
         .then(result => {
             console.log('초기화 완료:', result);
-            
+
             // 전역 변수에 저장
             initializedData = result;
             filterSystem = result.filterSystem;
             gridInstances = result.gridInstances;
-            
+
             // 초기화 완료 후 초기 필터 설정필요시
             setupInitialFilters();
-          
+
         })
         .catch(error => {
             console.error('초기화 실패:', error);
         });
-    
-    
-        
+
+
+
 });
 
 
@@ -120,47 +133,47 @@ function setupInitialFilters() {
         console.error('필터 시스템이 초기화되지 않았습니다.');
         return;
     }
-    
+
     // 여러 필터 동시 설정
     filterSystem.setSimpleInitialFilters({
         "schNtnCd": { value: "229", text: "시행기관 229" },
         "period": { value: "2024-01-01,2024-01-03", text: "시작일: 2024-01-01 - 2024-01-03" }
     });
-    
+
     console.log('초기 필터 설정 완료');
 }
 
 
 function someOtherFunction() {
 	//  var a=getGridById('grid1');
-	  
+
 	// a.setPageSize(5);
-	 
-	 
+
+
 
 
 	 const gridManager = gridManagers['grid1'];
-	 
+
 
 	 // 1. 인덱스로 행 데이터 가져오기 (0부터 시작)
 	 const firstRowData = gridManager.getRowDataByIndex(0);
-	 
-	 
-	 
+
+
+
 	// 3. 인덱스로 특정 필드만 업데이트
 	// gridManager.updateRowFieldByIndex(1, 'projectId', '1111');
-	
-	
+
+
 	 gridManager.updateRowDataByIndex(3, {
 		   projectId: '첫 번째 행 수정',
 		   projectTitle: '2222'
 		});
-	
+
 	// const thirdRowData = gridManager.getRowDataByIndex(2);
-	 
-	 
-	 
-	 
+
+
+
+
 }
 </script>
 
@@ -168,21 +181,21 @@ function someOtherFunction() {
 					<div class="lt">
 						<h2><a href="javascript:someOtherFunction()">요청 중인 연계</a></h2>
 					</div>
-					
+
 					<ul class="breadcrumb">
 						<li class="home"><a href="javascript:;">홈</a></li>
 						<li><a href="javascript:;">평가</a></li>
 						<li><a href="javascript:;">자체평가</a></li>
 					</ul>
-					
+
 					<div class="rt"></div>
 				</div>
-				
+
 				<form id="searchForm" method="post">
 	<!-- JSP 인클루드 파일들 (필요시) -->
 		<jsp:include page="/WEB-INF/jsp/framework/_includes/includePageParam.jsp" flush="true"/>
 		<jsp:include page="/WEB-INF/jsp/framework/_includes/includeSchParam.jsp" flush="true"/>
-				
+
 				<div class="schBox">
 				    <div class="searchTxt">
 				        <p>사업명</p>
@@ -192,7 +205,7 @@ function someOtherFunction() {
 						</div>
 						<button type="button" class="btn-flt" id="filterToggleBtn">검색 필터 열기</button>
 				    </div>
-				    
+
 				    <div class="searchFlt" id="searchFilterArea">
 				        <div class="fltList">
 				            <ul>
@@ -205,7 +218,7 @@ function someOtherFunction() {
 				                 <li><button type="button" class="filter-category-btn" data-category="schBudget">사업예산</button></li>
 				            </ul>
 				        </div>
-						        
+
 						<div class="fltCont" id="filterOptions">
 						    <ul>
 						        <li class="contBox type01">
@@ -232,23 +245,23 @@ function someOtherFunction() {
 					        <p>최종 선택</p>
 					        <ul class="fourth-step-list"></ul>
 					    </div>
-					    
+
 					    <div class="fifth-step-options" style="display: none;">
 						    <p>최종 세부 선택</p>
 						    <ul class="fifth-step-list"></ul>
 						</div>
 						            </div>
-						            
-						            	
+
+
 									<!-- 1단계 필터 전용 (기존 구조 유지) -->
 									<div class="filter-options-content" style="display: none;">
 									    <!-- 1단계 필터 내용 -->
 									</div>
-				        
+
 						        </li>
 						    </ul>
 						</div>
-					
+
 				        <div class="fltOpt">
                             <ul id="selectedFilters">
                                 <li class="empty-state">
@@ -258,7 +271,7 @@ function someOtherFunction() {
 				            <button type="reset" class="btn-reset txt" id="resetFiltersBtn">초기화</button>
 				        </div>
 				    </div>
-				    
+
 				    <button type="button" class="btn-apply" id="applyFiltersBtn">조건검색</button>
 				</div>
 				</form>
@@ -275,9 +288,9 @@ function someOtherFunction() {
 		            </div>
 		        </div>
 		    </div>
-		    
+
 		    <div class="tblBox">
-		    
+
 		        <table class="tbl col" id="grid1">
 		            <caption></caption>
 		            <colgroup>
@@ -309,22 +322,22 @@ function someOtherFunction() {
 		            <tbody id="grid1-body">
 		            </tbody>
 		        </table>
-		        
-		        
+
+
 			        <!-- pagination -->
 			        <div class="pagination" id="grid1-pagination">
-			           
+
 			        </div>
 			        <!-- //pagination -->
-		        
+
 		    </div>
-		    
+
 		    </div>
 		    </div>
 		    <div id="grid2-container">
-		    
+
 		     <div class="tblBox">
-		    
+
 		        <table class="tbl col" id="grid2">
 		            <caption></caption>
 		            <colgroup>
@@ -356,27 +369,32 @@ function someOtherFunction() {
 		            <tbody id="grid2-body">
 		            </tbody>
 		        </table>
-		        
-		        
+
+
 			        <!-- pagination -->
 			        <div class="pagination" id="grid2-pagination">
-			           
+
 			        </div>
 			        <!-- //pagination -->
-		        
+
 		    </div>
 		</div>
-	
-	
+
+
 <!-- 첫 번째 그리드용 템플릿 -->
 <script type="text/html" id="node-row-template-1">
-   
+
+
+
+
 <tr>
-    <td>
-        <div class="tblChk">
-            <input type="checkbox"  {{checkedAttr}}  id="chk-{{id}}"  class="row-check"><label for="chk-{{id}}"></label>
-        </div>
-    </td>
+
+<td>
+            {{#if mergeFirst statusCd}}
+              <div class="tblChk">  <input type="checkbox"  {{checkedAttr}}  id="chk-{{id}}"  class="row-check" ><label for="chk-{{id}}" ></label> </div>
+            {{/if}}
+ </td>
+
    <td class="tC">{{projectId}}</td>
     <td>
         <a href="#"><span class="span orange">{{projectType}}</span>{{projectTitle}}</a>
@@ -390,7 +408,8 @@ function someOtherFunction() {
         {{/each}}
     </select></td>
     <td>{{sector}}{{ntnCd['192']}}</td>
-    <td><span class="badge pt">{{status}}</span></td>
+    <td><span class="badge pt">
+{{status}}</span></td>
 </tr>
 
 
@@ -398,7 +417,7 @@ function someOtherFunction() {
 
 
 <script type="text/html" id="node-row-template-2">
-   
+
 <tr>
     <td>
         <div class="tblChk">
@@ -419,4 +438,4 @@ function someOtherFunction() {
 
 </script>
 
-	
+

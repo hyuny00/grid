@@ -164,32 +164,29 @@ function someOtherFunction() {
 
 
 <!-- 첫 번째 그리드용 템플릿 -->
-<script type="text/html" id="node-row-template-1">
-   
-<tr class="{{displayClass}}" data-level="{{level}}" data-parent-path="{{parentPath}}">
-    <td>
-        <div class="tblChk">
-            <input type="checkbox"  {{checkedAttr}}  id="chk-{{id}}"  class="row-check"><label for="chk-{{id}}"></label>
-        </div>
-    </td>
-    <td class="tC">{{projectId}}</td>
-     <td style="{{indentStyle}}">
 
-      <span class="{{toggleClass}}" >{{toggleSymbol}}</span><input type="text" name="projectTitle" style="width:95%" data-field="projectTitle" data-value="{{projectTitle}}">
-
-    </td>
-    <td>{{country}}</td>
- 	<td><input type="text" class="date-input pickr flatpickr-input active" placeholder="날짜를 선택하세요"   data-field="regDate"   data-value="{{regDate}}" readonly="readonly"></td>
-    <td>  <div class="selectBox">
-<select class="form-control form-control-sm" data-field="statusCd"   data-value="{{statusCd}}">
-                <option value="">선택하세요</option>
-                <option value="01">카테고리A</option>
-                <option value="02">카테고리B</option>
-            </select>
-</div>
-	</td>
-</tr>
-
-
-
-</script>
+ <template id="node-row-template-1">   
+	<tr class="{{displayClass}}" data-level="{{level}}" data-parent-path="{{parentPath}}">
+	    <td>
+	        <div class="tblChk">
+	            <input type="checkbox"  {{checkedAttr}}  id="chk-{{id}}"  class="row-check"><label for="chk-{{id}}"></label>
+	        </div>
+	    </td>
+	    <td class="tC">{{projectId}}</td>
+	     <td style="{{indentStyle}}">
+	
+	      <span class="{{toggleClass}}" >{{toggleSymbol}}</span><input type="text" name="projectTitle" style="width:95%" data-field="projectTitle" data-value="{{projectTitle}}">
+	
+	    </td>
+	    <td>{{country}}</td>
+	 	<td><input type="text" class="date-input pickr flatpickr-input active" placeholder="날짜를 선택하세요"   data-field="regDate"   data-value="{{regDate}}" readonly="readonly"></td>
+	    <td>  <div class="selectBox">
+	<select class="form-control form-control-sm" data-field="statusCd"   data-value="{{statusCd}}">
+	                <option value="">선택하세요</option>
+	                <option value="01">카테고리A</option>
+	                <option value="02">카테고리B</option>
+	            </select>
+	</div>
+		</td>
+	</tr>
+</template>

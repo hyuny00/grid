@@ -16,8 +16,8 @@ public class Pageable {
 	public void setParam(FtMap param) {
 		
 		
-		page = param.getInt("page");
-		pageSize = param.getInt("pageSize");
+		page = param.getInt("page")==0?1 : param.getInt("page");
+		pageSize = param.getInt("pageSize")==0?10 : param.getInt("pageSize");
 		
 		//List<String> allowedFields = Arrays.asList("ID", "NAME", "CREATED_AT");
 		List<String> allowedDirections = Arrays.asList("ASC", "DESC");

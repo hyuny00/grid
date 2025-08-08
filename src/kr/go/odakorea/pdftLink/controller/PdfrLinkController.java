@@ -3,6 +3,7 @@
  */
 package kr.go.odakorea.pdftLink.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,8 +18,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.futechsoft.framework.common.controller.AbstractController;
-import com.futechsoft.framework.common.page.Pageable;
+import com.futechsoft.framework.common.pagination.Page;
+import com.futechsoft.framework.common.pagination.Pageable;
+import com.futechsoft.framework.util.CommonUtil;
 import com.futechsoft.framework.util.FtMap;
+import com.futechsoft.framework.util.SecurityUtil;
 
 import kr.go.odakorea.pdftLink.service.PdfrLinkService;
 
@@ -51,8 +55,35 @@ public class PdfrLinkController  extends AbstractController{
 	 */
 	@ResponseBody
 	@RequestMapping("/pdftLink/listOdaBizInfo")
-	public List<FtMap> listOdaBizInfo(Pageable pageble, HttpServletRequest request) throws Exception{
-		return null;
+	public  Map<String, Object>  listOdaBizInfo(@RequestBody(required=false) Map<String, Object> map) throws Exception{
+		
+		
+		FtMap params = getFtMap(map);
+		
+		Pageable pageable = new Pageable();
+		pageable.setParam(params);
+		
+		
+		
+		LOGGER.debug("schInstCd..........", SecurityUtil.getMiniCd());
+	
+		params.put("userId", SecurityUtil.getUserId());
+		
+		params.put("schInstCd", SecurityUtil.getMiniCd());
+		params.put("schYear", CommonUtil.getToday("yyyy"));
+		params.put("schDiv", "01");
+		
+		
+		Page<FtMap> page = pdfrLinkService.listOdaBizInfo(pageable, params);
+
+		List<FtMap> resultList= page.getList();
+		Map<String, Object> response = new HashMap<>();
+	    response.put("data", resultList);
+	    response.put("total",  page.getPageable().getTotalCount());
+
+
+	    return response;
+		
 	}
 	
 
@@ -67,7 +98,7 @@ public class PdfrLinkController  extends AbstractController{
 	@RequestMapping("/pdftLink/createBizLinkDmnd")
 	public Map<String, Object> createBizLinkDmnd(Pageable pageble, HttpServletRequest request) throws Exception{
 		
-		//Result result = getResult();
+		
 		
 		return null;
 		
@@ -84,11 +115,6 @@ public class PdfrLinkController  extends AbstractController{
 	@RequestMapping("/pdftLink/deleteBizLinkDmnd")
 	public Map<String, Object> deleteBizLinkDmnd(@RequestBody Map<String, Object> map) throws Exception{
 	
-		FtMap params = getFtMap(map);
-		
-		
-		
-		
 		return null;
 		
 	}

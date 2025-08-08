@@ -73,37 +73,37 @@ public class ViewController  extends AbstractController {
 
 		FtMap params = super.getFtMap(request);
 		params.put("userNo", SecurityUtil.getUserNo());
-		
-		
+
+
 		List<FtMap> codeList = null;
-		
+
 
 		String code= params.getString("code");
 		int cdGroupSn= params.getInt("cdGroupSn");
 		params.put("upCd", code);
 		params.put("cdGroupSn", cdGroupSn);
-		
-		
+
+
 		String schCodeDiv= params.getString("schCodeDiv");
-		
-		
+
+
 		if(CommonUtil.nvl(schCodeDiv).equals("bizFldCd")) {
-			
+
 			if( params.getString("code").equals("")) {
 				params.put("upCd", "-");
 			}else {
 				params.put("upCd", code);
 			}
 			codeList = getCommonService().selectBizFldCdList(params);
-			
+
 		}else if(CommonUtil.nvl(schCodeDiv).equals("ntnCd")) {
 			params.put("schCntnt", "Y");
 			params.put("schUpNtnCd", code);
 			codeList = getCommonService().selectNtnSubCodeList(params);
-			
+
 		}else if(CommonUtil.nvl(schCodeDiv).equals("instCd")) {
 			codeList = getCommonService().selectInstCdList(params);
-			
+
 		}else {
 			codeList = getCommonService().selectCommonCodeList(params);
 		}
@@ -111,52 +111,52 @@ public class ViewController  extends AbstractController {
 		return codeList;
 
 	}
-	
-	
+
+
 	@RequestMapping(value = "/common/selectBizFldCdList")
 	@ResponseBody
 	public List<FtMap> selectBizFldCdList(HttpServletRequest request) throws Exception {
 
 		FtMap params = super.getFtMap(request);
-		
+
 		List<FtMap> codeList= getCommonService().selectBizFldCdList(params);
-		
+
 		return codeList;
 
 	}
-	
-	
+
+
 
 	@RequestMapping(value = "/common/selectCodeMultiple")
 	@ResponseBody
 	public Map<String, Object> selectCodeMultiple(@RequestBody Map<String, Object> requestData) throws Exception {
-	    
-	 
-	    FtMap params = getFtMap(requestData); 
-	    
+
+
+	    FtMap params = getFtMap(requestData);
+
 	    List<Map<String, Object>> requests = (List<Map<String, Object>>) params.get("requests");
 	    Map<String, Object> resultMap = new HashMap<>();
-	    
+
 	    if (requests != null) {
 	        for (Map<String, Object> request : requests) {
-	           
+
 	        	String code = (String) request.get("code");
 	            String cdGroupSn = (String) request.get("cdGroupSn");
 	            String schCodeDiv = (String) request.get("schCodeDiv");
-	            
-	            
-	            
+
+
+
 	            params.put("upCd", code);
 	    		params.put("cdGroupSn", cdGroupSn);
-	    		
-	            
+
+
 	            // 기존 selectCode 서비스 로직 재사용
 	           // List<FtMap> codeList = getCommonService().selectCommonCodeList(params);
-	            
-	          
-	            
+
+
+
 	            List<FtMap> codeList =null;
-	            
+
 	            if(CommonUtil.nvl(schCodeDiv).equals("bizFldCd")) {
 	    			codeList = getCommonService().selectBizFldCdList(params);
 	    		}else if(CommonUtil.nvl(schCodeDiv).equals("instCd")) {
@@ -166,47 +166,59 @@ public class ViewController  extends AbstractController {
 	    		}else {
 	    			codeList = getCommonService().selectCommonCodeList(params);
 	    		}
-	            
+
 	            FtMap codeMap = super.getCommonService().selectCommonCodeMap(codeList);
-	            
-	            
-	           
-	            
+
+
+
+
 	            resultMap.put(schCodeDiv, codeMap);
 	        }
 	    }
-	    
+
 	    return resultMap;
 	}
-		
-	
-	
-	
+
+
+
+
 	@RequestMapping(value = "/common/selectCodeListMultiple")
 	@ResponseBody
 	public Map<String, Object> selectCodeListMultiple(@RequestBody Map<String, Object> requestData) throws Exception {
-	    
-	 
-	    FtMap params = getFtMap(requestData); 
-	    
+
+
+	    FtMap params = getFtMap(requestData);
+
 	    List<Map<String, Object>> requests = (List<Map<String, Object>>) params.get("requests");
 	    Map<String, Object> resultMap = new HashMap<>();
-	    
+
 	    if (requests != null) {
 	        for (Map<String, Object> request : requests) {
 	            String code = (String) request.get("code");
 	            String cdGroupSn = (String) request.get("cdGroupSn");
 	            String codeDiv = (String) request.get("schCodeDiv");
-	            
-	        
-	            
+	            String schCodeDiv = (String) request.get("schCodeDiv");
+
+
 	            params.put("upCd", code);
 	    		params.put("cdGroupSn", cdGroupSn);
-	    		
-	            
+
+
 	            // 기존 selectCode 서비스 로직 재사용
-	            List<FtMap> codeList = getCommonService().selectCommonCodeList(params);
-	            
+	           // List<FtMap> codeList = getCommonService().selectCommonCodeList(params);
+	    		 List<FtMap> codeList =null;
+
+		            if(CommonUtil.nvl(schCodeDiv).equals("bizFldCd")) {
+		    			codeList = getCommonService().selectBizFldCdList(params);
+		    		}else if(CommonUtil.nvl(schCodeDiv).equals("instCd")) {
+		    			codeList = getCommonService().selectInstCdList(params);
+		    		}else if(CommonUtil.nvl(schCodeDiv).equals("ntnCd")) {
+		    			codeList = getCommonService().selectNtnCodeList(params);
+		    		}else {
+		    			codeList = getCommonService().selectCommonCodeList(params);
+		    		}
+
+
 	            // select2 형태로 변환
 	            List<Map<String, Object>> options = new ArrayList<>();
 	            for (FtMap item : codeList) {
@@ -215,18 +227,18 @@ public class ViewController  extends AbstractController {
 	                option.put("text", item.getString("text"));
 	                options.add(option);
 	            }
-	            
+
 	            resultMap.put(codeDiv, options);
 	        }
 	    }
-	    
+
 	    return resultMap;
 	}
-		
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
 }
