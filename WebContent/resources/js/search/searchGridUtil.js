@@ -476,10 +476,6 @@ class CommonGridManager {
                 console.log("❌ codeRequests가 없어서 코드맵 생성 생략");
             }
 
-            console.log("Final codeMap:", codeMap);
-         console.log("Final codeMap:", codeMap);
-
-
 
             // 코드맵 저장 (정리된 버전)
             this.codeMap = this.cleanNullKeys(codeMap);

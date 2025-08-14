@@ -25,7 +25,8 @@ class TreeGridManager {
 
 
        // this.isSaveEnabled = !!(this.urls.saveUrl);
-        this.isSaveEnabled = !!(this.urls.saveExlUrl || this.urls.saveUrl);
+       // this.isSaveEnabled = !!(this.urls.saveExlUrl || this.urls.saveUrl);
+        this.isSaveEnabled=true;
 
         this.isPagingEnabled = !!(this.pageSize); // pageSize가 있으면 페이징 활성화
 
@@ -82,6 +83,8 @@ class TreeGridManager {
         // 셀 병합 설정 추가
         this.mergeCells = config.mergeCells || {}; // { field1: true, field2: true }
         this.mergeFields = Object.keys(this.mergeCells).filter(field => this.mergeCells[field]);
+
+        this.renderRowFunction = config.renderRowFunction;  // 추가
 
         this.init();
     }
@@ -376,6 +379,10 @@ class TreeGridManager {
     	return  this.data;
     }
 
+    getCount(){
+    	return  this.data.length;
+    }
+
     setData(responseData, page = 1) {
         this.currentPage = page;
 
@@ -433,6 +440,8 @@ class TreeGridManager {
 		 if (this.onInitComplete && typeof this.onInitComplete === 'function' ) {
             this.onInitComplete();
         }
+
+
     }
 
     buildTreeStructure(flatData) {
@@ -548,6 +557,7 @@ class TreeGridManager {
         // 병합 그룹 계산
         const mergeGroups = this.calculateMergeGroups(flatData);
 
+
         // 테이블 렌더링
         globalIndex = 0;
         flatData.forEach(item => {
@@ -566,16 +576,7 @@ class TreeGridManager {
         this.applyMergeStyles();
 
         // 기존 코드 (날짜 입력 필드 초기화 등)...
-        $(`#${this.gridId}-container .date-input`).flatpickr({
-            locale: 'ko',
-            dateFormat: 'Y-m-d',
-            onReady: function(selectedDates, dateStr, instance) {
-                replaceYearWithSelect(instance);
-            },
-            onOpen: function(selectedDates, dateStr, instance) {
-                replaceYearWithSelect(instance);
-            }
-        });
+        this.initializeDatePickers();
 
         // 모든 폼 요소의 값을 data-value 속성으로 설정
         $(`#${this.gridId}-container [data-value]`).each(function() {
@@ -617,6 +618,35 @@ class TreeGridManager {
         */
 
         this.bindEditEvents();
+    }
+
+
+    initializeDatePickers() {
+
+    	const $dateInputs = $(`#${this.gridId}-container .date-input`);
+    	 if ($dateInputs.length === 0) {
+    		 return;
+    	 }
+
+        // flatpickr가 존재하고 date-input 요소가 있을 때만 실행
+        if (typeof $.fn.flatpickr === 'function') {
+	            $dateInputs.flatpickr({
+	                locale: 'ko',
+	                dateFormat: 'Y-m-d',
+	                onReady: function(selectedDates, dateStr, instance) {
+	                    if (typeof replaceYearWithSelect === 'function') {
+	                        replaceYearWithSelect(instance);
+	                    }
+	                },
+	                onOpen: function(selectedDates, dateStr, instance) {
+	                    if (typeof replaceYearWithSelect === 'function') {
+	                        replaceYearWithSelect(instance);
+	                    }
+	                }
+	            });
+        } else {
+            console.warn('flatpickr library is not loaded yet');
+        }
     }
 
     // 3. 병합 그룹 계산 메서드 추가
@@ -759,8 +789,15 @@ class TreeGridManager {
             mergeInfo: mergeInfo // 병합 정보 추가
         };
 
+
         // 템플릿 렌더링에서 병합 처리
-        const rowHtml = this.renderTemplate(this.templateId, rowData, this.codeMap, this.selectOption, reverseIndex);
+       // const rowHtml = this.renderTemplate(this.templateId, rowData, this.codeMap, this.selectOption, reverseIndex);
+
+        const rowHtml = this.renderRowFunction ?
+                this.renderRowFunction(rowData, reverseIndex, this.codeMap, this.selectOption) :
+                this.renderTemplate(this.templateId, rowData, this.codeMap, this.selectOption, reverseIndex); // fallback
+
+
         const $row = $(rowHtml);
         $row.attr('data-id', node.id);
         $row.attr('data-level', node.level);
@@ -944,7 +981,9 @@ class TreeGridManager {
     }
 
 
-
+    setDefaultFields(defaultFields){
+    	this.defaultFields=defaultFields;
+    }
 
     addRow() {
         //const newId = Date.now().toString() + Math.floor(Math.random() * 1000).toString(); // 문자열로 생성
@@ -1879,29 +1918,37 @@ class TreeGridManager {
     }
 
     renderTemplate(templateId, data, mapData, selectOption, reverseIndex) {
-
-
         const template = document.getElementById(templateId).innerHTML;
 
-        // Format 헬퍼 함수들
+        // Format 헬퍼 함수들 (기존과 동일)
         const formatHelpers = {
             // 날짜 포맷팅
             date: function(value, format = 'YYYY-MM-DD') {
                 if (!value) return '';
-
                 let date;
-
-                // 숫자 형태의 날짜 처리 (YYYYMMDD 또는 YYYYMMDDHHMM 등)
+                // 숫자 형태의 날짜 처리 (YYYYMMDD 또는 YYYYMMDDHHMISS 등)
                 const numStr = String(value);
                 if (/^\d{8,}$/.test(numStr)) {
-                    // YYYYMMDD 형태로 파싱
+                    // YYYYMMDD 또는 YYYYMMDDHHMISS 형태로 파싱
                     const year = parseInt(numStr.substring(0, 4));
                     const month = parseInt(numStr.substring(4, 6));
                     const day = parseInt(numStr.substring(6, 8));
 
+                    // 시간 정보 추출 (있는 경우)
+                    let hours = 0, minutes = 0, seconds = 0;
+                    if (numStr.length >= 10) {
+                        hours = parseInt(numStr.substring(8, 10)) || 0;
+                    }
+                    if (numStr.length >= 12) {
+                        minutes = parseInt(numStr.substring(10, 12)) || 0;
+                    }
+                    if (numStr.length >= 14) {
+                        seconds = parseInt(numStr.substring(12, 14)) || 0;
+                    }
+
                     // 유효한 날짜인지 검증
                     if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-                        date = new Date(year, month - 1, day); // month는 0부터 시작
+                        date = new Date(year, month - 1, day, hours, minutes, seconds);
                     } else {
                         date = new Date(value);
                     }
@@ -2000,6 +2047,27 @@ class TreeGridManager {
             }
         };
 
+        // 값을 파싱하는 공통 헬퍼 함수
+        function parseValue(val) {
+            val = val.trim();
+
+            // 문자열 리터럴 처리 ('...' 또는 "...")
+            if ((val.startsWith("'") && val.endsWith("'")) ||
+                (val.startsWith('"') && val.endsWith('"'))) {
+                let content = val.slice(1, -1);
+
+                // 템플릿 리터럴 처리 ${variable}
+                content = content.replace(/\$\{(\w+)\}/g, function(match, varName) {
+                    return data[varName] !== undefined ? data[varName] : '';
+                });
+
+                return content;
+            } else {
+                // 일반 변수
+                return data[val] !== undefined ? data[val] : val;
+            }
+        }
+
         // 1단계: each 반복문 처리
         let result = template.replace(/\{\{#each\s+(\[?\w+\]?)\}\}([\s\S]*?)\{\{\/each\}\}/g,
             function(match, arrayKey, content) {
@@ -2036,42 +2104,143 @@ class TreeGridManager {
                 }).join('');
             });
 
+        // 2단계: 복합 조건문 파서 (AND, OR 모두 지원)
+        // 복합 조건문 파싱 함수 (and, or 모두 지원)
+        function parseComplexCondition(conditionStr) {
+            // 'or'로 먼저 분리 (or가 and보다 우선순위가 낮음)
+            const orGroups = conditionStr.split(/\s+or\s+/);
 
-        // 2단계: if-else 블록 처리 (더 정확한 패턴)
-        result = result.replace(/\{\{#if\s+(\w+)\s+equals\s+['"]?([^'"}\s]+)['"]?\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g,
-        	    function(match, key, value, trueContent, falseContent) {
-        	        return data[key] == value ? trueContent : falseContent;
-        	    });
+            return orGroups.map(orGroup => {
+                // 각 or 그룹 내에서 'and'로 분리
+                const andConditions = orGroup.trim().split(/\s+and\s+/);
 
+                return andConditions.map(condition => {
+                    condition = condition.trim();
 
-     // merge 조건 처리 추가
+                    // 'not equals' 패턴 확인
+                    const notEqualsMatch = condition.match(/^(.+?)\s+not\s+equals\s+(.+)$/);
+                    if (notEqualsMatch) {
+                        return {
+                            left: notEqualsMatch[1].trim(),
+                            operator: 'not equals',
+                            right: notEqualsMatch[2].trim()
+                        };
+                    }
+
+                    // 'equals' 패턴 확인
+                    const equalsMatch = condition.match(/^(.+?)\s+equals\s+(.+)$/);
+                    if (equalsMatch) {
+                        return {
+                            left: equalsMatch[1].trim(),
+                            operator: 'equals',
+                            right: equalsMatch[2].trim()
+                        };
+                    }
+
+                    return null;
+                }).filter(Boolean);
+            });
+        }
+
+        // 조건 평가 함수 (and, or 지원)
+        function evaluateConditions(conditionGroups) {
+            // OR 조건: 하나의 그룹이라도 true이면 전체가 true
+            return conditionGroups.some(andGroup => {
+                // AND 조건: 그룹 내 모든 조건이 true여야 함
+                return andGroup.every(condition => {
+                    const leftValue = parseValue(condition.left);
+                    const rightValue = parseValue(condition.right);
+
+                    if (condition.operator === 'equals') {
+                        return leftValue == rightValue;
+                    } else if (condition.operator === 'not equals') {
+                        return leftValue != rightValue;
+                    }
+
+                    return false;
+                });
+            });
+        }
+
+        // 복합 조건문 처리 (and, or 모두 포함된 경우) - else 있는 버전
+        result = result.replace(
+            /\{\{#if\s+([^}]+?)\s+(and|or)\s+([^}]+?)\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g,
+            function(match, firstPart, operator, restPart, trueContent, falseContent) {
+                const conditionStr = firstPart + ' ' + operator + ' ' + restPart;
+                const conditions = parseComplexCondition(conditionStr);
+                if (conditions.length > 0) {
+                    const result = evaluateConditions(conditions);
+                    return result ? trueContent : falseContent;
+                }
+                return match;
+            });
+
+        // 복합 조건문 처리 (and, or 모두 포함된 경우) - else 없는 버전
+        result = result.replace(
+            /\{\{#if\s+([^}]+?)\s+(and|or)\s+([^}]+?)\}\}([\s\S]*?)\{\{\/if\}\}/g,
+            function(match, firstPart, operator, restPart, content) {
+                const conditionStr = firstPart + ' ' + operator + ' ' + restPart;
+                const conditions = parseComplexCondition(conditionStr);
+                if (conditions.length > 0) {
+                    const result = evaluateConditions(conditions);
+                    return result ? content : '';
+                }
+                return match;
+            });
+
+        // 3단계: NOT EQUALS 조건 처리
+        // {{#if key not equals 'value'}}...{{else}}...{{/if}}
+        result = result.replace(
+            /\{\{#if\s+([^}]+?)\s+not\s+equals\s+([^}]+?)\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g,
+            function(match, key, value, trueContent, falseContent) {
+                const leftValue = parseValue(key);
+                const rightValue = parseValue(value);
+                return leftValue != rightValue ? trueContent : falseContent;
+            });
+
+        // {{#if key not equals 'value'}}...{{/if}} (else 없는 버전)
+        result = result.replace(
+            /\{\{#if\s+([^}]+?)\s+not\s+equals\s+([^}]+?)\}\}([\s\S]*?)\{\{\/if\}\}/g,
+            function(match, key, value, content) {
+                const leftValue = parseValue(key);
+                const rightValue = parseValue(value);
+                return leftValue != rightValue ? content : '';
+            });
+
+        // 4단계: 기존 EQUALS 조건 처리
+        // {{#if key equals 'value'}}...{{else}}...{{/if}}
+        result = result.replace(/\{\{#if\s+([^}]+?)\s+equals\s+([^}]+?)\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g,
+            function(match, key, value, trueContent, falseContent) {
+                const leftValue = parseValue(key);
+                const rightValue = parseValue(value);
+                return leftValue == rightValue ? trueContent : falseContent;
+            });
+
+        // merge 조건 처리 (기존)
         result = result.replace(/\{\{#if\s+mergeFirst\s+(\w+)\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g,
             function(match, field, trueContent, falseContent) {
                 const mergeInfo = data.mergeInfo && data.mergeInfo[field];
-                // mergeInfo가 없으면 (병합하지 않는 필드) 항상 true, 있으면 isFirst 값 사용
                 return (!mergeInfo || mergeInfo.isFirst) ? trueContent : falseContent;
             });
 
-        // merge first 단독 조건
+        // merge first 단독 조건 (기존)
         result = result.replace(/\{\{#if\s+mergeFirst\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g,
             function(match, field, content) {
                 const mergeInfo = data.mergeInfo && data.mergeInfo[field];
-                // mergeInfo가 없으면 (병합하지 않는 필드) 항상 true, 있으면 isFirst 값 사용
                 return (!mergeInfo || mergeInfo.isFirst) ? content : '';
             });
 
-
-        // 3단계: else 없는 일반 if 처리
-        result = result.replace(/\{\{#if\s+(\w+)\s+equals\s+['"]?([^'"}\s]+)['"]?\}\}([\s\S]*?)\{\{\/if\}\}/g,
+        // {{#if key equals 'value'}}...{{/if}} (else 없는 버전)
+        result = result.replace(/\{\{#if\s+([^}]+?)\s+equals\s+([^}]+?)\}\}([\s\S]*?)\{\{\/if\}\}/g,
             function(match, key, value, content) {
-                return data[key] == value ? content : '';
+                const leftValue = parseValue(key);
+                const rightValue = parseValue(value);
+                return leftValue == rightValue ? content : '';
             });
 
-        // 4단계: format 함수 처리 (먼저 처리)
+        // 5단계: format 함수 처리 (기존과 동일)
         result = result.replace(/\{\{format\s+([a-zA-Z_$][a-zA-Z0-9_$.]*)\s+["']([a-zA-Z]+)["'](?:\s+([^}]+))?\}\}/g,
             function(match, variable, formatType, formatOptions) {
-               // console.log('Format 처리:', variable, formatType, formatOptions);
-
                 // 변수 값 가져오기
                 let value = data[variable];
 
@@ -2091,17 +2260,13 @@ class TreeGridManager {
 
                 if (value === undefined || value === null) return '';
 
-               // console.log('Format 값:', value);
-
                 // 포맷 옵션 파싱
                 let options = {};
                 if (formatOptions) {
                     try {
-                        // pattern="YYYY/MM/DD" 형태의 옵션 파싱
                         formatOptions.replace(/(\w+)=["']([^"']+)["']/g, function(match, key, val) {
                             options[key] = val;
                         });
-                      //  console.log('Format 옵션:', options);
                     } catch (e) {
                         console.warn('포맷 옵션 파싱 오류:', formatOptions, e);
                     }
@@ -2121,14 +2286,13 @@ class TreeGridManager {
                     } else if (formatType === 'string') {
                         result = formatHelpers[formatType](value, options.case || 'default');
                     }
-                 //   console.log('Format 결과:', result);
                     return result;
                 }
 
                 return value;
             });
 
-        // 5단계: 일반 변수 처리
+        // 6단계: 일반 변수 처리 (기존과 동일)
         result = result.replace(/\{\{([^#\/][^}]*?)\}\}/g, function(match, expression) {
             // 공백 제거
             expression = expression.trim();
@@ -2223,8 +2387,6 @@ class TreeGridManager {
                 return '';
             }
         });
-
-
 
         return result;
     }

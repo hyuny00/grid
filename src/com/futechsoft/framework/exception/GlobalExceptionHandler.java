@@ -8,6 +8,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,7 +19,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
-import org.springframework.web.servlet.ModelAndView;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -104,15 +105,19 @@ public class GlobalExceptionHandler {
 	}
 
 
-	@ExceptionHandler( AsyncRequestTimeoutException.class)
-	protected ModelAndView AsyncRequestTimeoutException(HttpServletRequest request, HttpServletResponse response, Model model, Exception e)  throws Exception{
-
-		if(!response.isCommitted()) {
-			response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-		}
-		return new ModelAndView();
-
+	@ExceptionHandler(AsyncRequestTimeoutException.class)
+	protected void handleAsyncTimeout(HttpServletRequest request, HttpServletResponse response) throws Exception {
+	    if (!response.isCommitted()) {
+	        // 타일 요청이면 바디 없이 상태 코드만 전송
+	        if (request.getRequestURI().startsWith("/maptiler/") || request.getRequestURI().startsWith("/tiles/")) {
+	            response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+	            return;
+	        }
+	        // 일반 요청은 에러 페이지
+	        response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+	    }
 	}
+
 
 
 	@ExceptionHandler(FileUploadException.class)
@@ -134,16 +139,35 @@ public class GlobalExceptionHandler {
 	}
 
 
-	
+
 	@ModelAttribute
     public void addUserToModel(Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        
+
             model.addAttribute("user", userDetails);  // 모든 JSP에서 ${user.userNm} 사용 가능
         }
     }
+
+
+
+
+	    @ExceptionHandler(IllegalStateException.class)
+	    public ResponseEntity<String> handleIllegalStateException(
+	            IllegalStateException e, HttpServletResponse response) {
+
+	        if (e.getMessage().contains("getOutputStream")) {
+
+	            // response가 commit되지 않았을 때만 처리
+	            if (!response.isCommitted()) {
+	                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                    .body("서버 응답 처리 중 오류가 발생했습니다.");
+	            }
+	        }
+
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+	    }
 
 	/*
 	 * @ExceptionHandler(FileUploadException.class) protected String

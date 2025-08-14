@@ -65,6 +65,10 @@ public class SampleController extends AbstractController{
 	 @RequestMapping("/sample/newSampleListForm")
 	public String newSampleList( HttpServletRequest request) throws Exception {
 
+
+		FtMap params = super.getFtMap(request);
+		params.put("testData", "1234");
+
 		 return "tiles:sample/newSampleListForm";
 
 	 }
@@ -289,6 +293,9 @@ public class SampleController extends AbstractController{
 
 	 @RequestMapping("/sample/gridSample6")
 		public String gridSample6( HttpServletRequest request) throws Exception {
+
+			FtMap params = super.getFtMap(request);
+			request.setAttribute("testData", "1234");
 
 			 return "tiles:sample/gridSample6";
 

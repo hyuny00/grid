@@ -1114,15 +1114,15 @@ class ODAFilterSystem {
 	            }
 	        });
 
-	        const searchTermFields = searchForm.find('[name="searchTerm"], [name="projectName"]');
-	        searchTermFields.val('');
+	      //  const searchTermFields = searchForm.find('[name="searchTerm"], [name="projectName"]');
+	      //  searchTermFields.val('');
 
 	        if (grid.gridData) {
 	            Object.keys(this.categoryData).forEach(category => {
 	                delete grid.gridData[category];
 	            });
-	            delete grid.gridData.searchTerm;
-	            delete grid.gridData.projectName;
+	            //delete grid.gridData.searchTerm;
+	            //delete grid.gridData.projectName;
 	        }
 	    });
 	}
@@ -1144,6 +1144,8 @@ class ODAFilterSystem {
 
 	applyFilters() {
 		const filters = this.getSelectedFilters();
+
+
 		/*
 		const projectNameInput = document.getElementById('projectNameInput');
 		const searchTerm = projectNameInput ? projectNameInput.value.trim() : '';
@@ -1173,11 +1175,12 @@ class ODAFilterSystem {
 	buildSearchParams(searchData) {
 	    const params = {};
 
+	    /*
 	    if (searchData.searchTerm) {
 	        params.searchTerm = searchData.searchTerm;
 	        params.projectName = searchData.searchTerm;
 	    }
-
+*/
 	    if (searchData.filters) {
 	        Object.entries(searchData.filters).forEach(([category, values]) => {
 	            if (values.length > 0) {
@@ -1196,17 +1199,20 @@ class ODAFilterSystem {
 	executeSearch(searchData) {
 	   // console.log('검색 실행:', searchData);
 
+
 	    if (this.gridInstances && this.gridInstances.length > 0) {
 	        const searchParams = this.buildSearchParams(searchData);
 
 	        this.gridInstances.forEach((gridInstance, index) => {
 	            this.setGridSearchParams(searchParams, gridInstance);
+
 	            gridInstance.searchData();
 	        });
 	    }
 	}
 
 	setGridSearchParams(params, gridInstance = null) {
+
 	    const targetGrids = gridInstance ? [gridInstance] : this.gridInstances;
 
 	    targetGrids.forEach((grid, index) => {
@@ -1238,6 +1244,7 @@ class ODAFilterSystem {
 	            }
 	        });
 	    });
+
 	}
 
 

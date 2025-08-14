@@ -310,7 +310,7 @@ function someOtherFunction() {
 		                            <input type="checkbox" id="chk01" class="check-all"><label for="chk01"></label>
 		                        </div>
 		                    </th>
-		                    <th scope="col">사업번호</th>
+		                    <th scope="col">사업번호111${testData}</th>
 		                    <th scope="col">사업명</th>
 		                    <th scope="col">사업기간</th>
 		                    <th scope="col">시행기관</th>
@@ -386,7 +386,6 @@ function someOtherFunction() {
 
 
 
-
 <tr>
 
 <td>
@@ -395,7 +394,20 @@ function someOtherFunction() {
             {{/if}}
  </td>
 
-   <td class="tC">{{projectId}}</td>
+   <td class="tC">
+
+{{#if '${testData}' equals '1234' or 'B' equals 'A'  }}
+  레벨 1 카테고리 A 항목입니다.
+
+{{else}}
+{{projectId}}
+{{/if}}
+
+
+
+
+
+</td>
     <td>
         <a href="#"><span class="span orange">{{projectType}}</span>{{projectTitle}}</a>
     </td>

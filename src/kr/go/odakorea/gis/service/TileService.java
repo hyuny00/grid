@@ -2,6 +2,7 @@ package kr.go.odakorea.gis.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -49,21 +50,21 @@ public class TileService {
 		return response.getBody();
 	}
 
-	
-	
+
+	@Cacheable(value = "osmTiles", key = "#zoom + '-' + #x + '-' + #y")
 	public byte[] getMaptilerTile(int zoom, int x, int y, String style) {
 		String tileUrl = String.format("%s/%s/%d/%d/%d.jpg?key=%s", procyMapTilerBaseUrl+"/maps", style, zoom, x, y, apiKey);
-		
+
 		System.out.println("tileUrl."+tileUrl);
 		return fetchMaptilerTile(tileUrl);
 	}
 
-	
-	
+
+
 	private byte[] fetchMaptilerTile(String tileUrl) {
         HttpEntity<String> entity = createHttpEntity();
         RestTemplate restTemplate = restTemplateFactory.getRestTemplate();
-        
+
         try {
             ResponseEntity<byte[]> response = restTemplate.exchange(
                 tileUrl, HttpMethod.GET, entity, byte[].class);

@@ -161,6 +161,45 @@ var gridData ={id:'123', name : 'qwe'};
 
 
 
+
+<!-- NOT EQUALS 조건 -->
+{{#if status not equals 'active'}}
+  비활성 상태입니다.
+{{else}}
+  활성 상태입니다.
+{{/if}}
+
+<!-- NOT EQUALS (else 없는 버전) -->
+{{#if type not equals 'premium'}}
+  일반 사용자입니다.
+{{/if}}
+
+<!-- AND 조건 -->
+{{#if status equals 'active' and type equals 'premium'}}
+  프리미엄 활성 사용자입니다.
+{{else}}
+  조건에 맞지 않습니다.
+{{/if}}
+
+<!-- AND 조건 (else 없는 버전) -->
+{{#if level equals '1' and category equals 'A'}}
+  레벨 1 카테고리 A 항목입니다.
+{{/if}}
+
+지원되는 모든 조건문:
+
+✅ {{#if key equals 'value'}}
+✅ {{#if key not equals 'value'}}
+✅ {{#if key1 equals 'value1' and key2 equals 'value2'}} (AND)
+✅ {{#if key1 equals 'value1' or key2 equals 'value2'}} (OR)
+✅ 복합 조건: {{#if a equals 'x' and b equals 'y' or c not equals 'z'}}
+✅ {{#if mergeFirst field}}
+
+연산자 우선순위:
+
+AND가 OR보다 높은 우선순위
+A and B or C and D → (A and B) or (C and D)
+
   <h1>포맷 </h1>
 
 
@@ -237,6 +276,66 @@ console.log('체크된 행 ID들:', checkedIds);
 
 
 
+
+
+
+// 그리드 매니저 인스턴스에서 사용
+const gridManager = gridManagers['your-grid-id'];
+
+// 1. 특정 행의 데이터 가져오기
+const rowData = gridManager.getRowData('row-id-123');
+
+// 2. 특정 행의 여러 필드 업데이트
+gridManager.updateRowData('row-id-123', {
+    name: '새로운 이름',
+    email: 'new@email.com',
+    status: 'active'
+});
+
+// 3. 특정 행의 단일 필드 업데이트
+gridManager.updateRowField('row-id-123', 'name', '수정된 이름');
+
+
+
+
+const gridManager = gridManagers['your-grid-id'];
+
+// 1. 인덱스로 행 데이터 가져오기 (0부터 시작)
+const firstRowData = gridManager.getRowDataByIndex(0);
+const thirdRowData = gridManager.getRowDataByIndex(2);
+
+// 2. 인덱스로 행 데이터 업데이트
+gridManager.updateRowDataByIndex(0, {
+    name: '첫 번째 행 수정',
+    status: 'updated'
+});
+
+// 3. 인덱스로 특정 필드만 업데이트
+gridManager.updateRowFieldByIndex(1, 'name', '두 번째 행 이름 수정');
+
+//템플릿수정
+ <span data-field="name">{{name}}</span>
+
+// 4. 상호 변환
+const nodeId = gridManager.getNodeIdByIndex(2); // 3번째 행의 nodeId
+const index = gridManager.getIndexByNodeId('some-node-id'); // nodeId의 인덱스
+
+// 5. 전역 함수로 사용
+const rowData = getGridRowDataByIndex('your-grid-id', 0);
+updateGridRowFieldByIndex('your-grid-id', 1, 'status', 'active');
+
+
+//체크박스 행선택용 checkedAttr : "checked"
+ gridManager.updateRowDataByIndex(3, {
+		   projectTitle: '2222',
+		   regDate:'20000101',
+		   statusCd:'01',
+		   checkedAttr:""
+		});
+
+
+
+
 ////////////////
 셀병합
 const treeGrid = new TreeGridManager({
@@ -258,10 +357,72 @@ const treeGrid = new TreeGridManager({
 
 
 
+
+// 렌터링 함수 직접처리 그리드 초기화에 추가
+renderRowFunction: function(rowData, reverseIndex, codeMap, selectOption) {
+
+	let template = `<tr class="\${rowData.displayClass}">`;
+	template = template.replace(/\\/g, '');
+	template = template.replace(/\$\{rowData\.(\w+)\}/g, function(match, key) {
+	    return rowData[key] || '';
+	});
+
+}
+
+
+
+방법 1: 삼항 연산자 (가장 많이 사용)
+javascriptlet template = `<tr class="\${rowData.displayClass}">
+    <td>
+        \${rowData.isTreeMode ?
+            `<span class="\${rowData.toggleClass}">\${rowData.toggleSymbol}</span>` :
+            ''
+        }
+        <input type="checkbox" \${rowData.checked ? 'checked' : ''}>
+    </td>
+    <td>\${rowData.name || '이름없음'}</td>
+</tr>`;
+방법 2: 즉시실행함수 (IIFE) 사용
+javascriptlet template = `<tr class="\${rowData.displayClass}">
+    <td>
+        \${(() => {
+            if (rowData.isTreeMode) {
+                return `<span class="\${rowData.toggleClass}">\${rowData.toggleSymbol}</span>`;
+            } else {
+                return '<span>일반모드</span>';
+            }
+        })()}
+    </td>
+</tr>`;
+방법 3: 논리 연산자 활용
+javascriptlet template = `<tr class="\${rowData.displayClass}">
+    <td>
+        \${rowData.isTreeMode && `<span class="\${rowData.toggleClass}">\${rowData.toggleSymbol}</span>`}
+        \${!rowData.isTreeMode && '<span>일반모드</span>'}
+    </td>
+</tr>`;
+방법 4: 함수로 분리 (복잡한 로직)
+javascriptfunction renderTreeToggle(rowData) {
+    if (rowData.isTreeMode) {
+        if (rowData.hasChildren) {
+            return `<span class="tree-toggle">${rowData.expanded ? '[-]' : '[+]'}</span>`;
+        } else {
+            return '<span class="tree-leaf">○</span>';
+        }
+    }
+    return '';
+}
+
+let template = `<tr class="\${rowData.displayClass}">
+    <td>
+        \${renderTreeToggle(rowData)}
+        <input type="checkbox">
+    </td>
+</tr>`;
+
+
+
+
 	</code></pre>
 </section>
-
-
-
-
 

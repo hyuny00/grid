@@ -1,9 +1,8 @@
 package kr.go.odakorea.gis.controller;
 
-import java.util.concurrent.TimeUnit;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,13 +20,13 @@ public class TileController {
 	@Autowired
     private  TileService tileService;
 
-  
+
 
     @GetMapping("/{zoom}/{x}/{y}.png")
     public ResponseEntity<byte[]> getTile(@PathVariable int zoom, @PathVariable int x, @PathVariable int y) {
         // B 서버에서 타일을 가져옵니다.
         byte[] tile = tileService.getTile(zoom, x, y);
-        
+
         System.out.println("KKKKKKKKKKKKKKKKKKKKKKKK");
 
         // 타일 이미지 파일을 클라이언트에게 반환합니다.
@@ -35,40 +34,47 @@ public class TileController {
                              .header("Content-Type", "image/png")
                              .body(tile);
     }
-  
-   
+
+
     @GetMapping("/maptiler/{style}/{zoom}/{x}/{y}")
     public ResponseEntity<byte[]> getMapTilerTileWithStyle(
     		 @PathVariable String style,
              @PathVariable int zoom,
              @PathVariable int x,
-             @PathVariable int y) {
-        
+             @PathVariable int y,
+             HttpServletResponse response) {
+
         try {
-        	  System.out.println("Style: " + style + ", Zoom: " + zoom + ", X: " + x + ", Y: " + y);
-        	 System.out.println("ffffffffffffffffffffffffff");
+
+        	  // 이미 response가 commit되었는지 확인
+            if (response.isCommitted()) {
+                return null;
+            }
+
+
+        	System.out.println("Style: " + style + ", Zoom: " + zoom + ", X: " + x + ", Y: " + y);
             byte[] tileData = tileService.getMaptilerTile(zoom, x, y, style);
-            
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.IMAGE_JPEG);
             headers.setCacheControl("max-age=86400"); // 24시간
-            
+
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(tileData);
-                    
+
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
     }
-    
-    
- 
-    
-    
-   /* 
+
+
+
+
+
+   /*
     public void test() {
-    	
+
         try {
             // 유효한 위도/경도 (서울역 → 강남역)
             String origin = "126.9723,37.5564";  // 서울역
@@ -79,7 +85,7 @@ public class TileController {
                 "https://api.mapbox.com/directions/v5/mapbox/driving/%s;%s?geometries=geojson&overview=full&access_token=%s",
                 origin, destination, "pk.eyJ1IjoiZnV0ZWNoIiwiYSI6ImNtOXVtNWYzbTA5eXIyanI4bXJjMTl0bHAifQ.iDR1Jma7ZhntwfF67SJ4kQ"
             );
-         
+
             URL url = new URL(urlStr);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
@@ -109,6 +115,6 @@ public class TileController {
             e.printStackTrace();
         }
     }
-    
+
 */
 }
