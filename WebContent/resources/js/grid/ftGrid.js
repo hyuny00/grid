@@ -86,9 +86,33 @@ class TreeGridManager {
 
         this.renderRowFunction = config.renderRowFunction;  // 추가
 
+
+        this.responseData={};
+
+
+        this.selectedRows = new Set(); // 선택된 행들의 ID 저장
+        this.lastSelectedRowId = null; // 마지막으로 선택된 행 ID
+
+
         this.init();
     }
 
+    // 행 선택 상태 관리
+    selectRow(rowId, isMultiple = false) {
+        if (!isMultiple) {
+            this.selectedRows.clear();
+            // 기존 선택 표시 제거
+            $(`#${this.gridId}-body tr`).removeClass('selected');
+        }
+
+        this.selectedRows.add(rowId);
+        this.lastSelectedRowId = rowId;
+
+        // 선택 표시 추가
+        $(`#${this.gridId}-body tr[data-id="${rowId}"]`).addClass('selected');
+
+        console.log('선택된 행들:', Array.from(this.selectedRows));
+    }
 
     setMainUrl(url) {
     	this.urls.mainUrl=url;
@@ -160,9 +184,10 @@ class TreeGridManager {
                  self.deleteSelected();
              });
         }
-
         $(`#${this.gridId}-container`).on('change', '.row-check', function(e) {
             const $checkbox = $(this);
+            const $row = $checkbox.closest('tr');
+            const nodeId = String($row.data('id'));
 
             // 체크하려고 할 때만 개수 제한 확인
             if ($checkbox.is(':checked') && self.checkCount) {
@@ -176,12 +201,49 @@ class TreeGridManager {
             }
 
             // 체크박스 상태 변경을 데이터에 반영
-            const nodeId = String($checkbox.closest('tr').data('id'));
             console.log('Node ID:', nodeId);
             if (nodeId) {
                 // checked 필드로 체크 상태 추적
                 self.trackEdit(nodeId, this, 'checked');
                 console.log('trackEdit 호출 완료');
+
+                // ★ 새로 추가: 행 선택 상태 관리
+                if ($checkbox.prop('checked')) {
+                    // 체크된 경우 - 선택 상태에 추가 (다중 선택 허용)
+                    if (!self.selectedRows) self.selectedRows = new Set();
+                    self.selectedRows.add(nodeId);
+                    self.lastSelectedRowId = nodeId;
+                    $row.addClass('selected');
+
+                    console.log('행 선택됨:', nodeId);
+                } else {
+                    // 체크 해제된 경우 - 선택 상태에서 제거
+                    if (self.selectedRows) {
+                        self.selectedRows.delete(nodeId);
+                        $row.removeClass('selected');
+
+                        // 마지막 선택이 해제된 경우 업데이트
+                        if (self.lastSelectedRowId === nodeId) {
+                            self.lastSelectedRowId = self.selectedRows.size > 0 ?
+                                Array.from(self.selectedRows).pop() : null;
+                        }
+                    }
+
+                    console.log('행 선택 해제됨:', nodeId);
+                }
+
+                console.log('현재 선택된 행들:', self.selectedRows ? Array.from(self.selectedRows) : []);
+                console.log('마지막 선택된 행:', self.lastSelectedRowId);
+
+                // ★ 선택 상태 변경 이벤트 발생 (필요한 경우)
+                if (self.onRowSelectionChange) {
+                    self.onRowSelectionChange({
+                        selectedRows: Array.from(self.selectedRows || []),
+                        lastSelectedRowId: self.lastSelectedRowId,
+                        currentRowId: nodeId,
+                        isChecked: $checkbox.prop('checked')
+                    });
+                }
             }
 
             self.updateHeaderCheckbox();
@@ -314,7 +376,7 @@ class TreeGridManager {
     searchData() {
 
         this.currentPage = 1;
-
+        this.toggleAll(false);
         if( this.isExcelMode){
         	 this.fetchExcelData();
         }else{
@@ -379,11 +441,18 @@ class TreeGridManager {
     	return  this.data;
     }
 
+    getAllData(){
+    	return  this.responseData;
+    }
+
     getCount(){
     	return  this.data.length;
     }
 
     setData(responseData, page = 1) {
+
+    	this.responseData = responseData;
+
         this.currentPage = page;
 
         this.data = [];
@@ -985,14 +1054,12 @@ class TreeGridManager {
     	this.defaultFields=defaultFields;
     }
 
-    addRow() {
-        //const newId = Date.now().toString() + Math.floor(Math.random() * 1000).toString(); // 문자열로 생성
+    addRow(position = 'top', targetRowId = null) {
         const newId = 'N_' + Date.now().toString() + Math.floor(Math.random() * 1000).toString();
         const newRow = {
             id: newId,
-            checked: false,  // ★ 추가: 체크박스 기본값 false
-            ...this.defaultFields, // 기본 필드들 적용
-
+            checked: false,
+            ...this.defaultFields,
             level: 0,
             parentPath: '',
             isNew: true
@@ -1006,41 +1073,117 @@ class TreeGridManager {
             newRow.childYn = 'N';
         }
 
-        // 행 추가 위치에 따라 처리
-        if (this.addRowPosition === 'bottom') {
-            this.data.push(newRow);
+        let insertIndex = -1;
+        let parentId = null;
+
+        // 위치별 처리
+        switch (position) {
+            case 'top':
+                insertIndex = 0;
+                break;
+
+            case 'bottom':
+                insertIndex = this.data.length;
+                break;
+
+            case 'above': // 선택된 행 위에
+                if (targetRowId || this.lastSelectedRowId) {
+                    const targetId = targetRowId || this.lastSelectedRowId;
+                    insertIndex = this.data.findIndex(row => String(row.id) === String(targetId));
+
+                    if (insertIndex !== -1) {
+                        // 같은 레벨로 설정
+                        const targetRow = this.data[insertIndex];
+                        newRow.level = targetRow.level || 0;
+                        newRow.parentPath = targetRow.parentPath || '';
+                        parentId = this.getParentId(targetRow);
+                    } else {
+                        insertIndex = 0; // 못찾으면 맨 위에
+                    }
+                } else {
+                    insertIndex = 0; // 선택된 행이 없으면 맨 위에
+                }
+                break;
+
+            case 'below': // 선택된 행 아래에
+                if (targetRowId || this.lastSelectedRowId) {
+                    const targetId = targetRowId || this.lastSelectedRowId;
+                    insertIndex = this.data.findIndex(row => String(row.id) === String(targetId));
+
+
+                    if (insertIndex !== -1) {
+                        insertIndex += 1; // 다음 위치에 삽입
+
+                        // 같은 레벨로 설정
+                        const targetRow = this.data[insertIndex - 1];
+                        newRow.level = targetRow.level || 0;
+                        newRow.parentPath = targetRow.parentPath || '';
+                        parentId = this.getParentId(targetRow);
+                    } else {
+                        insertIndex = this.data.length; // 못찾으면 맨 아래에
+                    }
+                } else {
+                    insertIndex = this.data.length; // 선택된 행이 없으면 맨 아래에
+                }
+                break;
+
+            case 'child': // 선택된 행의 자식으로
+                if (targetRowId || this.lastSelectedRowId) {
+                    const targetId = targetRowId || this.lastSelectedRowId;
+                    const targetIndex = this.data.findIndex(row => this.getNodeKey(row) === targetId);
+                    if (targetIndex !== -1) {
+                        const targetRow = this.data[targetIndex];
+
+                        // 자식 레벨로 설정
+                        newRow.level = (targetRow.level || 0) + 1;
+                        newRow.parentPath = targetRow.parentPath ?
+                            `${targetRow.parentPath}/${this.getNodeKey(targetRow)}` :
+                            this.getNodeKey(targetRow);
+                        parentId = this.getNodeKey(targetRow);
+
+                        // 자식이 있는 마지막 위치 찾기
+                        insertIndex = this.findLastChildIndex(targetIndex) + 1;
+
+                        // 부모 행의 childYn을 'Y'로 변경
+                        if (this.isTreeMode) {
+                            targetRow.childYn = 'Y';
+                            if (!targetRow.children) targetRow.children = [];
+                        }
+                    } else {
+                        insertIndex = this.data.length;
+                    }
+                } else {
+                    insertIndex = this.data.length;
+                }
+                break;
+
+            default:
+                insertIndex = this.data.length;
+        }
+
+        // 배열에 삽입
+        if (insertIndex >= 0 && insertIndex <= this.data.length) {
+            this.data.splice(insertIndex, 0, newRow);
         } else {
-            this.data.unshift(newRow);
+            this.data.push(newRow);
         }
 
         this.renderTable();
 
         // 저장 기능이 활성화된 경우만 추가된 행 추적
         if (this.isSaveEnabled) {
-            //this.addedRows.add(this.getNodeKey(newRow));
             this.modifiedRows.add(this.getNodeKey(newRow));
         }
 
-        //this.totalCount++;
-        //this.updatePageInfo();
-
-        // 새로 추가된 행의 첫 번째 편집 가능한 필드에 포커스
-
+        // 새로 추가된 행에 포커스
         setTimeout(() => {
             const $newRow = $(`#${this.gridId}-body tr[data-id="${newId}"]`);
-            //const $firstEditableField = $newRow.find('input[data-field], textarea[data-field], [contenteditable][data-field]').first();
             const $firstEditableField = $newRow.find('input[data-field]:not(.pickr), textarea[data-field], [contenteditable][data-field]').first();
-
-
             if ($firstEditableField.length) {
                 $firstEditableField.focus();
-
-                // input이나 textarea의 경우 텍스트 선택
                 if ($firstEditableField.is('input, textarea')) {
                     $firstEditableField.select();
-                }
-                // contenteditable의 경우 텍스트 선택
-                else if ($firstEditableField.is('[contenteditable]')) {
+                } else if ($firstEditableField.is('[contenteditable]')) {
                     const element = $firstEditableField[0];
                     if (element.textContent) {
                         const range = document.createRange();
@@ -1051,16 +1194,38 @@ class TreeGridManager {
                     }
                 }
             }
+
+            // 새로 추가된 행을 선택 상태로 만들기
+            this.selectRow(newId, false);
+
         }, 100);
 
-
-
-     // ★ 수정: 새 행 ID와 부모 ID(null) 반환
         return {
             newId: newId,
-            parentId: null
+            parentId: parentId
         };
     }
+
+
+ // 헬퍼 함수들
+ getParentId(row) {
+     if (!row.parentPath) return null;
+     const pathParts = row.parentPath.split('/');
+     return pathParts[pathParts.length - 1];
+ }
+
+ findLastChildIndex(parentIndex) {
+     const parentRow = this.data[parentIndex];
+     const parentLevel = parentRow.level || 0;
+
+     for (let i = parentIndex + 1; i < this.data.length; i++) {
+         const currentLevel = this.data[i].level || 0;
+         if (currentLevel <= parentLevel) {
+             return i - 1; // 이전 인덱스가 마지막 자식
+         }
+     }
+     return this.data.length - 1; // 배열 끝까지 자식
+ }
 
     addChildToSelected() {
         // 트리 모드가 아니면 실행하지 않음
@@ -1218,6 +1383,9 @@ class TreeGridManager {
 
 
     deleteSelected() {
+
+    	if(!confirm("삭제하시겠습니까?")) return;
+
         const checkedRows = $(`#${this.gridId}-body input.row-check:checked`).closest("tr");
 
         if (checkedRows.length === 0) {
@@ -1591,6 +1759,14 @@ class TreeGridManager {
             // 기존 로직 (개수 제한 없음)
             if (checkedCount === 0) {
                 $headerCheckbox.prop('checked', false).prop('indeterminate', false);
+
+                // ★ 모든 선택 해제시 selectedRows도 초기화
+                if (this.selectedRows) {
+                    this.selectedRows.clear();
+                }
+                this.lastSelectedRowId = null;
+                $(`#${this.gridId}-container tr`).removeClass('selected');
+
             } else if (checkedCount === totalCount) {
                 $headerCheckbox.prop('checked', true).prop('indeterminate', false);
             } else {
@@ -2063,10 +2239,54 @@ class TreeGridManager {
 
                 return content;
             } else {
-                // 일반 변수
-                return data[val] !== undefined ? data[val] : val;
+                // 복잡한 객체 접근 처리 (점 표기법, 대괄호 표기법)
+                if (/[\.\[\]]/.test(val)) {
+                    try {
+                        // 점과 대괄호를 모두 처리
+                        const tokens = val.match(/\w+|\[(\w+|['"][^'"]+['"])\]|\.\w+/g);
+                        if (!tokens) return '';
+
+                        let value = mapData; // mapData에서 시작
+                        for (let token of tokens) {
+                            if (token.startsWith('.')) {
+                                // 점 표기법
+                                const key = token.slice(1);
+                                value = value[key];
+                            } else if (token.startsWith('[')) {
+                                // 대괄호 표기법
+                                let key = token.slice(1, -1);
+                                if (key.startsWith('"') || key.startsWith("'")) {
+                                    key = key.slice(1, -1); // 정적 키
+                                } else {
+                                    key = data[key]; // 동적 키
+                                }
+                                value = value[key];
+                            } else {
+                                // 첫 번째 객체명 또는 일반 프로퍼티
+                                value = value[token];
+                            }
+
+                            if (value === undefined) break;
+                        }
+
+                        return value !== undefined ? value : val;
+                    } catch (e) {
+                        console.error('객체 접근 오류:', e);
+                        return val;
+                    }
+                }
+
+                // 일반 변수 - data에서 먼저 찾고, 없으면 mapData에서 찾기
+                if (data[val] !== undefined) {
+                    return data[val];
+                } else if (mapData && mapData[val] !== undefined) {
+                    return mapData[val];
+                }
+
+                return val;
             }
         }
+
 
         // 1단계: each 반복문 처리
         let result = template.replace(/\{\{#each\s+(\[?\w+\]?)\}\}([\s\S]*?)\{\{\/each\}\}/g,
@@ -2670,7 +2890,9 @@ class TreeGridManager {
                     // console.log('클릭된 행 데이터:', rowData);
 
                     // 행 선택 표시 (선택사항)
-                    self.selectRow($row);
+                	 //self.selectRow2($row);
+                	self.selectRow(nodeId);
+
 
                     // 콜백 함수가 있다면 실행
                     if (self.onRowClick && typeof self.onRowClick === 'function') {
@@ -3040,14 +3262,15 @@ class TreeGridManager {
 
 
  //  행 선택 표시 메서드 (선택사항)
- selectRow($row) {
+ /*
+ selectRow2($row) {
      // 이전 선택 해제
      $(`#${this.gridId}-body tr`).removeClass('selected');
 
      // 현재 행 선택
      $row.addClass('selected');
  }
-
+*/
 
 
 
@@ -3522,9 +3745,38 @@ class TreeGridManager {
   bindContextMenuEvents() {
       const self = this;
 
+      const gridBody = document.getElementById(`${this.gridId}-body`);
+
+      if (!gridBody) return;
+
+      gridBody.addEventListener('contextmenu', function(e) {
+          const row = e.target.closest('tr');
+          if (row) {
+              e.preventDefault();
+              e.stopPropagation();
+
+              const nodeId = row.dataset.id;
+
+              if (nodeId && nodeId !== 'undefined') {
+                 // $(`#${self.gridId}-body tr`).removeClass('context-selected');
+                 // $(row).addClass('context-selected');
+
+            	  //selectRow 에서 위의 주석처리한부분함
+                  self.selectRow(nodeId, false);
+
+                  self.showContextMenu(e.pageX, e.pageY, nodeId, $(row));
+              }
+          }
+      }, true); // true = 캡처링 단계
+
+
+      /*
+
       // 우클릭 이벤트
       $(`#${this.gridId}-body`).off('contextmenu.contextMenu').on('contextmenu.contextMenu', 'tr', function(e) {
           e.preventDefault();
+          e.stopImmediatePropagation(); // 다른 핸들러 차단
+
 
           const $row = $(this);
           const nodeId = String($row.data('id'));
@@ -3538,7 +3790,7 @@ class TreeGridManager {
 
           self.showContextMenu(e.pageX, e.pageY, nodeId, $row);
       });
-
+*/
       // 다른 곳 클릭시 컨텍스트 메뉴 숨기기
       $(document).off('click.contextMenu').on('click.contextMenu', function(e) {
           if (!$(e.target).closest('.context-menu').length) {
@@ -3555,86 +3807,157 @@ class TreeGridManager {
   }
 
   showContextMenu(x, y, nodeId, $row) {
-      this.hideContextMenu(); // 기존 메뉴 숨기기
 
-      const result = this.findNodeById(nodeId);
-      if (!result || !result.node) return;
+	    this.hideContextMenu(); // 기존 메뉴 숨기기
 
-      const node = result.node;
+	    const result = this.findNodeById(nodeId);
+	    console.log('findNodeById 결과:', result);
 
-      // 컨텍스트 메뉴 HTML 생성
-      const menuId = `${this.gridId}-context-menu`;
-      let menuHtml = `<div id="${menuId}" class="context-menu">`;
+	    if (!result || !result.node) {
+	        console.error('노드를 찾을 수 없습니다:', nodeId);
+	        return;
+	    }
 
-      this.contextMenuItems.forEach((item, index) => {
-          // 조건부 표시 체크
-          if (item.condition && !item.condition(node, $row)) {
-              return;
-          }
+	    const node = result.node;
+	    console.log('찾은 노드:', node);
 
-          const disabled = item.disabled && item.disabled(node, $row) ? 'disabled' : '';
-          const separator = item.separator ? 'separator' : '';
+	    // 컨텍스트 메뉴 HTML 생성
+	    const menuId = `${this.gridId}-context-menu`;
+	    let menuHtml = `<div id="${menuId}" class="context-menu" style="
+	        position: fixed;
+	        z-index: 9999;
+	        background: white;
+	        border: 1px solid #ccc;
+	        border-radius: 4px;
+	        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+	        padding: 8px 0;
+	        min-width: 150px;
+	        display: none;
+	    ">`;
 
-          if (item.separator) {
-              menuHtml += `<div class="context-menu-separator"></div>`;
-          } else {
-              menuHtml += `
-                  <div class="context-menu-item ${disabled}" data-action="${item.action}" data-node-id="${nodeId}">
-                      ${item.icon ? `<i class="${item.icon}"></i>` : ''}
-                      <span>${item.label}</span>
-                      ${item.shortcut ? `<span class="shortcut">${item.shortcut}</span>` : ''}
-                  </div>
-              `;
-          }
-      });
+	    console.log('contextMenuItems:', this.contextMenuItems);
 
-      menuHtml += '</div>';
+	    if (!this.contextMenuItems || this.contextMenuItems.length === 0) {
+	        console.warn('contextMenuItems가 비어있습니다. 기본 메뉴를 생성합니다.');
+	        menuHtml += `
+	            <div class="context-menu-item" data-action="test" data-node-id="${nodeId}" style="
+	                padding: 8px 16px;
+	                cursor: pointer;
+	                hover: background-color: #f0f0f0;
+	            ">
+	                <span>테스트 메뉴</span>
+	            </div>
+	        `;
+	    } else {
+	        this.contextMenuItems.forEach((item, index) => {
+	            console.log(`메뉴 아이템 ${index}:`, item);
 
-      // 메뉴를 body에 추가
-      $('body').append(menuHtml);
+	            // 조건부 표시 체크
+	            if (item.condition && !item.condition(node, $row)) {
+	                console.log(`메뉴 아이템 ${index} 조건 불만족으로 스킵`);
+	                return;
+	            }
 
-      const $menu = $(`#${menuId}`);
+	            const disabled = item.disabled && item.disabled(node, $row) ? 'disabled' : '';
+	            const separator = item.separator ? 'separator' : '';
 
-      // 메뉴 위치 조정 (화면 밖으로 나가지 않도록)
-      const menuWidth = $menu.outerWidth();
-      const menuHeight = $menu.outerHeight();
-      const windowWidth = $(window).width();
-      const windowHeight = $(window).height();
+	            if (item.separator) {
+	                menuHtml += `<div class="context-menu-separator" style="
+	                    height: 1px;
+	                    background: #e0e0e0;
+	                    margin: 4px 0;
+	                "></div>`;
+	            } else {
+	                menuHtml += `
+	                    <div class="context-menu-item ${disabled}" data-action="${item.action}" data-node-id="${nodeId}" style="
+	                        padding: 8px 16px;
+	                        cursor: pointer;
+	                        display: flex;
+	                        align-items: center;
+	                        gap: 8px;
+	                        ${disabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}
+	                    ">
+	                        ${item.icon ? `<i class="${item.icon}"></i>` : ''}
+	                        <span>${item.label}</span>
+	                        ${item.shortcut ? `<span class="shortcut" style="margin-left: auto; opacity: 0.7;">${item.shortcut}</span>` : ''}
+	                    </div>
+	                `;
+	            }
+	        });
+	    }
 
-      let finalX = x;
-      let finalY = y;
+	    menuHtml += '</div>';
+	   // console.log('생성된 HTML:', menuHtml);
 
-      if (x + menuWidth > windowWidth) {
-          finalX = x - menuWidth;
-      }
-      if (y + menuHeight > windowHeight) {
-          finalY = y - menuHeight;
-      }
+	    // 메뉴를 body에 추가
+	    $('body').append(menuHtml);
 
-      $menu.css({
-          left: finalX + 'px',
-          top: finalY + 'px'
-      }).show();
+	    const $menu = $(`#${menuId}`);
 
-      // 메뉴 아이템 클릭 이벤트
-      $menu.off('click.contextMenuItem').on('click.contextMenuItem', '.context-menu-item:not(.disabled)', (e) => {
-          const action = $(e.currentTarget).data('action');
-          const targetNodeId = $(e.currentTarget).data('node-id');
+	    if ($menu.length === 0) {
+	        console.error('메뉴 요소가 생성되지 않았습니다!');
+	        return;
+	    }
 
-          this.hideContextMenu();
+	    // 메뉴 위치 조정 (화면 밖으로 나가지 않도록)
+	    $menu.show(); // 먼저 보이게 해서 크기 측정
 
-          // 콜백 함수 호출
-          if (this.onContextMenuClick) {
-              this.onContextMenuClick(action, targetNodeId, node, $row, this);
-          }
-      });
-  }
+	    const menuWidth = $menu.outerWidth();
+	    const menuHeight = $menu.outerHeight();
+	    const windowWidth = $(window).width();
+	    const windowHeight = $(window).height();
 
-  hideContextMenu() {
-      $('.context-menu').remove();
-      $(`#${this.gridId}-body tr`).removeClass('context-selected');
-  }
 
+	    let finalX = x;
+	    let finalY = y;
+
+	    if (x + menuWidth > windowWidth) {
+	        finalX = x - menuWidth;
+	    }
+	    if (y + menuHeight > windowHeight) {
+	        finalY = y - menuHeight;
+	    }
+
+
+	    $menu.css({
+	        left: finalX + 'px',
+	        top: finalY + 'px',
+	        display: 'block' // 확실히 보이도록
+	    });
+
+
+	    // 호버 효과 추가
+	    $menu.find('.context-menu-item:not(.disabled)').hover(
+	        function() { $(this).css('background-color', '#f0f0f0'); },
+	        function() { $(this).css('background-color', 'transparent'); }
+	    );
+
+	    // 메뉴 아이템 클릭 이벤트
+	    $menu.off('click.contextMenuItem').on('click.contextMenuItem', '.context-menu-item:not(.disabled)', (e) => {
+
+	        const action = $(e.currentTarget).data('action');
+	        const targetNodeId = $(e.currentTarget).data('node-id');
+
+
+	        this.hideContextMenu();
+
+	        // 콜백 함수 호출
+	        if (this.onContextMenuClick) {
+	            this.onContextMenuClick(action, targetNodeId, node, $row, this);
+	        } else {
+	            console.warn('onContextMenuClick 콜백이 없습니다');
+	        }
+	    });
+
+
+	}
+
+	// 개선된 hideContextMenu
+	hideContextMenu() {
+	    const $menus = $('.context-menu');
+	    $menus.remove();
+	    $(`#${this.gridId}-body tr`).removeClass('context-selected');
+	}
 
 //행 데이터를 클립보드에 복사하는 메서드
   copyRowToClipboard(nodeId, format = 'json') {
@@ -3731,6 +4054,40 @@ class TreeGridManager {
   }
 
 
+
+
+	//사용 예시
+	addRowAbove() {
+	 if (this.selectedRows.size === 0) {
+	     alert('행을 선택해주세요.');
+	     return;
+	 }
+	 return this.addRow('above');
+	}
+
+	//선택된 행 아래에 추가
+	addRowBelow() {
+	 if (this.selectedRows.size === 0) {
+	     alert('행을 선택해주세요.');
+	     return;
+	 }
+	 return this.addRow('below');
+	}
+
+	//선택된 행의 자식으로 추가
+	addChildRow() {
+	 if (this.selectedRows.size === 0) {
+	     alert('행을 선택해주세요.');
+	     return;
+	 }
+	 if (!this.isTreeMode) {
+	     alert('트리 모드에서만 사용 가능합니다.');
+	     return;
+	 }
+	 return this.addRow('child');
+	}
+
+
 }
 
 //
@@ -3822,3 +4179,6 @@ function getGridIndexByNodeId(gridId, nodeId) {
     }
     return -1;
 }
+
+
+

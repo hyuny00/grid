@@ -36,6 +36,12 @@ class CommonGridManager {
                 cdGroupSn= -1;
             }
 
+            if(cdGroupSn=='conditionYn'){
+                schCodeDiv='conditionYn';
+                cdGroupSn= -1;
+            }
+
+
             // 요청 데이터에서 null 값 제거
             var requestData = {
                 cdGroupSn: cdGroupSn
@@ -370,11 +376,12 @@ class CommonGridManager {
         const {
             dynamicCategories,
             categoryCodeMapping,
+            maxSelectionCounts,
             multiStepCategories,
             categoryTitles,
             gridConfigs,
             codeRequests,
-            codeListRequests
+            codeListRequests=[]
         } = config;
 
         // 설정 유효성 검사
@@ -486,10 +493,17 @@ class CommonGridManager {
 
             for (const gridConfig of gridConfigs) {
                 // 각 그리드 설정에 codeMap 추가
-                const configWithCodeMap = {
-                    ...gridConfig,
-                    codeMap: this.codeMap,
-                    selectOption: this.codeList
+
+
+            	this.codeMap = {
+            		  ...(gridConfig.codeMap ||{}),
+                      ...(this.codeMap||{}),
+            	}
+
+            	const configWithCodeMap = {
+                        ...gridConfig,
+                        codeMap: this.codeMap,
+                        selectOption: this.codeList
                 };
 
                 try {
@@ -507,7 +521,8 @@ class CommonGridManager {
                 gridInstances.length === 1 ? gridInstances[0] : gridInstances,
                 multiStepCategories || [],
                 cleanedCategoryTitles,
-                cleanedCategoryCodeMapping
+                cleanedCategoryCodeMapping,
+                maxSelectionCounts
             );
 
 

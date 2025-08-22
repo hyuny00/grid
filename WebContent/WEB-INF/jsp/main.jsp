@@ -38,8 +38,6 @@
     }).addTo(map);
 
     
-   
-    
     
     // 마커 생성
   //  const marker = L.marker([-6.2088, 106.8456]).addTo(map);

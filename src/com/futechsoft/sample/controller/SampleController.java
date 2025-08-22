@@ -109,7 +109,14 @@ public class SampleController extends AbstractController{
 
 		    for (int i = 1; i <= 12; i++) {
 		        Map<String, Object> row = new HashMap<>();
-		        row.put("projectId", "1092000_2023_00" + i);
+		        if(i<3) {
+		        row.put("projectId", "1092000_2023_00");
+		        }else {
+		        	 row.put("projectId", "1092000_2023_00" + i);
+		        }
+
+
+
 		        row.put("projectType", "패키지" + i);
 		        row.put("projectTitle", "몽골 날라이흐구/바양주르흐구 지속가능한 '길(Trail)여행' 비즈니스 모델 고도화를 통한 주민 소득증대 사업 2단계('24-'26/" + (1240 + i) + "백만원)");
 		        row.put("period", "2023 ~2025");

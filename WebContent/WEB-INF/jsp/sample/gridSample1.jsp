@@ -24,7 +24,9 @@ $(document).ready(function() {
      onRowClick: function(rowData, $row) {
          console.log('선택된 행:', rowData);
      },
-
+     mergeCells: {
+         'projectId': true,
+     },
      onRowDoubleClick: function(rowData, $row) {
          console.log('더블클릭된 행:', rowData);
          // 여기에 더블클릭 시 실행할 로직 추가
@@ -35,8 +37,116 @@ $(document).ready(function() {
          console.log('그리드 초기화 완료!');
          // 여기에 추가 작업 수행
          doSomethingAfterInit();
+     },
+     contextMenuEnabled: true,
+     contextMenuItems: [
+         {
+             action: 'edit',
+             label: '수정',
+             icon: 'fas fa-edit',
+             shortcut: 'F2'
+         },
+         {
+             action: 'addAbove',
+             label: '위에 행 추가',
+             icon: 'fas fa-plus',
+             condition: () => true
+         },
+         {
+             action: 'addBelow',
+             label: '아래에 행 추가',
+             icon: 'fas fa-plus',
+             condition: () => true
+         },
+         {
+             action: 'add-child',
+             label: '자식 추가',
+             icon: 'fas fa-plus',
+             condition: (node) => node.childYn === 'Y' || node.level < 3,
+         },
+         {
+             separator: true
+         },
+         {
+             action: 'copy-json',
+             label: 'JSON으로 복사',
+             icon: 'fas fa-copy',
+             shortcut: 'Ctrl+C'
+         },
+         {
+             action: 'copy-tab',
+             label: '탭 구분 텍스트로 복사',
+             icon: 'fas fa-clipboard'
+         },
+         {
+             action: 'copy-text',
+             label: '텍스트로 복사',
+             icon: 'fas fa-file-text'
+         },
+         {
+             separator: true
+         },
+         {
+             action: 'delete',
+             label: '삭제',
+             icon: 'fas fa-trash',
+             shortcut: 'Del',
+             disabled: (node) => node.level === 0 && node.children?.length > 0
+         }
+     ],
+     onContextMenuClick: function(action, nodeId, node, $row, gridManager) {
+         console.log('Context menu clicked:', action, nodeId);
+
+         switch(action) {
+
+	         case 'addAbove':
+	        	 gridManager.addRow('above', nodeId);
+	             break;
+	         case 'addBelow':
+	        	 gridManager.addRow('below', nodeId);
+	             break;
+	         case 'addChild':
+	        	 gridManager.addRow('child', nodeId);
+	             break;
+
+             case 'edit':
+                 // 수정 로직
+                 break;
+             case 'add-child':
+                 gridManager.addChildRow(nodeId);
+                 break;
+             case 'copy-json':
+                 if (gridManager.copyRowToClipboard(nodeId, 'json')) {
+                     gridManager.showToast('JSON 형태로 클립보드에 복사되었습니다.');
+                 } else {
+                     gridManager.showToast('복사에 실패했습니다.', 'error');
+                 }
+                 break;
+             case 'copy-tab':
+                 if (gridManager.copyRowToClipboard(nodeId, 'tab')) {
+                     gridManager.showToast('탭 구분 텍스트로 클립보드에 복사되었습니다.');
+                 } else {
+                     gridManager.showToast('복사에 실패했습니다.', 'error');
+                 }
+                 break;
+             case 'copy-text':
+                 if (gridManager.copyRowToClipboard(nodeId, 'text')) {
+                     gridManager.showToast('텍스트 형태로 클립보드에 복사되었습니다.');
+                 } else {
+                     gridManager.showToast('복사에 실패했습니다.', 'error');
+                 }
+                 break;
+             case 'delete':
+                 if (confirm('정말 삭제하시겠습니까?')) {
+                     gridManager.deleteNodeRecursively(nodeId);
+                     gridManager.renderTable();
+                 }
+                 break;
+         }
      }
  });
+
+
 
 
 });
@@ -128,8 +238,8 @@ function test3(id){
 		            <caption></caption>
 		            <colgroup>
 		                <col style="width: 5%;">
-		                <col style="width: 8%;">
-		                <col style="width: 28%;">
+		                <col style="width: 18%;">
+		                <col style="width: 18%;">
 		                <col style="width: 6%;">
 		                <col style="width: 9%;">
 		                <col style="width: 9%;">
@@ -174,7 +284,9 @@ function test3(id){
 <tr class="{{displayClass}}" data-level="{{level}}" data-parent-path="{{parentPath}}">
     <td>
         <div class="tblChk">
+		 {{#if mergeFirst projectId}}
             <input type="checkbox"  {{checkedAttr}}  id="chk-{{id}}"  class="row-check"><label for="chk-{{id}}"></label>
+  {{/if}}
         </div>
     </td>
     <td class="tC"><a href="javascript:test3('{{id}}')">{{projectId}}</a></td>

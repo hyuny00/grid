@@ -1,6 +1,6 @@
 class ODAFilterSystem {
 
-	constructor(categoryData, gridInstances = [], multiStepCategories = [], categoryTitles = {},categoryCodeMapping = {}) {
+	constructor(categoryData, gridInstances = [], multiStepCategories = [], categoryTitles = {},categoryCodeMapping = {},maxSelectionCounts = {}) {
 	    this.selectedFilters = new Map();
 	    this.activeCategory = null;
 
@@ -18,6 +18,9 @@ class ODAFilterSystem {
 	    this.categoryTitles = categoryTitles || {};
 
 	    this.categoryCodeMapping = categoryCodeMapping || {};
+
+
+	    this.maxSelectionCounts = maxSelectionCounts ||{};
 
 	    this.init();
 	}
@@ -142,7 +145,9 @@ class ODAFilterSystem {
 
 			resetFiltersBtn.addEventListener('click', () => {
 				this.resetFilters();
+				$("#searchFilterArea").hide();
 			});
+
 		}
 
 		// 텍스트 입력 엔터키 처리
@@ -529,6 +534,17 @@ class ODAFilterSystem {
 
 	// 다단계 선택 완료
 	completeMultiStepSelection(category) {
+
+		if(this.maxSelectionCounts[category]){
+			const currentCount = this.geFilterCountByCategory(category);
+
+			if(currentCount >= this.maxSelectionCounts[category]){
+				alert(`${this.maxSelectionCounts[category]} 개까지 선택 가능합니다.`);
+				return;
+			}
+		}
+
+
 	    //console.log('다단계 선택 완료:', this.stepSelections, this.stepTexts);
 
 	    // 모든 단계의 텍스트를 조합하여 표시 텍스트 생성
@@ -558,6 +574,16 @@ class ODAFilterSystem {
 	    this.updateSelectedDisplay();
 	}
 
+	geFilterCountByCategory(category){
+		let count=0;
+		this.selectedFilters.forEach(filter =>{
+			if(filter.category === category){
+				count++;
+			}
+		});
+
+		return count;
+	}
 
 	// 2단계 필터 요소가 없을 때의 대체 메서드
 	updateFilterOptionsAsFallback(category) {
@@ -694,7 +720,9 @@ class ODAFilterSystem {
 	        		    ul.appendChild(li);
 
 	    }else {
-	            const li = document.createElement('li');
+	    		let tempValue=$("#pTxt").text();
+
+	    		const li = document.createElement('li');
 	            const button = document.createElement('button');
 	            button.type = 'button';
 	            button.className = 'filter-option-item';
@@ -702,6 +730,7 @@ class ODAFilterSystem {
 	            button.dataset.category = category;
 	            button.dataset.value = itemData.value;
 	            button.id = category + '-' + itemData.value;
+	            button.titleValue=tempValue;
 
 	            button.addEventListener('click', () => {
 	                button.classList.add('on');
@@ -912,30 +941,23 @@ class ODAFilterSystem {
 		return this.categoryTitles[category] || category;
 	}
 
+
+
 	selectFilterItem(item) {
+
+
 		const category = item.dataset.category;
 		const value = item.dataset.value;
-		const text = item.textContent;
+		const text = item.titleValue +":"+item.textContent;
 
-		const key = `${category}-${value}`;
-		if (this.selectedFilters.has(key)) {
-			return;
+		if(this.maxSelectionCounts[category]){
+			const currentCount = this.geFilterCountByCategory(category);
+
+			if(currentCount >= this.maxSelectionCounts[category]){
+				alert(`최대 ${this.maxSelectionCounts[category]} 개까지 선택 가능합니다.`);
+				return;
+			}
 		}
-
-		this.selectedFilters.set(key, {
-			category,
-			value,
-			text
-		});
-
-		this.updateSelectedDisplay();
-	}
-
-
-	selectFilterItem(item) {
-		const category = item.dataset.category;
-		const value = item.dataset.value;
-		const text = item.textContent;
 
 		const key = `${category}-${value}`;
 		if (this.selectedFilters.has(key)) {

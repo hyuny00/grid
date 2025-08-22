@@ -275,8 +275,10 @@ console.log('체크된 행 ID들:', checkedIds);
 
 
 
-
-
+//모든데이터 가져오기
+gridManager.getAllData();
+//그리드데이터만 가져오기
+gridManager.getData();
 
 
 // 그리드 매니저 인스턴스에서 사용

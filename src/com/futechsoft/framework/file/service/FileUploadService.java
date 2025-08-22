@@ -57,23 +57,23 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 
 	//@Autowired
 	//PropertiesConfiguration propertiesConfiguration;
-	
-	
+
+
 	@Value("${file.uploadPath.temp}")
 	private String tempUploadPath;
-	
+
 	@Value("${file.uploadPath}")
 	private String realUploadPath;
-	
-	
+
+
 	@Value("${file.uploadPath.temp.zip}")
 	private String tempZipPath;
-	
-	
+
+
 	public String getTempZipPath() {
 		return tempZipPath;
 	}
-	
+
 	public String getRealUploadPath() {
 		return realUploadPath;
 	}
@@ -88,7 +88,7 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 	 */
 	public FileInfoVo upload(MultipartFile multipartFile, FileInfoVo fileInfoVo) throws FileUploadException {
 
-	
+
 
 		FileInfoVo fileObject = null;
 		try {
@@ -211,15 +211,15 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 	public List<String> saveFiles(FtMap paramMap, String saveFilePath, String findDocId) throws Exception {
 		return  save( paramMap,  saveFilePath, findDocId);
 	}
-	
-	
+
+
 
 	/**
 	 * 파일정보를 DB에 인서트한다
 	 * @param param
 	 * @throws Exception
 	 */
-	
+
 	/*
 	@Transactional
 	public void saveFile(FtMap param) throws Exception {
@@ -230,8 +230,8 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 		mapper.insert(insertParam);
 	}
    */
-	
-	
+
+
 	/**
 	 * 파일을 저장한다
 	 * @param paramMap
@@ -250,8 +250,8 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 		try {
 
 			for (String value : paramMap.getStringArray("fileInfoList")) {
-				
-				
+
+
 
 
 				if (StringUtils.isEmpty(value)) continue;
@@ -304,7 +304,7 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 	 * @throws Exception
 	 */
 	private void saveProcess(JsonObject jsonObject, FtMap paramMap, String saveFilePath, String findDocId, String docId, List<String>  delFileIdList, List<String> addFileIdList) throws Exception {
-		
+
 
 		if(!saveFilePath.equals("")) {
 			saveFilePath =   Paths.get(saveFilePath,  FileUtil.getSaveFilePath()).toString();
@@ -325,9 +325,9 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 			if (!refDocId.equals(findDocId)) return;
 		}
 
-	
+
 		int fileOrd = 0;
-		
+
 		/*
 		if(paramMap.getBoolean("isNewDocId")) {
 			FtMap fileGroupParam = new FtMap();
@@ -336,7 +336,7 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 			fileGroupParam.put("userId", paramMap.getString("userId"));
 			mapper.insertFileGroup(fileGroupParam);
 		}*/
-		
+
 		FtMap fileGroupParam = new FtMap();
 		fileGroupParam.put("docId",docId);
 		String docIdCheck = mapper.selectDocId(fileGroupParam);
@@ -346,10 +346,10 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 			fileGroupParam.put("userId", paramMap.getString("userId"));
 			mapper.insertFileGroup(fileGroupParam);
 		}
-		
-		
+
+
 		 List<String> zipFileIdList = new ArrayList<String>();
-		 
+
 		for (FileInfoVo fileInfoVo : fileInfoVos) {
 
 			fileInfoVo.setFileOrd(fileOrd++);
@@ -358,10 +358,10 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 			if (StringUtils.defaultString(fileInfoVo.getTemp()).equals("Y")) {
 				File file = Paths.get(tempUploadPath, fileInfoVo.getFileId() + ".TEMP").toFile();
 				File fileToMove = Paths.get(realUploadPath, saveFilePath, fileInfoVo.getFileId() + ".FILE").toFile();
- 
+
 
 				FileUtils.moveFile(file, fileToMove);
-				
+
 				if(CommonUtil.nvl(fileInfoVo.getIsOnlyZip()).equals("Y")) {
 					zipFileIdList.add(fileInfoVo.getFileId());
 				}
@@ -390,8 +390,8 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 				param.setFtMap(map);
 				param.put("userId", paramMap.getString("userId"));
 				param.put("taskSecd", paramMap.getString("taskSecd"));
-				
-			
+
+
 				mapper.insertFileInfo(param);
 
 				if(StringUtils.defaultString(fileInfoVo.getThumbnailYn()).equals("Y")) {
@@ -443,7 +443,7 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 			 }
 
 		}
-		
+
 		paramMap.put("zipFileIdList", zipFileIdList);
 	}
 
@@ -496,7 +496,7 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 	 * @throws Exception
 	 */
 	public void createZip(FileInfoVo[] fileInfoVos, String target) throws Exception {
-		
+
 
 		File targetDir = new File(target).getParentFile();
 		boolean check = false;
@@ -529,6 +529,34 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 			throw new ZipParsingException(e.getMessage());
 		}
 	}
+
+	// 임시 폴더의 파일들로 ZIP 생성하는 메소드
+	public void createZipFromTempFolder(FileInfoVo[] fileInfoVos, String target, String tempFolder) throws Exception {
+
+		    File targetDir = new File(target).getParentFile();
+		    boolean check = false;
+		    if (!targetDir.exists()) {
+		        check = targetDir.mkdirs();
+		        if (!check) throw new ZipParsingException("디렉토리 생성 실패");
+		    }
+		    File zipFileName = Paths.get(target).toFile();
+		    try (ZipOutputStream zipStream = new ZipOutputStream(new FileOutputStream(zipFileName))) {
+		        for (FileInfoVo fileInfoVo : fileInfoVos) {
+		            //파일다운로드 권한 (이미 체크했지만 한번 더)
+		            boolean fileDownloadCheck = FileUtil.hasFileDownloadAuth(fileInfoVo);
+		            if(fileDownloadCheck) {
+		                // 임시 폴더의 파일 참조
+		                File file = Paths.get(tempFolder, fileInfoVo.getFileId() + ".FILE").toFile();
+		                if (file.exists()) {
+		                    addToZipFile(file, fileInfoVo.getFileNm(), zipStream);
+		                }
+		            }
+		        }
+		    } catch (IOException | ZipParsingException e) {
+		        LOGGER.error(e.toString());
+		        throw new ZipParsingException(e.getMessage());
+		    }
+		}
 
 	/**
 	 * 압축할 파일을 추가한다
@@ -612,7 +640,7 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 
 		return mapper.selectFileInfo(params);
 	}
-	
+
 	public FileInfoVo getFileInfo(String fileId) throws Exception {
 		FtMap params = new  FtMap();
 		params.put("fileId", fileId);
@@ -728,7 +756,7 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 	 */
 	public void saveExcelUploadFile(FileInfoVo fileInfoVo, String saveFilePath,  String docId,  String tblNm,  String refDocId) throws Exception {
 
-	
+
 
 		if(!saveFilePath.equals("")) {
 			saveFilePath =   Paths.get(saveFilePath,  FileUtil.getSaveFilePath()).toString();
@@ -771,9 +799,9 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 				Map<String, Object> map = ConvertUtil.beanToMap(fileInfoVo);
 				FtMap param = new FtMap();
 				param.setFtMap(map);
- 
-				
-				
+
+
+
 				//삭제후 저장
 				param.put("docId", docId);
 				mapper.deleteDoc(param);
@@ -797,8 +825,8 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 	public FtMap selectFile(FtMap params) throws Exception {
 		return mapper.selectFile(params);
 	}
-	
-	
+
+
 	public void deleteFileGroup(String docId) throws Exception {
 		mapper.updateFileGroupDelYn(docId);
 		mapper.updateFileGroupDtDelYn(docId);

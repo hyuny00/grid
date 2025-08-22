@@ -1,5 +1,7 @@
 package kr.go.odakorea.gis.controller;
 
+import java.util.Collections;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -12,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -32,18 +35,18 @@ import com.futechsoft.framework.component.RestTemplateFactory;
 @RestController
 @RequestMapping("/maps/{mapId}")
 public class MapProxyController {
-	
-	
+
+
 	@Value("${maptiler.proxy.baseUrl}")
 	private String procyMapTilerBaseUrl;
-	
-	
+
+
 	@Value("${maptiler.apiKey}")
 	private String apiKey;
-	
+
 	@Autowired
 	RestTemplateFactory restTemplateFactory;
-	
+
 	/**
 	 * 지도 스타일 정보를 가져온다
 	 * @param mapId
@@ -51,10 +54,10 @@ public class MapProxyController {
 	 */
     @GetMapping("/style.json")
     public ResponseEntity<String> proxyStyleJson(@PathVariable String mapId) {
-    	
-    	
+
+
     	RestTemplate  restTemplate = restTemplateFactory.getRestTemplate();
-    	
+
         String originUrl = UriComponentsBuilder
                 .fromHttpUrl(procyMapTilerBaseUrl + "/maps/" + mapId + "/style.json")
                 .queryParam("key", apiKey)
@@ -87,7 +90,7 @@ public class MapProxyController {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(modifiedJson);
     }
-    
+
 
     /**
      * 지도 Tiles를 가져온다
@@ -121,7 +124,7 @@ public class MapProxyController {
         return forwardResource(url);
     }
 
-    
+
     /**
      * MapTiler 에서 사용되는 스프라이트 이미지 파일을 반환한다
      * @param mapId
@@ -136,7 +139,7 @@ public class MapProxyController {
         return forwardResource(url);
     }
 
-    
+
     /**
      *  MapTiler에서 사용하는 스프라이트의 메타데이터를 반환한다
      * @param mapId
@@ -158,9 +161,9 @@ public class MapProxyController {
      * @return
      */
     private ResponseEntity<Resource> forwardResource(String url) {
-    	
+
     	RestTemplate  restTemplate = restTemplateFactory.getRestTemplate();
-    	
+
         HttpHeaders headers = new HttpHeaders();
         headers.set("User-Agent",
 				"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36");
@@ -179,4 +182,44 @@ public class MapProxyController {
                 .headers(response.getHeaders())
                 .body(response.getBody());
     }
+
+
+
+    @GetMapping("/image")
+    public ResponseEntity<byte[]> getStaticMapImage(
+            @RequestParam double lat,
+            @RequestParam double lon,
+            @RequestParam(defaultValue = "14") int zoom,
+            @RequestParam(defaultValue = "600") int width,
+            @RequestParam(defaultValue = "400") int height,
+            @PathVariable String mapId
+    ) {
+
+    	RestTemplate  restTemplate = restTemplateFactory.getRestTemplate();
+
+    	String format = "png";
+	    String url = String.format(
+	            "https://api.maptiler.com/maps/%s/static/%f,%f,%d/%dx%d.%s?key=%s",
+	            mapId, lon, lat, zoom, width, height, format, apiKey
+	    );
+
+
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setAccept(Collections.singletonList(MediaType.IMAGE_PNG));
+
+	    HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+	    ResponseEntity<byte[]> response = restTemplate.exchange(
+	            url,
+	            HttpMethod.GET,
+	            entity,
+	            byte[].class
+	    );
+
+	    return ResponseEntity
+	            .status(response.getStatusCode())
+	            .contentType(MediaType.IMAGE_PNG)
+	            .body(response.getBody());
+    }
+
 }

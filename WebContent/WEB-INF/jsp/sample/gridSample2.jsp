@@ -20,24 +20,27 @@ $(document).ready(function() {
     	 mainUrl: '/sample/newSampleList3',
     	 saveUrl: '/sample/grid/save',
     	 deleteUrl: '/sample/grid/delete'
-     }, 
+     },
+     mergeCells: {
+         'projectId': true,      // period 병합 - 첫 번째 행에만 체크박스 표시
+     },
     // pageSize: 10,
      treeLoadMode:  'full',   //'full : 트리 전체로딩' 또는 'lazy(클릭시 로딩)'
      onRowClick: function(rowData, $row) {
          console.log('선택된 행:', rowData);
      }
  });
- 
+
 
 });
 
 
 
 function someOtherFunction() {
-	
+
 
 	 const gridManager = gridManagers['grid1'];
-	 
+
 
 	 gridManager.updateRowDataByIndex(3, {
 		   projectTitle: '2222',
@@ -45,25 +48,25 @@ function someOtherFunction() {
 		   statusCd:'01',
 		   checkedAttr:""
 		});
-	
+
 	// const thirdRowData = gridManager.getRowDataByIndex(2);
-	 
+
 }
 
- 
+
 </script>
 
 <div class="pgtBox">
     <div class="lt">
         <h2><a href="javascript:someOtherFunction();">요청 중인 연계</a></h2>
     </div>
-    
+
     <ul class="breadcrumb">
         <li class="home"><a href="javascript:;">홈</a></li>
         <li><a href="javascript:;">평가</a></li>
         <li><a href="javascript:;">자체평가</a></li>
     </ul>
-    
+
     <div class="rt"></div>
 </div>
 <form id="searchForm" method="post">
@@ -97,7 +100,7 @@ function someOtherFunction() {
 	            </ul>
 	        </div>
 	    </div>
-	    
+
 	    <div class="btn-wrap">
 	        <button type="button" class="btn-apply btn-search">조건검색</button>
 	        <button type="reset" class="btn-reset"><span class="sr-only">초기화</span></button>
@@ -117,12 +120,12 @@ function someOtherFunction() {
 		            </div>
 		        </div>
 		    </div>
-		    
-					        
-					        
-		    
+
+
+
+
 		    <div class="tblBox">
-		 
+
 		        <table class="tbl col" id="grid1">
 		            <caption></caption>
 		            <colgroup>
@@ -150,14 +153,14 @@ function someOtherFunction() {
 		            <tbody id="grid1-body">
 		            </tbody>
 		        </table>
-		        
-		        
+
+
 			        <!-- pagination -->
 			        <div class="pagination" id="grid1-pagination">
-			           
+
 			        </div>
 			        <!-- //pagination -->
-		     
+
 		    </div>
 		</div>
 	</div>
@@ -165,7 +168,7 @@ function someOtherFunction() {
 
 <!-- 첫 번째 그리드용 템플릿 -->
 
- <template id="node-row-template-1">   
+ <template id="node-row-template-1">
 	<tr class="{{displayClass}}" data-level="{{level}}" data-parent-path="{{parentPath}}">
 	    <td>
 	        <div class="tblChk">
@@ -174,9 +177,9 @@ function someOtherFunction() {
 	    </td>
 	    <td class="tC">{{projectId}}</td>
 	     <td style="{{indentStyle}}">
-	
+
 	      <span class="{{toggleClass}}" >{{toggleSymbol}}</span><input type="text" name="projectTitle" style="width:95%" data-field="projectTitle" data-value="{{projectTitle}}">
-	
+
 	    </td>
 	    <td>{{country}}</td>
 	 	<td><input type="text" class="date-input pickr flatpickr-input active" placeholder="날짜를 선택하세요"   data-field="regDate"   data-value="{{regDate}}" readonly="readonly"></td>

@@ -9,8 +9,8 @@
 
 //페이지 로드 시 그리드들 초기화
 $(document).ready(function() {
-	
-	
+
+
 
 
 	//템플릿 생성 시 사용
@@ -28,14 +28,14 @@ $(document).ready(function() {
 		  ]
 
 	}
-	
+
 	*/
-	
+
     var requests = [
 	    {codeDiv:'statusOptions', code: '', cdGroupSn: '1' },
 	    {codeDiv:'statusOptions2', code: '', cdGroupSn: '1' }
 	];
-	
+
 	var selectOption;
 
 	$.ajax({
@@ -50,10 +50,10 @@ $(document).ready(function() {
 	    }
 	});
 
-	
-	
+
+
 	function initializeGrid() {
-	
+
 		 // 첫 번째 그리드 초기화
 		 initTreeGrid({
 		     gridId: 'grid1',
@@ -66,14 +66,14 @@ $(document).ready(function() {
 		    	 mainUrl: '/sample/newSampleList2',
 		    	 childrenUrl: '/sample/newSampleList2/children/{projectId}',
 		    	 saveUrl: '/sample/grid/save',
-		     }, 
+		     },
 		     pageSize: 10,
-		     checkCount: 3, 
+		     checkCount: 3,
 		     selectOption :selectOption,
 		     onRowClick: function(rowData, $row) {
 		         console.log('선택된 행:', rowData);
 		     },
-		     
+
 		     onRowDoubleClick: function(rowData, $row) {
 		         console.log('더블클릭된 행:', rowData);
 		         // 여기에 더블클릭 시 실행할 로직 추가
@@ -81,20 +81,20 @@ $(document).ready(function() {
 		     }
 		 });
 	}
-		 
+
 
 });
 
 
 function test2(){
 	var a= gridManagers['grid1'].getDeletedRows();
-	
+
 	console.log("...."+JSON.stringify(a));
-	
-	
+
+
 	var gridManager = gridManagers['grid1'];
-	
-	
+
+
 	// 체크된 행의 전체 데이터 가져오기
 	const checkedRows = gridManager.getCheckedRowsData();
 	console.log('체크된 행 데이터:', checkedRows);
@@ -109,27 +109,27 @@ function test2(){
 	// ID만 가져오기
 	const checkedIds = gridManager.getCheckedRowIds();
 	console.log('체크된 행 ID들:', checkedIds);
-	
+
 }
 
 function test3(id){
 	alert(id);
-	
+
 }
- 
+
 </script>
 
 <div class="pgtBox">
     <div class="lt">
         <h2>요청 중인 연계</h2>
     </div>
-    
+
     <ul class="breadcrumb">
         <li class="home"><a href="javascript:;">홈</a></li>
         <li><a href="javascript:;">평가</a></li>
         <li><a href="javascript:;">자체평가</a></li>
     </ul>
-    
+
     <div class="rt"></div>
 </div>
 <form id="searchForm" method="post">
@@ -163,13 +163,13 @@ function test3(id){
 	            </ul>
 	        </div>
 	    </div>
-	    
+
 	    <div class="btn-wrap">
 	        <button type="button" class="btn-apply btn-search">조건검색</button>
 	        <button type="reset" class="btn-reset"><span class="sr-only">초기화</span></button>
 	    </div>
 	</div>
-	
+
 	</form>
 	<div id="grid1-container">
 		<div class="schList">
@@ -184,12 +184,12 @@ function test3(id){
 		            </div>
 		        </div>
 		    </div>
-		    
-					        
+
+
 					        <a href="javascript:test2()">aaaaa</a>
-		    
+
 		    <div class="tblBox">
-		 
+
 		        <table class="tbl col" id="grid1">
 		            <caption></caption>
 		            <colgroup>
@@ -234,14 +234,14 @@ function test3(id){
 		            <tbody id="grid1-body">
 		            </tbody>
 		        </table>
-		        
-		        
+
+
 			        <!-- pagination -->
 			        <div class="pagination" id="grid1-pagination">
-			           
+
 			        </div>
 			        <!-- //pagination -->
-		     
+
 		    </div>
 		</div>
 	</div>
@@ -249,7 +249,7 @@ function test3(id){
 
 <!-- 첫 번째 그리드용 템플릿 -->
 <script type="text/html" id="node-row-template-1">
-   
+
 <tr class="{{displayClass}}" data-level="{{level}}" data-parent-path="{{parentPath}}">
     <td>
         <div class="tblChk">
@@ -264,7 +264,7 @@ function test3(id){
     </td>
     <td>{{country}}{{format regDate "date" pattern="YYYY/MM/DD"}}</td>
  	<td><input type="text" class="date-input pickr flatpickr-input active" placeholder="날짜를 선택하세요"   data-field="regDate"   data-value="{{regDate}}" readonly="readonly"></td>
-    <td>  
+    <td>
 <div class="selectBox">
     <select class="form-control form-control-sm" data-field="statusCd" data-value="{{statusCd}}">
         <option value="">선택하세요</option>
