@@ -10,12 +10,15 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.futechsoft.framework.annotation.SimpleCacheAccess;
 import com.futechsoft.framework.util.CommonUtil;
 import com.futechsoft.framework.util.FtMap;
 import com.futechsoft.framework.util.SecurityUtil;
@@ -24,6 +27,9 @@ import com.futechsoft.framework.util.SecurityUtil;
 public class ViewController  extends AbstractController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ViewController.class);
+
+	@Autowired
+	private CacheManager cacheManager;
 
 	@RequestMapping(value = "/common/view")
 	public String commonPupup(HttpServletRequest request) throws Exception {
@@ -237,6 +243,32 @@ public class ViewController  extends AbstractController {
 
 
 
+	@RequestMapping("/admin/allCache/clear")
+	@ResponseBody
+	public Map<String, Object> clearAllCache() {
+
+		cacheManager.getCacheNames().forEach(name -> cacheManager.getCache(name).clear());
+
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("msg", "SUCCESS");
+		return resultMap;
+	}
+
+	@RequestMapping("/admin/codeCache/clear")
+	@ResponseBody
+	public Map<String, Object> clearCodeCache() {
+
+		cacheManager.getCache("commonCode").clear();
+		cacheManager.getCache("ntnSubCode").clear();
+		cacheManager.getCache("ntnCode").clear();
+		cacheManager.getCache("bizFieldCode").clear();
+		cacheManager.getCache("instCode").clear();
+
+
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("msg", "SUCCESS");
+		return resultMap;
+	}
 
 
 

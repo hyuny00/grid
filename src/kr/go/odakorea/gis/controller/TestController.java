@@ -38,7 +38,7 @@ public class TestController {
 		    @GetMapping("/process-csv")
 		    public ResponseEntity<Map<String, Object>> processCSV() {
 		        try {
-		            List<String> sqlQueries = geocodeUpdateService.processCSVAndGenerateSQL("C:/test/rgn.csv");
+		            List<String> sqlQueries = geocodeUpdateService.processCSVAndGenerateSQL("C:/test/rgn2.csv");
 
 		            Map<String, Object> result = new HashMap<>();
 		            result.put("success", true);

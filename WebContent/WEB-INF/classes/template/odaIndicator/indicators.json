@@ -75,7 +75,7 @@
       "higherIsBetter": true
     }
   ],
-  
+
    "농업지표": [
     {
 	  "code": "AG.PRD.CREL.MT",
@@ -105,7 +105,7 @@
 	  "higherIsBetter": null
 	}
   ],
-  
+
  "경제": [
     {
       "code": "NY.GDP.PCAP.CD",
@@ -221,7 +221,7 @@
 	  "threshold": 50.0,
 	  "higherIsBetter": true
 	}
-    
+
   ],
   "ODA 흐름": [
     {

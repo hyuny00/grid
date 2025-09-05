@@ -118,7 +118,7 @@ public class GeocodeUpdateService {
      */
     private String generateUpdateSQL(String ntnNo, String rgnNo, double longitude, double latitude) {
         return String.format(
-            "update tcm_ntn_rgn_dc set biz_rgn_pstn_lot_vl=%s, biz_rgn_pstn_lat_vl=%s where ntn_no='%s' and rgn_no='%s';",
+            "update tcm_ntn_rgn_cd set biz_rgn_pstn_lot_vl=%s, biz_rgn_pstn_lat_vl=%s where ntn_no='%s' and rgn_no='%s';",
             longitude, latitude, ntnNo, rgnNo
         );
     }

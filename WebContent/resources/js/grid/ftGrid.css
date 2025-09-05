@@ -74,3 +74,10 @@
     content: '↓';
     color: #333;
 }
+
+
+button[class^="btn-tblnode"] {display:flex;align-items:center;gap:5px;width:auto;height:auto;font-size:inherit;color:#7d7d7d;border:0 none;background:none;}
+button[class^="btn-tblnode"]::before {content:'';display:block;width:20px;height:20px;background-repeat:no-repeat;background-position:center;}
+.btn-tblnode::before {background-image: url(./ico_tbl_plus.svg);}
+.btn-tblnode.opened::before {background-image: url(./ico_tbl_minus.svg);}
+.tableNode .line {display:block;width:20px;height:20px;background:url(./ico_tbl_depth.svg) no-repeat center;}

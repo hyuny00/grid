@@ -1,5 +1,9 @@
 <%@ page language="java" pageEncoding="UTF-8" contentType="text/html; charset=UTF-8"%>
 <%@ include file="/WEB-INF/jsp/framework/_includes/includeTags.jspf" %>
+
+
+
+
 <script type="text/javascript">
 
 let initializedData = null;
@@ -290,8 +294,8 @@ function someOtherFunction() {
 		    </div>
 
 		    <div class="tblBox">
-
-		        <table class="tbl col" id="grid1">
+				<div class="resize-indicator" id="resize-indicator"></div>
+		        <table class="tbl col resizable-table" id="grid1">
 		            <caption></caption>
 		            <colgroup>
 		                <col style="width: 5%;">
@@ -304,18 +308,19 @@ function someOtherFunction() {
 		                <col style="width: 5%;">
 		            </colgroup>
 		            <thead>
-		                <tr>
+		                 <tr>
 		                    <th scope="col">
 		                        <div class="tblChk">
 		                            <input type="checkbox" id="chk01" class="check-all"><label for="chk01"></label>
 		                        </div>
+		                        <div class="resizer"></div>
 		                    </th>
-		                    <th scope="col">사업번호111${testData}</th>
-		                    <th scope="col">사업명</th>
-		                    <th scope="col">사업기간</th>
-		                    <th scope="col">시행기관</th>
-		                    <th scope="col">수원국</th>
-		                    <th scope="col">사업분야</th>
+		                    <th scope="col">사업번호<div class="resizer"></div></th>
+		                    <th scope="col">사업명<div class="resizer"></div></th>
+		                    <th scope="col">사업기간<div class="resizer"></div></th>
+		                    <th scope="col">시행기관<div class="resizer"></div></th>
+		                    <th scope="col">수원국<div class="resizer"></div></th>
+		                    <th scope="col">사업분야<div class="resizer"></div></th>
 		                    <th scope="col">사업상태</th>
 		                </tr>
 		            </thead>

@@ -9,6 +9,7 @@
 <link href="${basePath}/js/grid/ftGrid.css" rel="stylesheet" />
 <link href="${basePath}/js/file/fileupload.css" rel="stylesheet" />
 <link href="${basePath}/js/search/search.css" rel="stylesheet" />
+<link href="${basePath}/js/grid/gridResizer.css" rel="stylesheet" />
 
  <c:if test="${includeCss}">
  	<link rel="stylesheet" href="${basePath}/css<tiles:getAsString name="includeCss"/>.css" >

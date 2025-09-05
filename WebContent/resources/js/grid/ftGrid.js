@@ -102,16 +102,18 @@ class TreeGridManager {
         if (!isMultiple) {
             this.selectedRows.clear();
             // 기존 선택 표시 제거
-            $(`#${this.gridId}-body tr`).removeClass('selected');
+           // $(`#${this.gridId}-body tr`).removeClass('selected');
+            $(`#${this.gridId}-body tr`).removeClass('on');
         }
 
         this.selectedRows.add(rowId);
         this.lastSelectedRowId = rowId;
 
         // 선택 표시 추가
-        $(`#${this.gridId}-body tr[data-id="${rowId}"]`).addClass('selected');
+       // $(`#${this.gridId}-body tr[data-id="${rowId}"]`).addClass('selected');
+        $(`#${this.gridId}-body tr[data-id="${rowId}"]`).addClass('on');
 
-        console.log('선택된 행들:', Array.from(this.selectedRows));
+        //console.log('선택된 행들:', Array.from(this.selectedRows));
     }
 
     setMainUrl(url) {
@@ -128,6 +130,10 @@ class TreeGridManager {
 
     setGridData(gridData) {
         this.gridData = gridData;
+    }
+
+    setCodeMap(codeMap) {
+        this.codeMap = codeMap;
     }
 
     init() {
@@ -287,6 +293,20 @@ class TreeGridManager {
             });
         }//엑셀 업로드 기능이 활성화된 경우만 이벤트 바인딩 end
         // 행 클릭 이벤트 바인딩
+
+
+        $(`#${this.gridId}-container .btn-move-up`).on('click', function() {
+            self.moveRowUp();
+        });
+
+       $(`#${this.gridId}-container .btn-move-down`).on('click', function() {
+            self.moveRowDown();
+        });
+
+
+
+
+
         this.bindRowClickEvents();
     }
 
@@ -357,7 +377,7 @@ class TreeGridManager {
 
         Object.keys(this.gridData).forEach(key => {
         	const value = this.gridData[key];
-        	if(value !== null && value !=='undefined' && value.toString().trim()!==''){
+        	if(typeof value != 'undefined'  && value !== null && value !=='undefined' && value.toString().trim()!==''){
         		params[key] = value.toString().trim();
         	}
         });
@@ -385,9 +405,35 @@ class TreeGridManager {
 
     }
 
+
+    resetSearchData() {
+        this.currentPage = 1;
+        this.toggleAll(false);
+        if( this.isExcelMode){
+        	 this.fetchExcelData();
+        }else{
+        	if(this.isLoading=='Y'){
+        		this.fetchData(this.currentPage);
+        	}else{
+
+        		const tbody = $(`#${this.gridId}-body`);
+    	        tbody.empty();
+    	        const template = document.getElementById(this.templateId).innerHTML;
+
+    	        const tdCount = (template.match(/<td/g) || []).length;
+    	        console.log("tdCount",tdCount);
+
+    	        tbody.append(`<tr><td class="empty" colspan=${tdCount}><p>데이터가 없습니다.</p></td></tr>`);
+
+    	        const pagination = $(`#${this.gridId}-pagination`);
+    	        pagination.empty();
+
+        	}
+        }
+
+    }
+
     resetSearch() {
-      //  $(`#${this.searchFormId}`)[0].reset();
-       // this.searchData();
 
         const $form = $(`#${this.searchFormId}`);
 
@@ -398,7 +444,7 @@ class TreeGridManager {
        // $form.find('.select2-hidden-accessible').val(null).trigger('change');
 
         // 대부분의 경우 첫 번째 옵션이 value=""
-        $form.find('.select2-hidden-accessible').val('').trigger('change');
+        //$form.find('.select2-hidden-accessible').val('').trigger('change');
 
     }
 
@@ -421,6 +467,10 @@ class TreeGridManager {
 
         console.log(`[${this.gridId}] Request params:`, JSON.stringify(requestParams));
 
+        if(	$("#loading").length){
+        	$("#loading").show();
+        }
+
         $.ajax({
         	url: this.urls.mainUrl,
         	method: "POST",
@@ -432,6 +482,9 @@ class TreeGridManager {
             },
             error: (xhr, status, error) => {
                 console.log(`[${this.gridId}] 서버 연결 실패:`, error);
+                if(	$("#loading").length){
+                	$("#loading").hide();
+                }
                 alert("데이터를 불러오는데 실패했습니다.");
             }
         });
@@ -462,15 +515,11 @@ class TreeGridManager {
             this.totalCount = responseData.total; // 전체 건수
             this.totalPages = Math.ceil(this.totalCount / this.pageSize);
         } else {
-           // this.totalCount = responseData.data.length;
             this.totalCount = responseData.total; // 전체 건수
             this.totalPages = 1;
         }
 
-       // console.log(responseData);
-        // 데이터를 responseData.data에서 꺼냄
         const rows = responseData.data || [];  // responseData.data가 undefined/null이면 빈 배열로 대체
-
 
         if (this.isTreeMode && this.treeLoadMode === 'full') {
             // 전체로딩 모드: 계층구조 구성
@@ -509,8 +558,9 @@ class TreeGridManager {
 		 if (this.onInitComplete && typeof this.onInitComplete === 'function' ) {
             this.onInitComplete();
         }
-
-
+		if(	$("#loading").length){
+			$("#loading").hide();
+		}
     }
 
     buildTreeStructure(flatData) {
@@ -594,10 +644,22 @@ class TreeGridManager {
     }
 
  // 2. renderTable 메서드 수정 - 병합 로직 추가
- // 2. renderTable 메서드 수정 - 병합 로직 추가
     renderTable() {
         const tbody = $(`#${this.gridId}-body`);
         tbody.empty();
+
+
+        if(this.templateId){
+        	 const template = document.getElementById(this.templateId).innerHTML;
+
+             const tdCount = (template.match(/<td/g) || []).length;
+             console.log("tdCount",tdCount);
+             if(this.getCount()==0){
+             	 tbody.append(`<tr><td class="empty" colspan=${tdCount}><p>데이터가 없습니다.</p></td></tr>`);
+             }
+        }
+
+
 
         let globalIndex = 0;
         const totalCount = this.totalCount || this.data.length;
@@ -668,23 +730,23 @@ class TreeGridManager {
                 } else if ($element.is('input[type="radio"]')) {
                     const name = $element.attr('name');
                     $(`#${this.gridId}-container input[type="radio"][name="${name}"][value="${value}"]`).prop('checked', true);
+
+                } else if ($element.is('[contenteditable]')) {  //editId=20250904  contenteditable 처리위해추가
+                    // contenteditable 요소 처리
+                    const stringValue = String(value);
+                    // HTML 태그가 포함된 경우와 일반 텍스트 구분
+                    if (stringValue.includes('<') && stringValue.includes('>')) {
+                        $element.html(stringValue);
+                    } else {
+                        $element.text(stringValue);
+                    }
+
                 } else if ($element.is('input, textarea')) {
                     $element.val(value);
                 }
             }
         });
 
-        /*
-        // 체크박스 상태를 별도로 설정 (병합된 셀 포함)
-        $(`#${this.gridId}-body input.row-check`).each((index, checkbox) => {
-            const $checkbox = $(checkbox);
-            const nodeId = $checkbox.closest('tr').data('id');
-            const result = this.findNodeById(nodeId);
-            if (result && result.node) {
-                $checkbox.prop('checked', result.node.checked === true || result.node.checked === 'true' || result.node.checked === 'Y');
-            }
-        });
-        */
 
         this.bindEditEvents();
     }
@@ -767,8 +829,6 @@ class TreeGridManager {
     }
 
 
-    // 편집 이벤트 바인딩 메서드 수정
- // 원본 TreeGridManager의 bindEditEvents 메서드 완성
     bindEditEvents() {
         const self = this;
 
@@ -803,7 +863,7 @@ class TreeGridManager {
         // 3. 트리 토글 이벤트 추가
         $(`#${this.gridId}-body`)
             .off('click.treeToggle')
-            .on('click.treeToggle', '.tree-toggle', function(e) {
+            .on('click.treeToggle', '.btn-tblnode', function(e) {
                 e.preventDefault();
                 const nodeId = String($(this).closest('tr').data('id'));
                 if (nodeId) {
@@ -825,6 +885,43 @@ class TreeGridManager {
                     }
                 }, 10);
             });
+
+
+        // 5. contenteditable의 Enter 키 처리 (선택사항)
+        $(`#${this.gridId}-body`)
+            .off('keydown.contenteditable')
+            .on('keydown.contenteditable', '[contenteditable][data-field]', function(e) {
+                const $this = $(this);
+
+                // Enter 키 처리 (필요에 따라 수정)
+                if (e.keyCode === 13) {
+                    // 기본적으로는 줄바꿈 허용, 필요시 preventDefault() 호출
+                     e.preventDefault();
+                    // 편집 추적
+                    const nodeId = String($this.closest('tr').data('id'));
+                    const field = $this.data('field');
+
+                    if (nodeId && field) {
+                        setTimeout(() => {
+                            self.trackEdit(nodeId, this, field);
+                        }, 10);
+                    }
+                }
+            });
+
+        // 6. contenteditable 포커스 아웃 시 추가 처리 (선택사항)
+        $(`#${this.gridId}-body`)
+            .off('focusout.contenteditable')
+            .on('focusout.contenteditable', '[contenteditable][data-field]', function(e) {
+                const $this = $(this);
+                const nodeId = String($this.closest('tr').data('id'));
+                const field = $this.data('field');
+
+                if (nodeId && field) {
+                    // 포커스 아웃 시 최종 값 확정
+                    self.trackEdit(nodeId, this, field);
+                }
+            });
     }
 
  // 5. createNodeRow 메서드 수정 - 병합 정보 포함
@@ -835,15 +932,22 @@ class TreeGridManager {
 
         if (this.isTreeMode) {
             hasChildren = (node.childYn === 'Y') || (node.children && node.children.length > 0);
-            toggleSymbol = hasChildren ? (node.treeExpanded ? '[-]' : '[+]') : '';
-            toggleClass = hasChildren ? 'tree-toggle' : 'tree-toggle no-children';
+            toggleSymbol = hasChildren ? (node.treeExpanded ? '<button type="button" class="btn-tblnode opened" title="닫기"></button>' : '<button type="button" class="btn-tblnode" title="열기"></button>') : '<span class="space"></span>';
+            if (node.level > 0 && hasChildren === false) toggleSymbol = '<span class="line"></span>';
+            //toggleClass = hasChildren ? 'tree-toggle' : 'tree-toggle no-children';
         }
 
         const displayClass = node.level === 0 ? '' : (isVisible ? 'tree-row' : 'tree-row hidden');
-        const indentStyle = 'padding-left: ' + (node.level * 20) + 'px;';
+        //const indentStyle = 'padding-left: ' + (node.level * 20) + 'px;';
 
         if (!node.id) {
             node.id = 'auto_' + Date.now().toString() + '_' + Math.floor(Math.random() * 10000).toString();
+        }
+
+        if (node.level) {
+        	for(var i=0;i < node.level; i++) {
+        		toggleSymbol = '<span class="space"></span>' + toggleSymbol;
+        	}
         }
 
         const rowData = {
@@ -851,17 +955,15 @@ class TreeGridManager {
             checkedAttr: (node.checked === true || node.checked === 'true' || node.checked === 'Y') ? 'checked' : '',
             gridId: this.gridId,
             displayClass: displayClass,
-            indentStyle: indentStyle,
+            //indentStyle: indentStyle,
             toggleSymbol: toggleSymbol,
-            toggleClass: toggleClass,
+            //toggleClass: toggleClass,
             isTreeMode: this.isTreeMode,
             mergeInfo: mergeInfo // 병합 정보 추가
         };
 
 
         // 템플릿 렌더링에서 병합 처리
-       // const rowHtml = this.renderTemplate(this.templateId, rowData, this.codeMap, this.selectOption, reverseIndex);
-
         const rowHtml = this.renderRowFunction ?
                 this.renderRowFunction(rowData, reverseIndex, this.codeMap, this.selectOption) :
                 this.renderTemplate(this.templateId, rowData, this.codeMap, this.selectOption, reverseIndex); // fallback
@@ -1055,6 +1157,10 @@ class TreeGridManager {
     }
 
     addRow(position = 'top', targetRowId = null) {
+
+
+    	position = this.addRowPosition;
+
         const newId = 'N_' + Date.now().toString() + Math.floor(Math.random() * 1000).toString();
         const newRow = {
             id: newId,
@@ -1249,10 +1355,10 @@ class TreeGridManager {
       //  this.addChildRow(parentId);
 
         // ★ 수정: addChildRow의 반환값을 그대로 반환 (이미 parentId 포함)
-        return this.addChildRow(parentId);
+        return this.addSelectedChildRow(parentId);
     }
 
-    addChildRow(parentId) {
+    addSelectedChildRow(parentId) {
     	 // 트리 모드가 아니면 실행하지 않음
         if (!this.isTreeMode) return;
 
@@ -1260,7 +1366,6 @@ class TreeGridManager {
         if (!result || !result.node) return;
 
         const parent = result.node;
-        //const newChildId = Date.now().toString() + Math.floor(Math.random() * 1000).toString();
         const newChildId = 'N_' + Date.now().toString() + Math.floor(Math.random() * 1000).toString();
 
 
@@ -1602,28 +1707,7 @@ class TreeGridManager {
         }
     }
 
-    /*
-    toggleAll2(checked) {
-        $(`#${this.gridId}-body .row-check`).prop("checked", checked);
 
-        // ★ 헤더 체크박스도 함께 업데이트
-        $(`#${this.gridId}-container .check-all`).prop('checked', checked);
-
-        // ★ 추가: 데이터에서도 체크 상태 업데이트
-        const updateNodeChecked = (nodes) => {
-            nodes.forEach(node => {
-                node.checked = checked;
-                if (this.isTreeMode && node.children && node.children.length > 0) {
-                    updateNodeChecked(node.children);
-                }
-            });
-        };
-
-        updateNodeChecked(this.data);
-
-
-    }
-    */
     toggleAll(checked) {
         if (checked && this.checkCount) {
             // 전체 선택시 개수 제한이 있으면 제한된 개수만 체크
@@ -1716,19 +1800,6 @@ class TreeGridManager {
 
 
 
-
-    /*
-    // ★ 새로 추가: 개별 체크박스 상태 변경 시 헤더 체크박스 업데이트
-    updateHeaderCheckbox2() {
-        const totalCheckboxes = $(`#${this.gridId}-body .row-check`).length;
-        const checkedCheckboxes = $(`#${this.gridId}-body .row-check:checked`).length;
-
-        // 모든 체크박스가 체크되어 있으면 헤더도 체크, 하나라도 해제되어 있으면 헤더 해제
-        const allChecked = totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes;
-        $(`#${this.gridId}-container .check-all`).prop('checked', allChecked);
-    }
-    */
-
     updateHeaderCheckbox() {
         const $container = $(`#${this.gridId}-container`);
         const $allCheckboxes = $container.find('.row-check');
@@ -1742,19 +1813,6 @@ class TreeGridManager {
         if (this.checkCount) {
             const maxSelectableCount = Math.min(this.checkCount, totalCount);
 
-            /*
-            if (checkedCount === 0) {
-                $headerCheckbox.prop('checked', false).prop('indeterminate', false);
-            } else if (checkedCount === maxSelectableCount) {
-               // $headerCheckbox.prop('checked', true).prop('indeterminate', false);
-            } else {
-               // $headerCheckbox.prop('checked', false).prop('indeterminate', true);
-            }
-            */
-
-            // 개수 제한 정보 표시
-         //   console.log(`체크된 항목: ${checkedCount}개 / 최대 ${this.checkCount}개`);
-           // $(`#${this.gridId}-checked-count`).text(`선택: ${checkedCount}/${this.checkCount}`);
         } else {
             // 기존 로직 (개수 제한 없음)
             if (checkedCount === 0) {
@@ -1773,8 +1831,6 @@ class TreeGridManager {
                 $headerCheckbox.prop('checked', false).prop('indeterminate', true);
             }
 
-           // console.log(`체크된 항목: ${checkedCount}개 / 전체 ${totalCount}개`);
-           // $(`#${this.gridId}-checked-count`).text(`선택된 항목: ${checkedCount}개`);
         }
     }
 
@@ -1782,6 +1838,9 @@ class TreeGridManager {
 
     trackEdit(nodeId, el, field) {
         let value;
+
+        //editId=20250904  contenteditable 처리위해추가
+        const $el = $(el);
 
         // 요소 타입에 따라 값 추출
         if (el.type === 'checkbox') {
@@ -1792,6 +1851,25 @@ class TreeGridManager {
                 return;
             }
             value = el.value;
+
+        } else if ($el.is('[contenteditable]')) {
+        	  //editId=20250904  contenteditable 처리위해추가
+            // contenteditable 요소 처리
+            // HTML 형태로 저장할지, 텍스트만 저장할지는 설정에 따라 결정
+            // 기본적으로는 HTML 형태로 저장하되, 순수 텍스트가 필요한 경우 .text() 사용
+            value = $el.html().trim();
+
+            // 만약 순수 텍스트만 필요한 경우 아래 주석을 해제하고 위 라인을 주석 처리
+            // value = $el.text().trim();
+
+            // 빈 HTML 태그만 남은 경우 처리 (예: <br>, <div><br></div> 등)
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = value;
+            const textContent = (tempDiv.textContent || tempDiv.innerText || '').trim();
+            if (!textContent && value.match(/^(<br\s*\/?>|<div><br\s*\/?>(<\/div>)?|\s*)$/i)) {
+                value = '';
+            }
+
         } else if (el.value !== undefined) {
             value = el.value;
         } else {
@@ -1808,7 +1886,18 @@ class TreeGridManager {
             if (this.isExcelMode && result.node.isExcel) {
                 const nodeIndex = this.data.indexOf(result.node);
                 if (nodeIndex >= 0 && nodeIndex < this.excelData.length) {
-                    this.excelData[nodeIndex][field] = value;
+                    //this.excelData[nodeIndex][field] = value;
+
+                	  //editId=20250904  contenteditable 처리위해추가
+                	 if ($el.is('[contenteditable]')) {
+                         // HTML에서 순수 텍스트 추출하여 엑셀 데이터에 저장
+                         const tempDiv = document.createElement('div');
+                         tempDiv.innerHTML = value;
+                         this.excelData[nodeIndex][field] = (tempDiv.textContent || tempDiv.innerText || '').trim();
+                     } else {
+                         this.excelData[nodeIndex][field] = value;
+                     }
+
                 }
 
                 // ★ 수정: 이전 오류 상태 먼저 확인
@@ -1821,8 +1910,21 @@ class TreeGridManager {
                     return !(errorCell.rowIndex === nodeIndex && errorCell.field === field);
                 });
 
+
+                // 실시간 유효성 검사 - contenteditable의 경우 텍스트 값으로 검증
+                //editId=20250904  contenteditable 처리위해추가
+                let validationValue = value;
+                if ($el.is('[contenteditable]')) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = value;
+                    validationValue = (tempDiv.textContent || tempDiv.innerText || '').trim();
+                }
+
+
                 // 실시간 유효성 검사
-                const validationError = this.validateSingleCell(nodeId, field, value);
+                //editId=20250904  contenteditable 처리위해 수정, 입력파라메터 value ->validationValue 로 수정
+                const validationError = this.validateSingleCell(nodeId, field, validationValue);
+                //const validationError = this.validateSingleCell(nodeId, field, value);
                 const $element = $(el);
                 const $td = $element.closest('td');
 
@@ -1861,36 +1963,6 @@ class TreeGridManager {
     }
 
 
-
-
-
-    // ★  전체 유효성 검사 오류 목록 업데이트
-    /*
-    updateValidationErrors() {
-        this.excelValidationErrors = [...new Set(this.excelErrorCells.map(errorCell => errorCell.error))];
-
-
-        // ★ 수정: 오류가 있을 때만 토스트 표시
-
-        if (this.excelValidationErrors.length > 0) {
-
-            let errorMessage = "엑셀 데이터에 오류가 있습니다.<br><br>";
-            this.excelValidationErrors.forEach(error => {
-                errorMessage += `${error}\n`;
-            });
-
-            let type  = 'info';
-            let timeOut  = 0;
-            this.showToast(errorMessage,  type = type, timeOut = timeOut);
-
-        }else{
-        	 let errorMessage="모든 밸리데이션 오류가 해결되었습니다."
-        	 let type  = 'success';
-             let timeOut  = 10;
-             this.showToast(errorMessage,  type = type, timeOut = timeOut);
-        }
-
-    }*/
 
  // ★  전체 유효성 검사 오류 목록 업데이트
     updateValidationErrors() {
@@ -2049,20 +2121,12 @@ class TreeGridManager {
             }
         });
 
-        /*
-        this.deletedRows.forEach((key) => {
-            const id = key.slice(2); // 이미 문자열이므로 그대로 사용
-            nodesToDelete.push(id);
-        });
-        */
+
         this.deletedRows.forEach((key) => {
             const [nodeKey, paramValue] = key.split('|'); // '|'로 분리
             nodesToDelete.push(paramValue);
         });
 
-       // console.log(`[${this.gridId}] 추가된 노드:`, nodesToAdd);
-       // console.log(`[${this.gridId}] 수정된 노드:`, nodesToUpdate);
-       // console.log(`[${this.gridId}] 삭제된 노드:`, nodesToDelete);
 
         // 실제 서버 전송
         const payload = {
@@ -2070,6 +2134,9 @@ class TreeGridManager {
             updatedNodes: nodesToUpdate,
             deletedNodes: nodesToDelete
         };
+
+
+        console.log("payload............",payload);
 
         $.ajax({
         	url: this.urls.saveUrl,
@@ -2286,7 +2353,6 @@ class TreeGridManager {
                 return val;
             }
         }
-
 
         // 1단계: each 반복문 처리
         let result = template.replace(/\{\{#each\s+(\[?\w+\]?)\}\}([\s\S]*?)\{\{\/each\}\}/g,
@@ -2656,80 +2722,15 @@ class TreeGridManager {
     }
 
 
-    renderPagination2() {
-        if (!this.isPagingEnabled) return;
-        const pagination = $(`#${this.gridId}-pagination`);
-        pagination.empty();
-
-        // 유틸리티 함수: 페이지 버튼 생성
-        const createButton = (label, page, disabled = false, isActive = false) => {
-            const button = $(`
-                <span class="pagination-btn ${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}" data-page="${page}">${label}</span>
-            `);
-            if (!disabled && !isActive) {
-                button.on('click', (e) => {
-                    e.preventDefault();
-                    this.fetchData(page);
-                });
-            }
-            return button;
-        };
-
-        // 첫 페이지, 이전 페이지
-        pagination.append(createButton('처음', 1, this.currentPage === 1));
-        pagination.append(createButton('이전', this.currentPage - 1, this.currentPage === 1));
-
-        // 페이지 번호 범위 계산
-        const maxVisiblePages = 5; // 보여줄 최대 페이지 수
-        let startPage, endPage;
-
-        if (this.totalPages <= maxVisiblePages) {
-            // 전체 페이지가 적으면 모두 표시
-            startPage = 1;
-            endPage = this.totalPages;
-        } else {
-            // 현재 페이지를 중심으로 범위 계산
-            const halfVisible = Math.floor(maxVisiblePages / 2);
-            startPage = Math.max(1, this.currentPage - halfVisible);
-            endPage = Math.min(this.totalPages, this.currentPage + halfVisible);
-
-            // 범위 조정 (시작이나 끝에 치우쳤을 때)
-            if (startPage === 1) {
-                endPage = Math.min(maxVisiblePages, this.totalPages);
-            } else if (endPage === this.totalPages) {
-                startPage = Math.max(1, this.totalPages - maxVisiblePages + 1);
-            }
-        }
-
-        // 첫 페이지와 ... 표시
-        if (startPage > 1) {
-            pagination.append(createButton(1, 1));
-            if (startPage > 2) {
-                pagination.append($('<span class="pagination-ellipsis">...</span>'));
-            }
-        }
-
-        // 페이지 번호들
-        for (let i = startPage; i <= endPage; i++) {
-            pagination.append(createButton(i, i, false, i === this.currentPage));
-        }
-
-        // ... 과 마지막 페이지 표시
-        if (endPage < this.totalPages) {
-            if (endPage < this.totalPages - 1) {
-                pagination.append($('<span class="pagination-ellipsis">...</span>'));
-            }
-            pagination.append(createButton(this.totalPages, this.totalPages));
-        }
-
-        // 다음 페이지, 마지막 페이지
-        pagination.append(createButton('다음', this.currentPage + 1, this.currentPage === this.totalPages));
-        pagination.append(createButton('마지막', this.totalPages, this.currentPage === this.totalPages));
-    }
-
-
 
     renderPagination() {
+
+    	if(this.totalPages==0){
+		    const pagination = $(`#${this.gridId}-pagination`);
+	        pagination.empty();
+    		return;
+    	}
+
         if (!this.isPagingEnabled) return;
         const pagination = $(`#${this.gridId}-pagination`);
         pagination.empty();
@@ -2868,7 +2869,7 @@ class TreeGridManager {
         // 행 클릭 이벤트 (체크박스나 버튼 클릭은 제외)
         $(`#${this.gridId}-body`).off('click.rowClick').on('click.rowClick', 'tr', function(e) {
             // 체크박스, 버튼, input 등은 제외
-            if ($(e.target).is('input, button, select, .tree-toggle')) {
+            if ($(e.target).is('input, button, select, .btn-tblnode')) {
                 return;
             }
 
@@ -2887,10 +2888,7 @@ class TreeGridManager {
 
                 // 지연 후 클릭 이벤트 실행
                 clickTimer = setTimeout(function() {
-                    // console.log('클릭된 행 데이터:', rowData);
-
                     // 행 선택 표시 (선택사항)
-                	 //self.selectRow2($row);
                 	self.selectRow(nodeId);
 
 
@@ -2907,7 +2905,7 @@ class TreeGridManager {
         // 행 더블클릭 이벤트
         $(`#${this.gridId}-body`).off('dblclick.rowDoubleClick').on('dblclick.rowDoubleClick', 'tr', function(e) {
             // 체크박스, 버튼, input 등은 제외
-            if ($(e.target).is('input, button, select, .tree-toggle')) {
+            if ($(e.target).is('input, button, select, .btn-tblnode')) {
                 return;
             }
 
@@ -2970,9 +2968,6 @@ class TreeGridManager {
              this.modifiedRows.add(nodeKey);
          }
 
-         // 테이블 다시 렌더링
-        // this.renderTable();
-         // ★ renderTable() 대신 해당 행만 업데이트
          this.updateSingleRow(nodeId);
 
          return true;
@@ -3015,8 +3010,6 @@ class TreeGridManager {
      return false;
  }
 
-//단일 행만 업데이트하는 메서드
-//TreeGridManager 클래스에 추가
  updateSingleRow(nodeId) {
 
 	    const result = this.findNodeById(nodeId);
@@ -3035,24 +3028,18 @@ class TreeGridManager {
 	    const rowIndex = $existingRow.index();
 	    const isVisible = $existingRow.is(':visible');
 
-	    //console.log('행 재생성 중... Node data:', node);
 
 	    // 새 행 HTML 생성
 	    const reverseIndex = this.totalCount - (this.currentPage - 1) * this.pageSize - rowIndex;
 	    const newRowHtml = this.createNodeRow(node, isVisible, rowIndex, reverseIndex);
 
-	  //  console.log("기존 행 HTML (교체 전):", $existingRow.html());
-	   // console.log("새 행 HTML:", newRowHtml);
 
 	    // 기존 행을 새 행으로 교체
 	    $existingRow.replaceWith(newRowHtml);
 
-	    // ⚠️ 이 시점에서 $existingRow는 더 이상 DOM에 존재하지 않는 요소를 참조함
-	   // console.log("$existingRow는 이제 DOM에서 분리됨:", $existingRow.html());
 
 	    // 새로 DOM에 삽입된 행을 다시 선택
 	    const $newRowInDOM = $(`#${this.gridId}-body tr[data-id="${nodeId}"]`);
-	  //  console.log("DOM에서 새로 선택한 행:", $newRowInDOM.html());
 
 	    // 행 선택 체크박스 상태 설정 (node 데이터의 checkedAttr 기반)
 	    const shouldBeChecked = node.checkedAttr === 'checked' || node.checkedAttr === true;
@@ -3078,7 +3065,6 @@ class TreeGridManager {
 	            actualValue = $this.html();
 	        }
 
-	       // console.log(`필드 ${field}: data-value="${dataValue}", 실제값="${actualValue}", 타입: ${$this.attr('type') || $this.prop('tagName')}`);
 
 	        // data-value가 있으면 실제 input에 설정
 	        if (dataValue !== undefined && dataValue !== '') {
@@ -3149,8 +3135,6 @@ class TreeGridManager {
  bindSingleRowEvents($row) {
 	    const self = this;
 
-	    //console.log('=== bindSingleRowEvents 호출 ===');
-	   // console.log('대상 행:', $row.data('id'));
 
 	    // 기존 이벤트 모두 제거
 	    $row.off();
@@ -3187,7 +3171,7 @@ class TreeGridManager {
 	    });
 
 	    // 트리 토글 이벤트
-	    $row.on('click', '.tree-toggle', function(e) {
+	    $row.on('click', '.btn-tblnode', function(e) {
 	        e.preventDefault();
 	        const nodeId = String($(this).closest('tr').data('id'));
 	        if (nodeId) {
@@ -3261,18 +3245,6 @@ class TreeGridManager {
  }
 
 
- //  행 선택 표시 메서드 (선택사항)
- /*
- selectRow2($row) {
-     // 이전 선택 해제
-     $(`#${this.gridId}-body tr`).removeClass('selected');
-
-     // 현재 행 선택
-     $row.addClass('selected');
- }
-*/
-
-
 
 //3. 엑셀 업로드 처리 메서드 추가
  handleExcelUpload(file) {
@@ -3335,12 +3307,6 @@ class TreeGridManager {
      // ★ 수정: 유효성 검사 실패해도 데이터는 로드하고 오류 정보만 저장
      this.excelValidationErrors = validationResult.errors || [];
      this.excelErrorCells = validationResult.errorCells || [];
-
-  // 유효성 검사 실행
-    // const validationResult = this.validateExcelData(headers, rows);
-     // ★ 수정: 헤더 오류도 포함하여 모든 오류 정보 저장
-    // this.excelValidationErrors = [...(validationResult.errors || [])];
-    // this.excelErrorCells = validationResult.errorCells || [];
 
 
 
@@ -3490,10 +3456,7 @@ class TreeGridManager {
          success: (res) => {
 
     		 toastr["success"](res.message);
-             //this.isExcelMode = false;
 
-             //this.excelData = [];
-             //this.fetchData(this.currentPage); // 서버에서 데이터 다시 조회
              this.excelData = [];
              this.data = []; // 현재 그리드 데이터 초기화
 
@@ -3758,8 +3721,6 @@ class TreeGridManager {
               const nodeId = row.dataset.id;
 
               if (nodeId && nodeId !== 'undefined') {
-                 // $(`#${self.gridId}-body tr`).removeClass('context-selected');
-                 // $(row).addClass('context-selected');
 
             	  //selectRow 에서 위의 주석처리한부분함
                   self.selectRow(nodeId, false);
@@ -4085,6 +4046,105 @@ class TreeGridManager {
 	     return;
 	 }
 	 return this.addRow('child');
+	}
+
+
+
+
+	// 선택된 행을 위로 이동
+	moveRowUp() {
+	    const checkedRows = $(`#${this.gridId}-body input.row-check:checked`);
+
+	    if (checkedRows.length === 0) {
+	        alert("이동할 행을 선택해주세요.");
+	        return;
+	    }
+
+	    if (checkedRows.length > 1) {
+	        alert("하나의 행만 선택해주세요.");
+	        return;
+	    }
+
+	    const selectedRow = checkedRows.closest("tr");
+	    const nodeId = String(selectedRow.data("id"));
+
+	    this.moveNode(nodeId, 'up');
+	}
+
+	// 선택된 행을 아래로 이동
+	moveRowDown() {
+	    const checkedRows = $(`#${this.gridId}-body input.row-check:checked`);
+
+	    if (checkedRows.length === 0) {
+	        alert("이동할 행을 선택해주세요.");
+	        return;
+	    }
+
+	    if (checkedRows.length > 1) {
+	        alert("하나의 행만 선택해주세요.");
+	        return;
+	    }
+
+	    const selectedRow = checkedRows.closest("tr");
+	    const nodeId = String(selectedRow.data("id"));
+
+	    this.moveNode(nodeId, 'down');
+	}
+
+
+	// 노드 이동 처리 메서드
+	moveNode(nodeId, direction) {
+	    const result = this.findNodeById(nodeId);
+	    if (!result || !result.node) return;
+
+	    const node = result.node;
+	    let targetArray = this.data;
+
+	    // 트리 모드인 경우 부모의 children 배열을 사용
+	    if (this.isTreeMode && result.parent) {
+	        targetArray = result.parent.children;
+	    }
+
+	    const currentIndex = targetArray.indexOf(node);
+	    if (currentIndex === -1) return;
+
+	    let newIndex;
+	    if (direction === 'up') {
+	        if (currentIndex === 0) {
+	            alert("첫 번째 항목은 위로 이동할 수 없습니다.");
+	            return;
+	        }
+	        newIndex = currentIndex - 1;
+	    } else {
+	        if (currentIndex === targetArray.length - 1) {
+	            alert("마지막 항목은 아래로 이동할 수 없습니다.");
+	            return;
+	        }
+	        newIndex = currentIndex + 1;
+	    }
+
+	    // 배열에서 노드 위치 변경
+	    targetArray.splice(currentIndex, 1);
+	    targetArray.splice(newIndex, 0, node);
+
+	    // 저장 기능이 활성화된 경우 수정된 행으로 추적
+	    if (this.isSaveEnabled) {
+	        const nodeKey = this.getNodeKey(node);
+	        this.modifiedRows.add(nodeKey);
+
+	        // 이동의 영향을 받는 다른 노드도 수정된 것으로 표시
+	        const affectedNode = targetArray[direction === 'up' ? newIndex + 1 : newIndex - 1];
+	        if (affectedNode) {
+	            const affectedNodeKey = this.getNodeKey(affectedNode);
+	            this.modifiedRows.add(affectedNodeKey);
+	        }
+	    }
+
+	    // 테이블 다시 렌더링
+	    this.renderTable();
+
+	    // 이동한 행 다시 선택
+	    $(`#${this.gridId}-body tr[data-id="${nodeId}"] input.row-check`).prop('checked', true);
 	}
 
 

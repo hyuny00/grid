@@ -12,17 +12,20 @@
 	<script defer src="${basePath}/js/timepicker/jquery.timepicker.min.js"></script>
 	<script defer src="${basePath}/js/ui.js" ></script>
 	<script defer src="${basePath}/js/menu/common-menu.js" ></script>
-	
+
 	<script defer src="${basePath}/js/grid/ftGrid.js"></script>
 	<script defer src="${basePath}/js/xlsx/xlsx.full.min.js"></script>
 	<script  src="${basePath}/js/toastr/toastr.min.js"></script>
 	<script defer src="${basePath}/js/flatpickr.js"></script>
-	
+
 	<script defer src="${basePath}/js/popupManager.js"></script>
-	
+
 	<script defer src="${basePath}/js/search/search.js"></script>
 	<script defer src="${basePath}/js/search/searchGridUtil.js"></script>
-	
+	<script defer src="${basePath}/js/grid/gridResizer.js"></script>
+
+
+
 
 <script >
 
@@ -85,7 +88,7 @@
 	}
 
 
- 	
+
  	 toastr.options = {
    		  "closeButton": true,
              "debug": false,

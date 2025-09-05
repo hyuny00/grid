@@ -1,0 +1,252 @@
+{
+	"경제": [
+
+		{
+			"code": "NY.GNP.PCAP.CD",
+			"name": "1인당 GNI",
+			"description": "국민 1인당 명목 국민총소득(GNI)으로, 한 나라 국민이 국내외에서 벌어들인 총소득을 인구수로 나눈 값입니다. 생활수준과 경제력의 지표로 사용됩니다.",
+			"unit": "USD",
+			"target": 5000.0,
+			"threshold": 1045.0,
+			"higherIsBetter": true
+		},
+
+		{
+			"code": "FP.CPI.TOTL.ZG",
+			"name": "인플레이션율",
+			"description": "소비자물가지수(CPI)의 연간 변화율로, 일반 소비자가 구매하는 상품과 서비스의 가격 상승률을 나타냅니다. 경제의 물가 안정성과 통화정책의 효과를 측정하는 핵심 지표입니다.",
+			"unit": "%",
+			"target": 2.0,
+			"threshold": 10.0,
+			"higherIsBetter": false
+		},
+		{
+			"code": "NE.TRD.GNFS.ZS",
+			"name": "무역 비중(GDP 대비)",
+			"description": "상품과 서비스의 수출입 합계가 GDP에서 차지하는 비율로, 한 국가의 대외 개방도와 세계경제와의 통합 정도를 나타냅니다. 수치가 높을수록 국제무역에 대한 의존도가 높음을 의미합니다.",
+			"unit": "% of GDP",
+			"target": 60.0,
+			"threshold": 20.0,
+			"higherIsBetter": true
+		},
+		{
+			"code": "SI.POV.DDAY",
+			"name": "빈곤율 데이터",
+			"description": "하루 2.15달러 미만으로 생활하는 인구의 비율로, 국제빈곤선 기준 극빈층 규모를 나타냅니다. 절대빈곤 상태에 있는 인구의 비중을 측정하여 사회경제적 불평등과 복지 수준을 평가하는 핵심 지표입니다.",
+			"unit": "% of population",
+			"target": 0.0,
+			"threshold": 3.0,
+			"higherIsBetter": false
+		}
+	],
+	"보건 지표": [
+		{
+			"code": "SH.STA.STNT.ZS",
+			"name": "아동 발육부진율",
+			"description": "5세 미만 아동 중 연령 대비 신장이 WHO 표준 중위값보다 2표준편차 이상 낮은 아동의 비율입니다. 만성적 영양실조와 장기간의 건강 문제를 반영하는 지표로, 아동의 신체적·인지적 발달 상태를 나타냅니다.",
+			"unit": "% of children under 5",
+			"target": 0.0,
+			"threshold": 20.0,
+			"higherIsBetter": false
+		},
+
+		{
+			"code": "SH.MED.BEDS.ZS",
+			"name": "병상 수(인구 1,000명)",
+			"description": "인구 1,000명당 이용 가능한 병원 병상 수로, 의료 인프라와 의료 서비스 접근성을 나타내는 지표입니다. 입원 치료 능력과 의료 시설의 충분성을 측정하여 보건 시스템의 역량을 평가합니다.",
+			"unit": "per 1,000 people",
+			"target": 4.5,
+			"threshold": 1.0,
+			"higherIsBetter": true
+		}
+	],
+
+
+	"재난 관리 및 기후변화 적응": [
+		{
+			"code": "EN.CLC.MDAT.ZS",
+			"name": "기후 변화 관련 재해",
+			"description": "홍수, 가뭄, 폭풍, 산불 등 기후 변화와 관련된 자연재해로 인해 영향을 받은 인구의 비율입니다. 기후 변화의 직접적 영향과 국가의 재해 대응 역량, 취약성을 나타내는 지표로 환경 리스크를 측정합니다.",
+			"unit": "% of population",
+			"target": 0.0,
+			"threshold": 5.0,
+			"higherIsBetter": false
+		},
+		{
+			"code": "VC.IHR.PSRC.P5",
+			"name": "평화/안보 지수",
+			"description": "인구 10만 명당 의도적 살인 사건 발생률로, 사회의 치안 상태와 안전 수준을 나타내는 지표입니다. 범죄율과 사회 안정성을 측정하여 국가의 평화와 안보 상황을 평가합니다.",
+			"unit": "per 100,000 population",
+			"target": 1.0,
+			"threshold": 10.0,
+			"higherIsBetter": false
+		}
+	],
+	"디지털 격차 및 혁신": [
+		{
+			"code": "IT.CEL.SETS.P2",
+			"name": "휴대폰 보급률",
+			"description": "인구 100명당 휴대전화 가입 건수로, 모바일 통신 접근성과 디지털 연결성을 나타내는 지표입니다. 정보통신 인프라의 보급 수준과 디지털 격차 해소 정도를 측정합니다.",
+			"unit": "per 100 people",
+			"target": 100.0,
+			"threshold": 50.0,
+			"higherIsBetter": true
+		},
+		{
+			"code": "IT.NET.BBND.P2",
+			"name": "브로드밴드 구독률",
+			"description": "인구 100명당 고정 브로드밴드 인터넷 가입 건수로, 고속 인터넷 접근성과 디지털 인프라 발달 정도를 나타냅니다. 디지털 경제 참여와 정보화 수준을 측정하는 핵심 지표입니다.",
+			"unit": "per 100 people",
+			"target": 40.0,
+			"threshold": 10.0,
+			"higherIsBetter": true
+		}
+	],
+	"평화 및 안보": [
+		{
+			"code": "VC.BTL.DETH",
+			"name": "분쟁 관련 사망자",
+			"description": "국가 내 무력분쟁으로 인한 연간 사망자 수로, 정치적 불안정과 폭력 수준을 나타내는 지표입니다. 전쟁, 내전, 테러 등으로 인한 직접적 사망을 측정하여 국가의 평화와 안정성을 평가합니다.",
+			"unit": "number of deaths",
+			"target": 0,
+			"threshold": 25,
+			"higherIsBetter": false
+		},
+		{
+			"code": "IC.BUS.EASE.XQ",
+			"name": "비즈니스 용이성 지수",
+			"description": "사업 시작, 건설 허가, 전력 공급, 재산 등록, 신용 접근, 투자자 보호, 세금 납부, 국제무역, 계약 집행, 파산 해결 등 10개 영역의 사업 환경을 종합 평가한 지수입니다. 기업 활동의 용이성과 규제 환경을 측정합니다.",
+			"unit": "rank (1=most business-friendly)",
+			"target": 30,
+			"threshold": 100,
+			"higherIsBetter": false
+		}
+	],
+	"사망률": [
+		{
+			"code": "SP.DYN.CDRT.IN",
+			"name": "조사망률",
+			"description": "인구 1,000명당 연간 사망자 수로, 전체 인구의 사망률을 나타내는 기본적인 인구통계학적 지표입니다. 국가의 전반적인 보건 수준과 생활 환경을 반영합니다.",
+			"unit": "per 1,000 people",
+			"target": 7.0,
+			"threshold": 15.0,
+			"higherIsBetter": false
+		},
+		{
+			"code": "SP.DYN.IMRT.IN",
+			"name": "영아사망률",
+			"description": "출생아 1,000명당 1세 미만에 사망하는 영아 수로, 모성 및 신생아 보건 서비스의 질과 접근성을 나타내는 핵심 지표입니다. 국가의 보건시스템 발달 정도를 측정합니다.",
+			"unit": "per 1,000 live births",
+			"target": 5.0,
+			"threshold": 25.0,
+			"higherIsBetter": false
+		},
+		{
+			"code": "SP.DYN.AMRT.MA",
+			"name": "성인남성 사망률",
+			"description": "15세 남성이 60세가 되기 전에 사망할 확률로, 성인 남성의 조기사망 위험을 나타냅니다. 생활습관, 직업적 위험, 보건의료 접근성 등이 반영된 남성 건강 지표입니다.",
+			"unit": "per 1,000 male adults",
+			"target": 100.0,
+			"threshold": 250.0,
+			"higherIsBetter": false
+		},
+		{
+			"code": "SP.DYN.AMRT.FE",
+			"name": "성인여성 사망률",
+			"description": "15세 여성이 60세가 되기 전에 사망할 확률로, 성인 여성의 조기사망 위험을 나타냅니다. 모성사망, 생활습관, 보건의료 접근성 등이 반영된 여성 건강 지표입니다.",
+			"unit": "per 1,000 female adults",
+			"target": 60.0,
+			"threshold": 180.0,
+			"higherIsBetter": false
+		}
+	],
+	"교육": [
+
+		{
+			"code": "SE.ADT.LITR.ZS",
+			"name": "성인 문해율",
+			"description": "15세 이상 성인 중 일상생활에서 간단하고 짧은 글을 이해하고 읽고 쓸 수 있는 인구의 비율입니다. 기본적인 교육 성과와 인적자본 개발 수준을 나타내는 핵심 지표로, 사회경제 발전의 기초가 됩니다.",
+			"unit": "% of people ages 15 and above",
+			"target": 99.0,
+			"threshold": 80.0,
+			"higherIsBetter": true
+		}
+	],
+
+	"거버넌스": [
+
+		{
+			"code": "PS.EST",
+			"name": "정치적 안정성",
+			"description": "정부가 헌법적·비헌법적 수단에 의해 불안정해지거나 전복될 가능성을 측정하는 지표입니다. 정치적 폭력, 테러, 내전 등의 위험도를 포함하여 국가의 정치적 안정성과 제도적 지속가능성을 평가합니다.",
+			"unit": "estimate (-2.5 to 2.5)",
+			"target": 1.0,
+			"threshold": -0.5,
+			"higherIsBetter": true
+		}
+	],
+	"농업지표": [
+		{
+			"code": "AG.PRD.CREL.MT",
+			"name": "곡물 생산량",
+			"description": "건조 곡물로만 수확된 작물의 연간 생산량입니다. 밀, 쌀, 옥수수, 보리, 귀리, 호밀, 수수, 기장 등이 포함됩니다. 건초나 사료용으로 수확된 것, 방목용으로 사용된 것은 제외됩니다. 국가의 식량 생산 능력과 식량 안보를 측정하는 핵심 농업 지표입니다.",
+			"unit": "메트릭톤",
+			"target": 10000000.0,
+			"threshold": 1000000.0,
+			"higherIsBetter": true
+		}
+
+	],
+
+	"금융 포용성": [
+		{
+			"code": "FB.ATM.TOTL.P5",
+			"name": "ATM 접근성",
+			"description": "성인 인구 10만 명당 자동화기기(ATM) 수로, 금융 서비스 접근성과 금융 인프라 발달 정도를 나타내는 지표입니다. 현금 인출 및 기본적인 금융 거래의 편의성을 측정하여 금융 포용성을 평가합니다.",
+			"unit": "per 100,000 adults",
+			"target": 60.0,
+			"threshold": 20.0,
+			"higherIsBetter": true
+		},
+
+		{
+			"code": "FB.CBK.BRCH.P5",
+			"name": "은행 지점 밀도",
+			"description": "성인 인구 10만 명당 상업은행 지점 수로, 금융 서비스의 물리적 접근성과 금융 인프라 분포를 나타내는 지표입니다. 대면 금융 서비스 이용 가능성을 측정하여 금융 포용성과 지역별 금융 서비스 격차를 평가합니다.",
+			"unit": "per 100,000 adults",
+			"target": 25.0,
+			"threshold": 10.0,
+			"higherIsBetter": true
+		}
+	],
+	"에너지 접근성": [
+		{
+			"code": "EG.ELC.ACCS.RU.ZS",
+			"name": "농촌 전력 접근률",
+			"description": "농촌 지역 인구 중 전력에 접근할 수 있는 인구의 비율로, 도농간 전력 공급 격차와 농촌 지역의 에너지 인프라 발달 정도를 나타냅니다. 농촌 개발과 생활 수준 향상을 측정하는 핵심 지표입니다.",
+			"unit": "% of rural population",
+			"target": 100.0,
+			"threshold": 80.0,
+			"higherIsBetter": true
+		},
+		{
+			"code": "EG.CFT.ACCS.ZS",
+			"name": "청정 연료 접근률",
+			"description": "요리와 난방을 위해 청정 연료와 기술에 접근할 수 있는 인구의 비율입니다. 전력, LPG, 천연가스, 바이오가스, 태양열 등이 포함되며, 나무, 숯, 농업 폐기물 등 전통 바이오매스는 제외됩니다. 실내 공기질과 건강 수준을 나타내는 지표입니다.",
+			"unit": "% of population",
+			"target": 100.0,
+			"threshold": 70.0,
+			"higherIsBetter": true
+		},
+		{
+			"code": "EG.USE.ELEC.KH.PC",
+			"name": "1인당 전력 소비량",
+			"description": "연간 1인당 전력 소비량으로, 국가의 전력 사용량과 에너지 집약도를 나타내는 지표입니다. 산업 발달, 생활 수준, 에너지 효율성을 종합적으로 반영하여 경제 발전과 에너지 정책을 평가합니다.",
+			"unit": "kWh per capita",
+			"target": 5000.0,
+			"threshold": 1000.0,
+			"higherIsBetter": true
+		}
+	]
+
+}

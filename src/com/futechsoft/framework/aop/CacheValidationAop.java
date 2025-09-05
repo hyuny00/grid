@@ -3,6 +3,7 @@ package com.futechsoft.framework.aop;
 
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
+import java.util.concurrent.TimeUnit;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -15,11 +16,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.futechsoft.framework.annotation.CacheAccess;
+import com.futechsoft.framework.annotation.SimpleCacheAccess;
 import com.futechsoft.framework.common.page.Pageable;
 import com.futechsoft.framework.common.service.CacheUpdateService;
 import com.futechsoft.framework.util.FtMap;
@@ -30,18 +33,19 @@ public class CacheValidationAop {
     private static final Logger logger = LoggerFactory.getLogger(CacheValidationAop.class);
     private static final String DEFAULT_CACHE_NAME = "defaultCache";
     private static final String CACHE_CREATION_TIME_SUFFIX = "_created";
-   
+    private static final String SIMPLE_CACHE_TIME_SUFFIX = "_simple_time";
+
     @Autowired
     private  CacheManager cacheManager;
 
     @Autowired
-	private  CacheUpdateService cacheUpdateService; 
-    
+	private  CacheUpdateService cacheUpdateService;
+
 
     @Around("@annotation(com.futechsoft.framework.annotation.CacheAccess)")
     public Object validateCache(ProceedingJoinPoint joinPoint) throws Throwable {
-    	
-    	
+
+
         Object[] args = joinPoint.getArgs();
         Pageable pageable = null;
         FtMap params = null;
@@ -55,21 +59,131 @@ public class CacheValidationAop {
         }
 
         return validateCache(joinPoint, pageable, params);
+
     }
 
-    
+    /**
+     * TTL 기반 단순 캐시
+     */
+    @Around("@annotation(com.futechsoft.framework.annotation.SimpleCacheAccess)")
+    public Object validateSimpleCache(ProceedingJoinPoint joinPoint) throws Throwable {
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        Method method = signature.getMethod();
+        SimpleCacheAccess simpleCacheAccess = method.getAnnotation(SimpleCacheAccess.class);
+
+        String cacheName = StringUtils.hasText(simpleCacheAccess.value()) ?
+            simpleCacheAccess.value() : DEFAULT_CACHE_NAME;
+        long ttlSeconds = simpleCacheAccess.ttl();
+        boolean isCode = simpleCacheAccess.isCode();
+
+
+
+
+        for (String cacheTmpName : cacheManager.getCacheNames()) {
+            com.github.benmanes.caffeine.cache.Cache<Object, Object> nativeCache =
+                    (com.github.benmanes.caffeine.cache.Cache<Object, Object>)
+                    ((CaffeineCache) cacheManager.getCache(cacheTmpName)).getNativeCache();
+            System.out.println("캐시 '" + cacheName + "' 의 현재 크기: " + nativeCache.estimatedSize());
+
+            nativeCache.policy().expireAfterAccess().ifPresent(policy -> {
+                System.out.println("Access TTL: " + policy.getExpiresAfter(TimeUnit.DAYS) + " days");
+            });
+
+            nativeCache.policy().eviction().ifPresent(policy -> {
+                System.out.println("Maximum Size: " + policy.getMaximum());
+            });
+        }
+
+
+        Object[] args = joinPoint.getArgs();
+        Pageable pageable = null;
+        FtMap params = null;
+
+        for (Object arg : args) {
+            if (arg instanceof Pageable) {
+                pageable = (Pageable) arg;
+            } else if (arg instanceof FtMap) {
+                params = (FtMap) arg;
+            }
+        }
+
+        String key = isCode ? generateCodeCacheKey(pageable, params) : generateCacheKey(pageable, params);
+
+        logger.debug("Simple cache validation: cacheName={}, key={}, ttl={}s",
+                    cacheName, key, ttlSeconds);
+
+        Cache cache = cacheManager.getCache(cacheName);
+        if (cache == null) {
+            logger.warn("Cache not found: {}", cacheName);
+            return joinPoint.proceed();
+        }
+
+        // 캐시에서 데이터 및 생성 시간 가져오기
+        Cache.ValueWrapper cachedData = cache.get(key);
+        Long cacheCreationTime = cache.get(key + SIMPLE_CACHE_TIME_SUFFIX, Long.class);
+
+        // TTL 기반 검증
+        if (cachedData != null && cacheCreationTime != null) {
+            long currentTime = System.currentTimeMillis();
+            long elapsedSeconds = (currentTime - cacheCreationTime) / 1000;
+
+            if (elapsedSeconds < ttlSeconds) {
+                logger.debug("Simple cache hit (TTL valid): {} (age={}s, ttl={}s)",
+                           key, elapsedSeconds, ttlSeconds);
+                return cachedData.get();
+            } else {
+                logger.debug("Simple cache expired: {} (age={}s, ttl={}s)",
+                           key, elapsedSeconds, ttlSeconds);
+                // 만료된 캐시 삭제
+                cache.evict(key);
+                cache.evict(key + SIMPLE_CACHE_TIME_SUFFIX);
+            }
+        } else {
+            logger.debug("Simple cache miss: {}", key);
+        }
+
+        // 캐시가 없거나 만료된 경우 새로운 데이터 조회
+        logger.debug("Fetching fresh data for simple cache: {}", key);
+        Object freshData = joinPoint.proceed();
+
+        // 현재 시간과 함께 캐시에 저장
+        long currentTime = System.currentTimeMillis();
+        cache.put(key, freshData);
+        cache.put(key + SIMPLE_CACHE_TIME_SUFFIX, currentTime);
+
+        logger.debug("Simple cache saved: {}, timestamp: {}", key, currentTime);
+
+        return freshData;
+    }
 
     public Object validateCache(ProceedingJoinPoint joinPoint, Pageable pageable, FtMap params) throws Throwable {
-    	
-    	
+
+
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
         CacheAccess cacheAccess = method.getAnnotation(CacheAccess.class);
 
         String cacheName = StringUtils.hasText(cacheAccess.value()) ? cacheAccess.value() : DEFAULT_CACHE_NAME;
-        
+
+        for (String cacheTmpName : cacheManager.getCacheNames()) {
+            com.github.benmanes.caffeine.cache.Cache<Object, Object> nativeCache =
+                    (com.github.benmanes.caffeine.cache.Cache<Object, Object>)
+                    ((CaffeineCache) cacheManager.getCache(cacheTmpName)).getNativeCache();
+            System.out.println("캐시 '" + cacheName + "' 의 현재 크기: " + nativeCache.estimatedSize());
+
+            nativeCache.policy().expireAfterAccess().ifPresent(policy -> {
+                System.out.println("Access TTL: " + policy.getExpiresAfter(TimeUnit.DAYS) + " days");
+            });
+
+            nativeCache.policy().eviction().ifPresent(policy -> {
+                System.out.println("Maximum Size: " + policy.getMaximum());
+            });
+        }
+
+
+
         String key = generateCacheKey(pageable, params);
-        
+
         logger.debug("Cache validation: cacheName={}, key={}", cacheName, key);
 
         Cache cache = cacheManager.getCache(cacheName);
@@ -81,25 +195,25 @@ public class CacheValidationAop {
         // 캐시에서 데이터 및 생성 시간 가져오기
         Cache.ValueWrapper cachedData = cache.get(key);
         Long cacheCreationTime = cache.get(key + CACHE_CREATION_TIME_SUFFIX, Long.class);
-        
+
         // 캐시 데이터가 있고 유효한지 확인
         if (cachedData != null && cacheCreationTime != null) {
             // DB에서 마지막 업데이트 시간 가져오기
             Timestamp lastUpdated = getLastUpdatedTimestamp(cacheName);
-            
+
             if (lastUpdated != null) {
                 //long lastUpdatedTimeSeconds = lastUpdated.getTime() / 1000;
                 //long cacheCreatedTimeSeconds = cacheCreationTime / 1000;
                 long lastUpdatedTimeSeconds = lastUpdated.getTime();
                 long cacheCreatedTimeSeconds = cacheCreationTime;
-                
+
                 // 캐시가 유효하면 캐시에서 데이터를 반환
                 if (cacheCreatedTimeSeconds > lastUpdatedTimeSeconds) {
-                    logger.debug("Cache hit and valid: {} (cacheTime={}, lastUpdateTime={})", 
+                    logger.debug("Cache hit and valid: {} (cacheTime={}, lastUpdateTime={})",
                             key, cacheCreatedTimeSeconds, lastUpdatedTimeSeconds);
                     return cachedData.get();
                 } else {
-                    logger.debug("Cache invalid: {} (cacheTime={}, lastUpdateTime={})", 
+                    logger.debug("Cache invalid: {} (cacheTime={}, lastUpdateTime={})",
                             key, cacheCreatedTimeSeconds, lastUpdatedTimeSeconds);
                 }
             } else {
@@ -116,17 +230,11 @@ public class CacheValidationAop {
 
         // 캐시와 DB의 현재 시간 함께 저장
         saveCacheWithTimestamp(cache, key, freshData);
-        
+
         //System.out.println("현재 캐시 크기: " + caffeineCache.estimatedSize());
-        
-        /*
-    	for (String cacheTmpName : cacheManager.getCacheNames()) {
-            com.github.benmanes.caffeine.cache.Cache<Object, Object> nativeCache =
-                    (com.github.benmanes.caffeine.cache.Cache<Object, Object>) 
-                    ((CaffeineCache) cacheManager.getCache(cacheTmpName)).getNativeCache();
-            System.out.println("캐시 '" + cacheName + "' 의 현재 크기: " + nativeCache.estimatedSize());
-        }
-         */
+
+
+
 
         return freshData;
     }
@@ -134,7 +242,7 @@ public class CacheValidationAop {
     /**
      * 페이징 정보와 파라미터를 사용하여 캐시 키를 생성
      */
-    
+
     private String generateCacheKey(Pageable pageable, FtMap params) {
         StringBuilder keyBuilder = new StringBuilder();
         if(pageable!=null) {
@@ -143,7 +251,7 @@ public class CacheValidationAop {
             .append(pageable.getPageSize())
             .append('_');
         }
-        
+
         // FtMap에서 값이 있는 항목만 포함하고 "csrf" 키는 제외
         if (params != null) {
             params.entrySet().stream()
@@ -159,24 +267,51 @@ public class CacheValidationAop {
                             .append(entry.getValue())
                             .append(',');
                 });
-        }   
-        
+        }
+
         return keyBuilder.toString();
     }
-    
-    
+
+    /**
+     * 코드성 데이터를 위한 캐시 키 생성
+     * cdGroupSn, schCd, upCd, schUpNtnCd 파라미터만 사용
+     */
+    private String generateCodeCacheKey(Pageable pageable, FtMap params) {
+        StringBuilder keyBuilder = new StringBuilder();
+
+
+
+        // 코드성 데이터에서 사용할 특정 키들만 포함
+        if (params != null) {
+            String[] codeKeys = {"cdGroupSn", "schCd", "upCd", "schUpNtnCd"};
+
+            for (String codeKey : codeKeys) {
+                Object value = params.get(codeKey);
+                if (value != null && !value.toString().isEmpty()) {
+                    keyBuilder.append(codeKey)
+                            .append('=')
+                            .append(value)
+                            .append(',');
+                }
+            }
+        }
+
+        logger.debug("Generated code cache key: {}", keyBuilder.toString());
+        return keyBuilder.toString();
+    }
+
     /*
     private String generateCacheKey(Pageable pageable, FtMap params) {
         StringBuilder keyBuilder = new StringBuilder();
-        
+
         if(pageable!=null) {
             keyBuilder.append(pageable.getPageNo())
             .append('_')
             .append(pageable.getPageSize())
             .append('_');
         }
-    
-        
+
+
         // FtMap에서 "sch"로 시작하는 키와 "menuSeq", "topMenuSeq" 키만 포함
         if (params != null) {
             params.entrySet().stream()
@@ -192,8 +327,8 @@ public class CacheValidationAop {
                             .append(entry.getValue())
                             .append(',');
                 });
-        }   
-        
+        }
+
         return keyBuilder.toString();
     }*/
 
@@ -208,13 +343,13 @@ public class CacheValidationAop {
                 logger.error("Failed to get current DB time for cache: {}", key);
                 return;
             }
-            
+
             long currentTimeMillis = currentDbTime.getTime();
-            
+
             // 캐시에 데이터와 시간을 저장
             cache.put(key, data);
             cache.put(key + CACHE_CREATION_TIME_SUFFIX, currentTimeMillis);
-            
+
             logger.debug("Cache saved: {}, DB timestamp: {}", key, currentTimeMillis);
         } catch (Exception e) {
             logger.error("Error saving cache with timestamp: " + key, e);
@@ -241,25 +376,25 @@ public class CacheValidationAop {
             return cacheUpdateService.getLastUpdatedByCacheName(cacheName);
         } catch (Exception e) {
             logger.debug("Failed to get last updated timestamp for cache: " + cacheName, e);
-            return null; 
+            return null;
         }
     }
-    
-    
-    
+
+
+
     @Pointcut("@annotation(org.springframework.cache.annotation.CacheEvict)")
     public void cacheEvictMethods() {}
 
     @Around("cacheEvictMethods()")
-    @Transactional  
+    @Transactional
     public Object aroundCacheEvict(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
-        
+
         CacheEvict cacheEvict = method.getAnnotation(CacheEvict.class);
-        
+
         String cacheName = cacheEvict.value().length > 0 ? cacheEvict.value()[0] : DEFAULT_CACHE_NAME;
-        
+
         Object result = joinPoint.proceed();
 
         cacheUpdateService.updateCacheTimestamp(cacheName);

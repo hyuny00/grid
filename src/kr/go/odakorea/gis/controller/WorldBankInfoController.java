@@ -166,7 +166,7 @@ public class WorldBankInfoController {
     public ResponseEntity<Map<String, Object>> test() {
 
     	try {
-		//	worldBankService.fetchWorldBankData();
+			worldBankService.fetchWorldBankData();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

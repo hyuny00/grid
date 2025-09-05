@@ -181,6 +181,9 @@ function test3(id){
 					    <button type="button" class="btn-plus txt btn-add-row">추가</button>
 					    <button type="button" class="btn-plus txt btn-add-child">자식추가</button>
 					    <button type="button" class="btn-del btn-delete"><span class="sr-only">삭제</span></button>
+
+					    <button type="button" class="btn-plus txt btn-move-up">위</button>
+					    <button type="button" class="btn-plus txt btn-move-down">아래</button>
 		            </div>
 		        </div>
 		    </div>

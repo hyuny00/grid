@@ -200,6 +200,11 @@ var gridData ={id:'123', name : 'qwe'};
 AND가 OR보다 높은 우선순위
 A and B or C and D → (A and B) or (C and D)
 
+추가조건 필요시 codeMap에 세팅해서비교가능
+{{#if type not equals 'premium'  and  code['aa'] equals '01' }}
+  일반 사용자입니다.
+{{/if}}
+
   <h1>포맷 </h1>
 
 

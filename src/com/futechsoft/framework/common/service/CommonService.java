@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.futechsoft.admin.menu.vo.Menu;
+import com.futechsoft.framework.annotation.SimpleCacheAccess;
 import com.futechsoft.framework.common.mapper.CommonMapper;
 import com.futechsoft.framework.util.FtMap;
 
@@ -34,44 +35,49 @@ public class CommonService extends EgovAbstractServiceImpl {
 	 * @return
 	 * @throws Exception
 	 */
+    @SimpleCacheAccess(value = "commonCode", ttl = 300, isCode = true)
 	public List<FtMap> selectCommonCodeList(FtMap params) throws Exception {
 		return commonMapper.selectCommonCodeList(params);
 	}
-	
-	
+
+
 	/**
 	 * 대륙에 해당하는 국가코드를 가져온다
 	 * @param params
 	 * @return
 	 * @throws Exception
 	 */
+    @SimpleCacheAccess(value = "ntnSubCode", ttl = 300, isCode = true)
 	public List<FtMap> selectNtnSubCodeList(FtMap params) throws Exception {
 		return commonMapper.selectNtnSubCodeList(params);
 	}
-	
-	
+
+
+    @SimpleCacheAccess(value = "ntnCode", ttl = 300, isCode = true)
 	public List<FtMap> selectNtnCodeList(FtMap params) throws Exception {
 		return commonMapper.selectNtnCodeList(params);
 	}
-	
-	
+
+
 	/**
 	 * 사업분야를 가져온다
 	 * @param params
 	 * @return
 	 * @throws Exception
 	 */
+    @SimpleCacheAccess(value = "bizFieldCode", ttl = 300, isCode = true)
 	public List<FtMap> selectBizFldCdList(FtMap params) throws Exception {
 		return commonMapper.selectBizFldCdList(params);
 	}
-	
-	
+
+
 	/**
 	 * 기관코드를 가져온다
 	 * @param params
 	 * @return
 	 * @throws Exception
 	 */
+    @SimpleCacheAccess(value = "instCode", ttl = 300, isCode = true)
 	public List<FtMap> selectInstCdList(FtMap params) throws Exception {
 		return commonMapper.selectInstCdList(params);
 	}
@@ -130,8 +136,8 @@ public class CommonService extends EgovAbstractServiceImpl {
 		List<FtMap> codeList = commonMapper.selectCommonCodeList(params);
 		return selectCommonCodeMap(codeList);
 	}
-	
-	
+
+
 	/**
 	 * 데이터에 숫자만 남김 . - / , . 등 제거 . 소숫점도 제거됨 cleanData(params, "phoneNumber", "birthDate", "amount");
 	 * @param params

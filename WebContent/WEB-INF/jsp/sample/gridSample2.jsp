@@ -117,6 +117,8 @@ function someOtherFunction() {
 					    <button type="button" class="btn-plus txt btn-add-row">추가</button>
 					    <button type="button" class="btn-plus txt btn-add-child">자식추가</button>
 					    <button type="button" class="btn-del btn-delete"><span class="sr-only">삭제</span></button>
+					     <button type="button" class="btn-plus txt btn-move-up">위</button>
+					    <button type="button" class="btn-plus txt btn-move-down">아래</button>
 		            </div>
 		        </div>
 		    </div>
@@ -177,9 +179,10 @@ function someOtherFunction() {
 	    </td>
 	    <td class="tC">{{projectId}}</td>
 	     <td style="{{indentStyle}}">
-
-	      <span class="{{toggleClass}}" >{{toggleSymbol}}</span><input type="text" name="projectTitle" style="width:95%" data-field="projectTitle" data-value="{{projectTitle}}">
-
+			<div class="tableNode">
+			{{toggleSymbol}}
+	      <input type="text" name="projectTitle" style="width:95%" data-field="projectTitle" data-value="{{projectTitle}}">
+			</div>
 	    </td>
 	    <td>{{country}}</td>
 	 	<td><input type="text" class="date-input pickr flatpickr-input active" placeholder="날짜를 선택하세요"   data-field="regDate"   data-value="{{regDate}}" readonly="readonly"></td>
