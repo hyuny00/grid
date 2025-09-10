@@ -36,13 +36,6 @@ class CommonGridManager {
                 cdGroupSn= -1;
             }
 
-            /*
-            if(cdGroupSn=='conditionYn'){
-                schCodeDiv='conditionYn';
-                cdGroupSn= -1;
-            }
-             */
-
             // 요청 데이터에서 null 값 제거
             var requestData = {
                 cdGroupSn: cdGroupSn
@@ -72,7 +65,6 @@ class CommonGridManager {
                         value: item.code || '',  // null 방지
                         text: item.text || ''    // null 방지
                     })).filter(item => item.value !== null && item.value !== undefined); // null 값 제거
-
 
                     resolve(transformedData);
                 },
@@ -107,16 +99,6 @@ class CommonGridManager {
                     type: 'budget'
                 }
             ]
-
-	        ,
-
-	        'schYear': [
-	            {
-	                value: 'current_year',
-	                text: '',
-	                type: 'year'
-	            }
-	        ]
         };
 
         // 입력값 유효성 검사
@@ -142,7 +124,6 @@ class CommonGridManager {
                 categoryData[category] = [];
             }
         }
-
 
         this.categoryData = categoryData;
         return categoryData;
@@ -244,6 +225,7 @@ class CommonGridManager {
                         console.warn("Unexpected response format:", data);
                         cleanData = {};
                     }
+
                     resolve(cleanData);
                 },
                 error: function(xhr, status, error) {
@@ -386,16 +368,13 @@ class CommonGridManager {
      */
     async initializeAllData(config) {
         const {
-        	formId,
             dynamicCategories,
-            customData={},
             categoryCodeMapping,
-            maxSelectionCounts,
             multiStepCategories,
             categoryTitles,
             gridConfigs,
             codeRequests,
-            codeListRequests=[]
+            codeListRequests
         } = config;
 
         // 설정 유효성 검사
@@ -410,13 +389,9 @@ class CommonGridManager {
 
 
             // 카테고리 데이터 로드
-            let categoryData = await this.initializeCategoryData(dynamicCategories, cleanedCategoryCodeMapping);
-
-            categoryData = {...categoryData, ...customData};
-
+            const categoryData = await this.initializeCategoryData(dynamicCategories, cleanedCategoryCodeMapping);
 
             // 다중 코드 데이터 로드 (실패해도 진행)
-            /*
             let codeMap = {};
             try {
                 codeMap = await this.loadMultipleCodeData(codeRequests);
@@ -424,79 +399,14 @@ class CommonGridManager {
                 console.warn('Failed to load multiple code data, continuing with empty codeMap:', codeError);
                 codeMap = {};
             }
-*/
-         // 다중 코드 데이터 로드 (실패해도 진행)
+
+            // 다중 코드 데이터 로드 (실패해도 진행)
             let codeList = {};
-            let mergedCodeListRequests = [];
-
             try {
-                // codeRequests의 항목들을 codeListRequests에 자동 추가
-                mergedCodeListRequests = [...codeListRequests];
-
-                // codeRequests에 있는 항목 중 codeListRequests에 없는 것들 추가
-                if (Array.isArray(codeRequests) && codeRequests.length > 0) {
-                    codeRequests.forEach(codeReq => {
-                        const exists = codeListRequests.some(listReq =>
-                            listReq.schCodeDiv === codeReq.schCodeDiv &&
-                            listReq.cdGroupSn === codeReq.cdGroupSn
-                        );
-
-                        if (!exists) {
-                            mergedCodeListRequests.push({
-                                schCodeDiv: codeReq.schCodeDiv,
-                                code: codeReq.code,
-                                cdGroupSn: codeReq.cdGroupSn
-                            });
-                        }
-                    });
-                }
-
-                console.log("Merged codeListRequests:", mergedCodeListRequests);
-                codeList = await this.loadMultipleCodeListData(mergedCodeListRequests);
+            	codeList = await this.loadMultipleCodeListData(codeListRequests);
             } catch (codeError) {
                 console.warn('Failed to load multiple code data, continuing with empty codeMap:', codeError);
                 codeList = {};
-            }
-
-            // 최종 코드맵 생성
-            let codeMap = {};
-            if (Array.isArray(codeRequests) && codeRequests.length > 0) {
-                codeRequests.forEach(({ schCodeDiv, cdGroupSn }) => {
-                    if (cdGroupSn && cdGroupSn.trim() !== '') {
-                        // cdGroupSn이 있을 때: 같은 cdGroupSn을 가진 mergedCodeListRequests의 모든 데이터를 합침
-                        const relatedCodeListItems = mergedCodeListRequests
-                            .filter(item => item.cdGroupSn === cdGroupSn)
-                            .map(item => item.schCodeDiv);
-                        const merged = relatedCodeListItems.flatMap(div => codeList[div] || []);
-                        const codeObj = {};
-                        merged.forEach(item => {
-                            codeObj[item.value] = item.text;
-                        });
-                        codeMap[schCodeDiv] = codeObj;
-                    } else {
-                        // cdGroupSn이 공백일 때: schCodeDiv가 같은 것을 찾아서 직접 매칭
-                        const matchingCodeListItem = mergedCodeListRequests.find(
-                            item => item.schCodeDiv === schCodeDiv && (!item.cdGroupSn || item.cdGroupSn.trim() === '')
-                        );
-                        if (matchingCodeListItem) {
-                            if (codeList[schCodeDiv]) {
-                                const codeObj = {};
-                                codeList[schCodeDiv].forEach(item => {
-                                    codeObj[item.value] = item.text;
-                                });
-                                codeMap[schCodeDiv] = codeObj;
-                            } else {
-                                console.warn(`Warning: codeList does not contain key '${schCodeDiv}'. Available keys:`, Object.keys(codeList));
-                                codeMap[schCodeDiv] = {}; // 빈 객체로 초기화
-                            }
-                        } else {
-                            console.warn(`Warning: No matching codeListRequests found for schCodeDiv '${schCodeDiv}'`);
-                            codeMap[schCodeDiv] = {};
-                        }
-                    }
-                });
-            } else {
-                console.log("❌ codeRequests가 없어서 코드맵 생성 생략");
             }
 
 
@@ -509,17 +419,10 @@ class CommonGridManager {
 
             for (const gridConfig of gridConfigs) {
                 // 각 그리드 설정에 codeMap 추가
-
-
-            	this.codeMap = {
-            		  ...(gridConfig.codeMap ||{}),
-                      ...(this.codeMap||{}),
-            	}
-
-            	const configWithCodeMap = {
-                        ...gridConfig,
-                        codeMap: this.codeMap,
-                        selectOption: this.codeList
+                const configWithCodeMap = {
+                    ...gridConfig,
+                    codeMap: this.codeMap,
+                    selectOption: this.codeList
                 };
 
                 try {
@@ -537,9 +440,7 @@ class CommonGridManager {
                 gridInstances.length === 1 ? gridInstances[0] : gridInstances,
                 multiStepCategories || [],
                 cleanedCategoryTitles,
-                cleanedCategoryCodeMapping,
-                maxSelectionCounts,
-                formId
+                cleanedCategoryCodeMapping
             );
 
 

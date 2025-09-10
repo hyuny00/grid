@@ -11,7 +11,6 @@ class ColgroupTableResizer {
         this.createIndicator(); // 동적으로 인디케이터 생성
     }
 
-    // 방법 1: 동적으로 인디케이터 생성 (권장)
     createIndicator() {
         // 기존 인디케이터가 있으면 제거
         const existingIndicator = document.getElementById('dynamic-resize-indicator');
@@ -19,7 +18,6 @@ class ColgroupTableResizer {
             existingIndicator.remove();
         }
 
-        // 새 인디케이터 생성
         this.indicator = document.createElement('div');
         this.indicator.id = 'dynamic-resize-indicator';
         this.indicator.className = 'resize-indicator';
@@ -63,7 +61,6 @@ class ColgroupTableResizer {
         document.addEventListener('mousemove', (e) => this.doResize(e));
         document.addEventListener('mouseup', () => this.stopResize());
 
-        // 동적 테이블 감지
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
@@ -210,8 +207,6 @@ class ColgroupTableResizer {
 
     updateIndicator(width) {
         if (this.indicator) {
-            // 테이블 정보도 함께 표시
-            const tableId = this.currentTable.id || 'unnamed';
             this.indicator.textContent = `${tableId} - 넓이: ${width.toFixed(1)}%`;
         }
     }

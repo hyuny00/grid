@@ -14,13 +14,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.zip.ZipOutputStream;
 
 import javax.annotation.Resource;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -40,18 +42,20 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.futechsoft.framework.common.controller.AbstractController;
+import com.futechsoft.framework.common.pagination.Page;
+import com.futechsoft.framework.common.pagination.Pageable;
 import com.futechsoft.framework.common.service.RemoteFileDownloader;
 import com.futechsoft.framework.exception.ErrorCode;
 import com.futechsoft.framework.exception.FileDownloadException;
 import com.futechsoft.framework.exception.FileUploadException;
-import com.futechsoft.framework.exception.ZipParsingException;
 import com.futechsoft.framework.file.service.FileUploadService;
 import com.futechsoft.framework.file.vo.FileInfoVo;
 import com.futechsoft.framework.util.CommonUtil;
 import com.futechsoft.framework.util.FileUtil;
 import com.futechsoft.framework.util.FtMap;
+import com.futechsoft.framework.util.SecurityUtil;
 import com.google.gson.Gson;
-
+import java.util.Base64;
 import kr.go.odakorea.gis.service.KoicaScrapingService;
 
 @Controller
@@ -111,7 +115,7 @@ public class FileUploadController extends AbstractController {
 
 	@RequestMapping(value = "/file/upload")
 	@ResponseBody
-	public Map<String, Object> upload(Model model, @RequestParam MultipartFile file, @RequestParam String metadata)
+	public Map<String, Object> upload(Model model, HttpSession session,  @RequestParam MultipartFile file, @RequestParam String metadata)
 			throws JsonMappingException, JsonProcessingException, FileUploadException {
 
 
@@ -156,6 +160,10 @@ public class FileUploadController extends AbstractController {
 		} else {
 			fileInfoVo = fileUploadService.upload(file, fileInfoVo);
 			List<FileInfoVo> fileList = new ArrayList<FileInfoVo>();
+
+			session.setAttribute("getFileExt", fileInfoVo.getFileExt());
+			session.setAttribute("getTempFilePath", fileInfoVo.getTempFilePath());
+
 			fileList.add(fileInfoVo);
 			fileInfo.put("fileInfo", fileList);
 		}
@@ -413,7 +421,139 @@ public class FileUploadController extends AbstractController {
 	        // 원격에서 받은 임시 파일 정리
 	        if (StringUtils.isNotEmpty(fullRemoteUrl) && downloadFile != null) {
 	            try {
-	              //  Files.deleteIfExists(downloadFile.toPath());
+	              Files.deleteIfExists(downloadFile.toPath());
+	            } catch (Exception ignored) {}
+	        }
+	    }
+
+	}
+
+
+
+	/**
+	 * 썸네일을 다운로드한다
+	 *
+	 */
+	@RequestMapping(value = "/file/thumbnail/{fileId}", method = {RequestMethod.GET, RequestMethod.HEAD})
+	public void thumbnailDownload( @PathVariable String fileId, HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+		String[] remoteIps=null;
+
+		String filePstnSecd="";
+		if(inOutDiv.equals("in")){
+			filePstnSecd="01";
+			remoteIps= outIp;
+
+		}else if(inOutDiv.equals("out")){
+			filePstnSecd="02";
+			remoteIps= inIp;
+		}
+
+		String selectedIp = remoteIps[ThreadLocalRandom.current().nextInt(remoteIps.length)];
+
+
+		FtMap params = getFtMap(request);
+        params.put("fileId", fileId);
+        FileInfoVo fileInfoVo = fileUploadService.getFileInfo(params);
+
+
+		File downloadFile = null;
+
+		String fullRemoteUrl="";
+
+		try {
+			if (StringUtils.defaultString(fileInfoVo.getTemp(), "").equals("Y")) {
+				downloadFile = Paths.get(tempUploadPath, fileInfoVo.getFileId() + ".TEMP").toFile();
+
+			} else {
+
+				params.put("fileId", fileInfoVo.getFileId());
+				fileInfoVo = fileUploadService.getFileInfo(params);
+
+				// 파일다운로드 권한
+				boolean fileDownloadCheck = FileUtil.hasFileDownloadAuth(fileInfoVo);
+				if (!fileDownloadCheck) {
+					throw new FileDownloadException(ErrorCode.FILE_ACCESS_DENIED.getMessage());
+				}
+
+
+				if(filePstnSecd.equals(fileInfoVo.getFilePstnSecd())) {
+
+					if(fileInfoVo.getFileId().length()==32) {
+						downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + "."+fileInfoVo.getFileExt()).toFile();
+					}else {
+						downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId()).toFile();
+					}
+
+				}else {
+
+					String jwtToken = null;
+
+				    Cookie[] cookies = request.getCookies();
+				    if (cookies != null) {
+				        for (Cookie cookie : cookies) {
+				            if ("JWT".equals(cookie.getName())) {
+				                jwtToken = cookie.getValue();
+				                break;
+				            }
+				        }
+				    }
+
+				    LOGGER.debug("jwtToken....{}", jwtToken);
+
+					// 최적의 청크 수 계산
+					int optimalChunks = calculateOptimalChunks(fileInfoVo.getFileSize());
+
+					// 임시 파일 경로 생성
+					String tempFileName = fileInfoVo.getFileId() + "_" + System.currentTimeMillis() + ".tmp";
+					downloadFile = Paths.get(tempUploadPath, tempFileName).toFile();
+
+					fullRemoteUrl = "http://"+selectedIp+"/file/remoteDownload/" + fileInfoVo.getFileId();
+
+					// 여기서 사용!
+					remoteFileDownloader.downloadFileFromOtherWAS(fullRemoteUrl, jwtToken, downloadFile.getAbsolutePath(),
+							optimalChunks);
+
+				}
+
+			}
+
+			if (downloadFile.isFile() && downloadFile.exists()) {
+
+				if(fileInfoVo.getFileExt().endsWith("jpg") || fileInfoVo.getFileExt().endsWith("jpeg")) {
+					response.setContentType("image/jpeg");
+				}else if( fileInfoVo.getFileExt().endsWith("png")) {
+					response.setContentType("image/png");
+				}else if( fileInfoVo.getFileExt().endsWith("gif")) {
+					response.setContentType("image/gif");
+				}else {
+					 response.setContentType("application/octet-stream; charset=utf-8");
+				}
+
+				response.setContentLength((int) fileInfoVo.getFileSize());
+				response.setHeader("Content-Transfer-Encoding", "binary");
+
+
+				try (OutputStream out = response.getOutputStream(); FileInputStream fis = new FileInputStream(downloadFile);) {
+					// FileCopyUtils.copy(fis, out);
+					CommonUtil.copy(fis, out);
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+				}
+			} else {
+				throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new FileDownloadException(e.getMessage());
+
+		}finally {
+	        // 원격에서 받은 임시 파일 정리
+	        if (StringUtils.isNotEmpty(fullRemoteUrl) && downloadFile != null) {
+	            try {
+	               Files.deleteIfExists(downloadFile.toPath());
 	            } catch (Exception ignored) {}
 	        }
 	    }
@@ -445,8 +585,16 @@ public class FileUploadController extends AbstractController {
 	        }
 
 
+
+
 	        if(fileInfoVo.getFileId().length()==32) {
-				downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
+
+	        	if( fileInfoVo.getFilePath().endsWith("thumbnail")) {
+	        		downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + "."+fileInfoVo.getFileExt()).toFile();
+	        	}else {
+	        		downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
+	        	}
+
 			}else {
 				downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId()).toFile();
 			}
@@ -567,7 +715,6 @@ public class FileUploadController extends AbstractController {
 
 					LOGGER.debug("selectedIp......{}",selectedIp);
 
-
 					String jwtToken = null;
 
 				    Cookie[] cookies = request.getCookies();
@@ -596,10 +743,6 @@ public class FileUploadController extends AbstractController {
 							optimalChunks);
 
 				}
-
-
-
-
 
 
 			if (downloadFile.isFile() && downloadFile.exists()) {
@@ -634,7 +777,7 @@ public class FileUploadController extends AbstractController {
 	        // 원격에서 받은 임시 파일 정리
 	        if (StringUtils.isNotEmpty(fullRemoteUrl) && downloadFile != null) {
 	            try {
-	              //  Files.deleteIfExists(downloadFile.toPath());
+	              Files.deleteIfExists(downloadFile.toPath());
 	            } catch (Exception ignored) {}
 	        }
 	    }
@@ -758,58 +901,13 @@ public class FileUploadController extends AbstractController {
 		return "core/file/upload";
 	}
 
-	/*
-	@RequestMapping(value = "/file/download/zip")
-	public void downloadZip(HttpServletRequest request, HttpServletResponse res) throws Exception {
 
-
-
-
-		FtMap params = getFtMap(request);
-
-		String downloadFileInfo = params.getString("downloadFileInfo");
-
-		Gson gson = new Gson();
-		FileInfoVo[] fileInfoVos = gson.fromJson(downloadFileInfo, FileInfoVo[].class);
-
-		String zipFileName = FileUtil.getRandomId() + ".zip";
-
-		fileUploadService.createZip(fileInfoVos, tempZipPath + File.separator + zipFileName);
-
-		// 파일다운로드
-		File downloadFile = Paths.get(tempZipPath, zipFileName).toFile();
-
-		if (downloadFile.isFile() && downloadFile.exists()) {
-
-			res.setContentType("application/octet-stream; charset=utf-8");
-
-			if (downloadFile.length() > 1024 * 1024 * 20) { // 20M
-				res.setHeader("Content-Transfer-Encoding", "chunked");
-			} else {
-				res.setContentLength((int) downloadFile.length());
-				res.setHeader("Content-Transfer-Encoding", "binary");
-			}
-
-			res.setHeader("Content-Disposition",
-					"attachment; filename=\"" + java.net.URLEncoder.encode(zipFileName, "utf-8") + "\";");
-
-			try (OutputStream out = res.getOutputStream(); FileInputStream fis = new FileInputStream(downloadFile);) {
-				// FileCopyUtils.copy(fis, out);
-				CommonUtil.copy(fis, out);
-				if (downloadFile.exists())
-					downloadFile.delete();
-			} catch (IOException e) {
-				if (downloadFile.exists())
-					downloadFile.delete();
-				e.printStackTrace();
-			}
-
-		} else {
-			throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
-		}
-	}*/
-
-
+	/**
+	 * 내외부망 파일을 다운로드한다
+	 * @param request
+	 * @param res
+	 * @throws Exception
+	 */
 	@RequestMapping(value = "/file/download/zip")
 	public void downloadZip(HttpServletRequest request, HttpServletResponse res) throws Exception {
 
@@ -1010,15 +1108,63 @@ public class FileUploadController extends AbstractController {
 	    }
 	}
 
+	/*
+	@RequestMapping(value = "/file/download/zip")
+	public void downloadZip(HttpServletRequest request, HttpServletResponse res) throws Exception {
 
 
 
+
+		FtMap params = getFtMap(request);
+
+		String downloadFileInfo = params.getString("downloadFileInfo");
+
+		Gson gson = new Gson();
+		FileInfoVo[] fileInfoVos = gson.fromJson(downloadFileInfo, FileInfoVo[].class);
+
+		String zipFileName = FileUtil.getRandomId() + ".zip";
+
+		fileUploadService.createZip(fileInfoVos, tempZipPath + File.separator + zipFileName);
+
+		// 파일다운로드
+		File downloadFile = Paths.get(tempZipPath, zipFileName).toFile();
+
+		if (downloadFile.isFile() && downloadFile.exists()) {
+
+			res.setContentType("application/octet-stream; charset=utf-8");
+
+			if (downloadFile.length() > 1024 * 1024 * 20) { // 20M
+				res.setHeader("Content-Transfer-Encoding", "chunked");
+			} else {
+				res.setContentLength((int) downloadFile.length());
+				res.setHeader("Content-Transfer-Encoding", "binary");
+			}
+
+			res.setHeader("Content-Disposition",
+					"attachment; filename=\"" + java.net.URLEncoder.encode(zipFileName, "utf-8") + "\";");
+
+			try (OutputStream out = res.getOutputStream(); FileInputStream fis = new FileInputStream(downloadFile);) {
+				// FileCopyUtils.copy(fis, out);
+				CommonUtil.copy(fis, out);
+				if (downloadFile.exists())
+					downloadFile.delete();
+			} catch (IOException e) {
+				if (downloadFile.exists())
+					downloadFile.delete();
+				e.printStackTrace();
+			}
+
+		} else {
+			throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+		}
+	}
+*/
 	@RequestMapping(value = "/file/isExistFile")
 	@ResponseBody
 	public Map<String, Object> isExistFile(HttpServletRequest request, FileInfoVo fileInfoVo) throws Exception {
 
 
-
+		/*
 		FtMap params = getFtMap(request);
 
 		boolean fileDownloadCheck = true;
@@ -1050,6 +1196,11 @@ public class FileUploadController extends AbstractController {
 		}
 
 		return map;
+		*/
+
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("msg", "SUCCESS");
+		return map;
 
 	}
 
@@ -1077,4 +1228,284 @@ public class FileUploadController extends AbstractController {
             return 12; // 최대 12개 청크
         }
     }
+
+
+	 @RequestMapping(value = "/file/hwpCtrlPopup")
+	 public String  hwpCtrlPopup(HttpServletRequest request) throws Exception {
+
+
+		 	String[] remoteIps=null;
+
+
+			String filePstnSecd="";
+			if(inOutDiv.equals("in")){
+				filePstnSecd="01";
+				remoteIps= outIp;
+
+			}else if(inOutDiv.equals("out")){
+				filePstnSecd="02";
+				remoteIps= inIp;
+			}
+
+			String selectedIp = remoteIps[ThreadLocalRandom.current().nextInt(remoteIps.length)];
+
+			LOGGER.debug("selectedIp......{}",selectedIp);
+
+			FtMap params = getFtMap(request);
+
+			String fileId = params.getString("fileId");
+			String temp = params.getString("temp");
+			String hwpPopupUrl = params.getString("hwpPopupUrl");
+
+
+			params.put("fileId", fileId);
+
+			File downloadFile = null;
+			String base64Str = "";
+			String fullRemoteUrl="";
+
+			try {
+				if (StringUtils.defaultString(temp, "").equals("Y")) {
+
+					downloadFile = Paths.get(tempUploadPath, fileId + ".TEMP").toFile();
+
+				} else {
+
+					FileInfoVo fileInfoVo = fileUploadService.getFileInfo(params);
+
+					// 파일다운로드 권한
+					boolean fileDownloadCheck = FileUtil.hasFileDownloadAuth(fileInfoVo);
+					if (!fileDownloadCheck) {
+						throw new FileDownloadException(ErrorCode.FILE_ACCESS_DENIED.getMessage());
+					}
+
+
+					if(filePstnSecd.equals(fileInfoVo.getFilePstnSecd())) {
+
+						if(fileInfoVo.getFileId().length()==32) {
+							downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), fileInfoVo.getFileId() + ".FILE").toFile();
+						}else {
+							downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), fileInfoVo.getFileId()).toFile();
+						}
+
+					}else {
+
+						String jwtToken = null;
+
+					    Cookie[] cookies = request.getCookies();
+					    if (cookies != null) {
+					        for (Cookie cookie : cookies) {
+					            if ("JWT".equals(cookie.getName())) {
+					                jwtToken = cookie.getValue();
+					                break;
+					            }
+					        }
+					    }
+
+					    LOGGER.debug("jwtToken....{}", jwtToken);
+
+						int optimalChunks = calculateOptimalChunks(fileInfoVo.getFileSize());
+
+						String tempFileName = fileInfoVo.getFileId() + "_" + System.currentTimeMillis() + ".tmp";
+						downloadFile = Paths.get(tempUploadPath, tempFileName).toFile();
+
+						fullRemoteUrl = "http://"+selectedIp+"/file/remoteDownload/" + fileInfoVo.getFileId();
+
+						remoteFileDownloader.downloadFileFromOtherWAS(fullRemoteUrl, jwtToken, downloadFile.getAbsolutePath(),
+								optimalChunks);
+
+					}
+
+				}
+
+				if (downloadFile.isFile() && downloadFile.exists()) {
+
+					byte[] fileByte = FileUtil.getFileBinary(downloadFile);
+					base64Str = Base64.getEncoder().encodeToString(fileByte);
+
+				} else {
+					throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+				}
+			} catch (Exception e) {
+				LOGGER.error(e.toString());
+				throw new FileDownloadException(e.getMessage());
+			}
+
+
+			request.setAttribute("hwpFileId", fileId);
+			request.setAttribute("hwpFileNm", params.getString("fileNm"));
+			request.setAttribute("hwpTemp", temp);
+
+			request.setAttribute("base64Str", base64Str);
+			return hwpPopupUrl;
+
+
+		}
+
+
+
+	   /**
+		 * 한글파일을 저장한다
+		 *
+		 * @param request
+		 * @param response
+		 * @return 성공실패여부
+		 * @throws Exception
+		 */
+		@ResponseBody
+		@RequestMapping(value = "/file/saveHwp")
+		public String saveHwp(@RequestBody Map<String, Object> map, HttpServletRequest request) throws Exception {
+
+
+		 	String[] remoteIps=null;
+
+
+			String filePstnSecd="";
+			if(inOutDiv.equals("in")){
+				filePstnSecd="01";
+				remoteIps= outIp;
+
+			}else if(inOutDiv.equals("out")){
+				filePstnSecd="02";
+				remoteIps= inIp;
+			}
+
+			String selectedIp = remoteIps[ThreadLocalRandom.current().nextInt(remoteIps.length)];
+
+			LOGGER.debug("selectedIp......{}",selectedIp);
+
+
+			FtMap params = getFtMap(map);
+
+
+			LOGGER.debug("params......{}",params);
+
+
+			File downloadFile = null;
+
+			String base64Str = params.getString("base64Data");
+			byte[] base64DecodeFileData = Base64.getDecoder().decode(base64Str);
+
+			String result = "";
+
+			String fullRemoteUrl="";
+
+			FileInfoVo fileInfoVo =null;
+
+			try {
+				if (StringUtils.defaultString(params.getString("temp"), "").equals("Y")) {
+					downloadFile = Paths.get(tempUploadPath, params.getString("fileId") + ".TEMP").toFile();
+				} else {
+					//FileInfoVo fileInfoVo = fileUploadService.getFileInfo(params);
+					//downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), fileInfoVo.getFileId() + ".FILE").toFile();
+
+					fileInfoVo = fileUploadService.getFileInfo(params);
+
+					// 파일다운로드 권한
+					boolean fileDownloadCheck = FileUtil.hasFileDownloadAuth(fileInfoVo);
+					if (!fileDownloadCheck) {
+						throw new FileDownloadException(ErrorCode.FILE_ACCESS_DENIED.getMessage());
+					}
+
+					if(filePstnSecd.equals(fileInfoVo.getFilePstnSecd())) {
+
+						if(fileInfoVo.getFileId().length()==32) {
+							downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), fileInfoVo.getFileId() + ".FILE").toFile();
+						}else {
+							downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), fileInfoVo.getFileId()).toFile();
+						}
+
+					}else {
+
+						String jwtToken = null;
+
+					    Cookie[] cookies = request.getCookies();
+					    if (cookies != null) {
+					        for (Cookie cookie : cookies) {
+					            if ("JWT".equals(cookie.getName())) {
+					                jwtToken = cookie.getValue();
+					                break;
+					            }
+					        }
+					    }
+
+					    LOGGER.debug("jwtToken....{}", jwtToken);
+
+						// 최적의 청크 수 계산
+						int optimalChunks = calculateOptimalChunks(fileInfoVo.getFileSize());
+
+						// 임시 파일 경로 생성
+						String tempFileName = fileInfoVo.getFileId() + "_" + System.currentTimeMillis() + ".tmp";
+						downloadFile = Paths.get(tempUploadPath, tempFileName).toFile();
+
+						fullRemoteUrl = "http://"+selectedIp+"/file/remoteDownload/" + fileInfoVo.getFileId();
+
+						remoteFileDownloader.downloadFileFromOtherWAS(fullRemoteUrl, jwtToken, downloadFile.getAbsolutePath(),
+								optimalChunks);
+
+					}
+				}
+
+
+				if (downloadFile.isFile() && downloadFile.exists()) {
+
+					if(filePstnSecd.equals(fileInfoVo.getFilePstnSecd())) {
+
+						FileOutputStream fos = new FileOutputStream(downloadFile);
+						FileCopyUtils.copy(base64DecodeFileData, fos);
+
+						params.put("filePstnSecd", filePstnSecd);
+						params.put("fileSz", downloadFile.length());
+
+						fileUploadService.updateFilePstnSecd(params);
+
+					}
+
+					//파일 원본과 파일호출이 내부망 외부망 다를경우
+
+					if (!StringUtils.defaultString(params.getString("temp"), "").equals("Y")) {
+
+						if(!filePstnSecd.equals(fileInfoVo.getFilePstnSecd())) {
+
+							File file = downloadFile;
+							File fileToMove = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
+
+							FileUtils.forceMkdir(fileToMove.getParentFile());
+							FileUtils.moveFile(file, fileToMove);
+
+
+							params.put("filePstnSecd", filePstnSecd);
+							params.put("fileSz", fileToMove.length());
+
+							fileUploadService.updateFilePstnSecd(params);
+
+						}
+					}
+
+
+
+					result = "OK";
+
+				} else {
+					result = "FAIL";
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				LOGGER.error(e.toString());
+				throw new FileDownloadException(e.getMessage());
+
+			}finally {
+		        // 원격에서 받은 임시 파일 정리
+		        if (StringUtils.isNotEmpty(fullRemoteUrl) && downloadFile != null) {
+		            try {
+		              Files.deleteIfExists(downloadFile.toPath());
+		            } catch (Exception ignored) {}
+		        }
+		    }
+
+			return result;
+
+		}
 }
+
+

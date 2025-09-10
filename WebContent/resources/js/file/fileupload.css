@@ -1,7 +1,9 @@
 /* 드래그 드롭 영역 기본 스타일 (view 모드 제외) */
-[data-file-list]:not([data-mode="view"]) {
+.file-upload[data-file-list] {flex:1 1 auto;}
+
+[data-file-list] {
     position: relative;
-    min-height: 60px;
+    min-height: 100px;
     border: 2px dashed #ddd;
     border-radius: 8px;
     padding: 10px;
@@ -62,9 +64,11 @@
 
 /* view 모드일 때는 기본 스타일 적용 */
 [data-file-list][data-mode="view"] {
-    border: none;
-    background-color: transparent;
-    padding: 5px;
+	/* min-height: auto;*/
+	padding-left:20px;
+}
+[data-file-list][data-mode="view"] label {
+	
 }
 
 /* 파일 목록 아이템 간격 조정 - 간격을 최소화 */
@@ -72,19 +76,18 @@
     margin: 0;
     padding: 0;
     list-style: none;
-    line-height: 1.1; /* 줄 간격 축소 */
 }
 
 [data-file-list] li {
     margin: 0; /* 상하 여백 제거 */
     padding: 0; /* 상하 패딩 제거 */
-    line-height: 1.2; /* 줄 높이 최소화 */
 }
 
 [data-file-list] li > div {
-    padding-left: 4px !important;
     padding-top: 1px; /* 최소 상단 패딩 */
     padding-bottom: 1px; /* 최소 하단 패딩 */
+    box-sizing:border-box;
+    max-width:100%;
 }
 
 /* 체크박스와 레이블 간격 조정 */
@@ -113,78 +116,157 @@
     }
 }
 
-.file-upload ul li label a {
+.file-upload ul li a {
+	flex:0 1 auto;
     display: inline-block;
     padding-left: 25px;
     background-repeat: no-repeat;
     background-position: left center;
     background-size: 20px 20px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
 
 
-.file-upload ul li label .hwp {
-    background: url(../../img/ico_hwp.svg) no-repeat left center;
+.file-upload ul li .hwp {
+    background: url(../../img/ico_file_hwp.svg) no-repeat left center;
     background-size: 18px 18px;
     padding-left: 25px;
     position: relative;
 }
 
-.file-upload ul li label .xls {
+.file-upload ul li .xls {
     background: url(../../img/ico_excel.svg) no-repeat left center;
     background-size: 18px 18px;
     padding-left: 25px;
     position: relative;
 }
 
-.file-upload ul li label .pdf {
-    background: url(../../img/ico_pdf.svg) no-repeat left center;
+.file-upload ul li .pdf {
+    background: url(../../img/ico_file_pdf.svg) no-repeat left center;
     background-size: 18px 18px;
     padding-left: 25px;
     position: relative;
 }
 
 
-.file-upload ul li label .zip {
-    background: url(../../img/ico_zip.svg) no-repeat left center;
+.file-upload ul li .zip {
+    background: url(../../img/ico_file_zip.svg) no-repeat left center;
     background-size: 18px 18px;
     padding-left: 25px;
     position: relative;
 }
 
-.file-upload ul li label .doc {
-    background: url(../../img/ico_doc.svg) no-repeat left center;
+.file-upload ul li .doc {
+    background: url(../../img/ico_file_doc.svg) no-repeat left center;
     background-size: 18px 18px;
     padding-left: 25px;
     position: relative;
 }
 
-.file-upload ul li label .ppt {
-    background: url(../../img/ico_ppt.svg) no-repeat left center;
+.file-upload ul li .ppt {
+    background: url(../../img/ico_file_ppt.svg) no-repeat left center;
     background-size: 18px 18px;
     padding-left: 25px;
     position: relative;
 }
 
-.file-upload ul li label .txt {
-    background: url(../../img/ico_txt.svg) no-repeat left center;
+.file-upload ul li .txt {
+    background: url(../../img/ico_file_txt.svg) no-repeat left center;
     background-size: 18px 18px;
     padding-left: 25px;
     position: relative;
 }
 
-.file-upload ul li label .img {
-    background: url(../../img/ico_img.svg) no-repeat left center;
+.file-upload ul li .jpg {
+    background: url(../../img/ico_file_jpg.svg) no-repeat left center;
     background-size: 18px 18px;
     padding-left: 25px;
     position: relative;
 }
 
-.file-upload ul li label .etc {
-    background: url(../../img/ico_etc.svg) no-repeat left center;
+.file-upload ul li .png {
+    background: url(../../img/ico_file_png.svg) no-repeat left center;
     background-size: 18px 18px;
     padding-left: 25px;
     position: relative;
 }
 
-.file-upload ul li label::before {position: relative;top: 3px;margin-right: 8px;}
+.file-upload ul li .gif {
+    background: url(../../img/ico_file_gif.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li .tit {
+    background: url(../../img/ico_file_tit.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li .mp4 {
+    background: url(../../img/ico_file_mp4.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+
+.file-upload ul li .mpg {
+    background: url(../../img/ico_file_mpg.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li .xml {
+    background: url(../../img/ico_file_xml.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+
+.file-upload ul li .html {
+    background: url(../../img/ico_file_html.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+
+
+.file-upload ul li .etc {
+    background: url(../../img/ico_file_etc.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+
+.file-upload ul li .avi {
+    background: url(../../img/ico_file_avi.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li .exe {
+    background: url(../../img/ico_file_exe.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li .bmp {
+    background: url(../../img/ico_file_bmp.svg) no-repeat left center;
+    background-size: 18px 18px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.file-upload ul li label::before {position: relative;margin-right: 8px;}

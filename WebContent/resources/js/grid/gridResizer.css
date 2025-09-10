@@ -5,9 +5,8 @@
             min-width: 800px;
         }
 
-        .tbl th, .tbl td {
-            border: 1px solid #ddd;
-            padding: 12px 8px;
+        .schList .tbl th,
+        .schList .tbl td {
             text-align: left;
             position: relative;
             white-space: nowrap;
@@ -16,13 +15,13 @@
         }
 
 
-        .tbl tbody tr:nth-child(even) td {
+        /*.tbl tbody tr:nth-child(even) td {
             background-color: #f8f9fa;
         }
 
         .tbl tbody tr:hover td {
             background-color: #e3f2fd;
-        }
+        }*/
 
         .resizer {
             position: absolute;
@@ -53,8 +52,6 @@
         .tbl th:last-child .resizer {
             display: none;
         }
-
-
 
         .resize-indicator {
             position: fixed;

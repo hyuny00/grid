@@ -390,6 +390,7 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 				param.setFtMap(map);
 				param.put("userId", paramMap.getString("userId"));
 				param.put("taskSecd", paramMap.getString("taskSecd"));
+				param.put("filePstnSecd", paramMap.getString("filePstnSecd"));
 
 
 				mapper.insertFileInfo(param);
@@ -529,6 +530,7 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 			throw new ZipParsingException(e.getMessage());
 		}
 	}
+
 
 	// 임시 폴더의 파일들로 ZIP 생성하는 메소드
 	public void createZipFromTempFolder(FileInfoVo[] fileInfoVos, String target, String tempFolder) throws Exception {
@@ -817,7 +819,7 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 
 
 	/**
-	 * 파일정보를 구한다
+	 * 파일목록을 구한다
 	 * @param params
 	 * @return 파일목록
 	 * @throws Exception
@@ -830,5 +832,9 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 	public void deleteFileGroup(String docId) throws Exception {
 		mapper.updateFileGroupDelYn(docId);
 		mapper.updateFileGroupDtDelYn(docId);
+	}
+
+	public void updateFilePstnSecd(FtMap params)throws Exception{
+		 mapper.updateFilePstnSecd(params);
 	}
 }

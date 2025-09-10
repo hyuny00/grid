@@ -23,21 +23,23 @@ public interface FileMapper  {
 	FtMap selectFileDataInfo(FtMap params) throws Exception;
 
 	FtMap selectFile(FtMap params) throws Exception;
-	
+
 	String selectDocId(FtMap params) throws Exception;
-	
+
 	void deleteFile(FtMap params)throws Exception;
 	void updateFileOrd(FtMap params)throws Exception;
-	
+
 	void insertFileGroup(FtMap params)throws Exception;
 	void insertFileInfo(FtMap params)throws Exception;
-	
+
 	void deleteDoc(FtMap params)throws Exception;
-	
-	
+
+
 	void updateFileGroupDelYn(String docId)throws Exception;
 	void updateFileGroupDtDelYn(String docId)throws Exception;
 	void updateFileDtDelYn(FtMap params)throws Exception;
+
+	void updateFilePstnSecd(FtMap params)throws Exception;
 }
 
 

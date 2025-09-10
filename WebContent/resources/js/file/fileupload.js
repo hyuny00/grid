@@ -166,7 +166,7 @@ var uploadModule =(function() {
 	     dropZone.on('dragenter', function(e) {
 	         e.stopPropagation();
 	         e.preventDefault();
-	         
+
 	         // 드래그 오버 시각적 효과 적용
 	         dropZone.addClass('dragover');
 	         dropZone.css({
@@ -174,23 +174,23 @@ var uploadModule =(function() {
 	             'border': '2px dashed #2196f3',
 	             'opacity': '0.8'
 	         });
-	         
+
 	         // 드롭 가능 메시지 표시
 	         if (!dropZone.find('.drag-message').length) {
 	             dropZone.append('<div class="drag-message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(33, 150, 243, 0.9); color: white; padding: 10px 20px; border-radius: 5px; font-size: 14px; z-index: 1000;">파일을 여기에 드롭하세요</div>');
 	         }
 	     });
-	     
+
 	     // Drag Leave - 드래그가 영역을 벗어날 때
 	     dropZone.on('dragleave', function(e) {
 	         e.stopPropagation();
 	         e.preventDefault();
-	         
+
 	         // 실제로 영역을 벗어났는지 확인 (자식 요소로 이동하는 경우 제외)
 	         var rect = this.getBoundingClientRect();
 	         var x = e.originalEvent.clientX;
 	         var y = e.originalEvent.clientY;
-	         
+
 	         if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
 	             // 원래 스타일로 복구
 	             dropZone.removeClass('dragover');
@@ -199,29 +199,29 @@ var uploadModule =(function() {
 	                 'border': originalStyle.border,
 	                 'opacity': originalStyle.opacity
 	             });
-	             
+
 	             // 드롭 메시지 제거
 	             dropZone.find('.drag-message').remove();
 	         }
 	     });
-	     
+
 	     // Drag Over - 드래그 중일 때 (필수: drop 이벤트를 위해)
 	     dropZone.on('dragover', function(e) {
 	         e.stopPropagation();
 	         e.preventDefault();
-	         
+
 	         // 드롭 가능 효과 유지
 	         dropZone.addClass('dragover');
-	         
+
 	         // 드롭 효과 표시
 	         e.originalEvent.dataTransfer.dropEffect = 'copy';
 	     });
-	     
+
 	     // Drop - 파일이 드롭될 때
 	     dropZone.on('drop', function(e) {
 	         e.preventDefault();
 	         e.stopPropagation();
-	         
+
 	         // 드래그 효과 제거
 	         dropZone.removeClass('dragover');
 	         dropZone.css({
@@ -229,10 +229,10 @@ var uploadModule =(function() {
 	             'border': originalStyle.border,
 	             'opacity': originalStyle.opacity
 	         });
-	         
+
 	         // 드롭 메시지 제거
 	         dropZone.find('.drag-message').remove();
-	         
+
 	         // 업로드 중 확인
 	         var disabled = $("#file_input_" + uploadFormId).attr('disabled');
 
@@ -242,16 +242,16 @@ var uploadModule =(function() {
 	                 if (files.length < 1) {
 	                     return;
 	                 }
-	                 
+
 	                 // 드롭 성공 시 잠시 성공 메시지 표시
 	                // dropZone.append('<div class="drop-success" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(76, 175, 80, 0.9); color: white; padding: 10px 20px; border-radius: 5px; font-size: 14px; z-index: 1000;">파일이 추가되었습니다!</div>');
-	                 
+
 	                 setTimeout(function() {
 	                     dropZone.find('.drop-success').fadeOut(300, function() {
 	                         $(this).remove();
 	                     });
 	                 }, 1500);
-	                 
+
 	                 var fileList = getFileArray(uploadFormId, files);
 	                 setUploadInfo(fileList, uploadFormId);
 	             } else {
@@ -261,7 +261,7 @@ var uploadModule =(function() {
 	             alert("업로드 중에는 사용하실수 없습니다.");
 	         }
 	     });
-	     
+
 	     // 전체 문서에서 드래그 이벤트 차단 (브라우저 기본 동작 방지)
 	     $(document).on('dragover drop', function(e) {
 	         e.preventDefault();
@@ -270,7 +270,7 @@ var uploadModule =(function() {
 
 	//업로드 정보세팅
 	 function setUploadInfo(fileList, uploadFormId){
-		 
+
 		 var acceptFile =  $("#fileList_"+uploadFormId).data("acceptFile");
 
 		 if(fileList){
@@ -296,6 +296,12 @@ var uploadModule =(function() {
 			 if(acceptFile==='.zip'){
 				 metadata.isOnlyZip='Y';
 			 }
+
+			 var thumbnailYn=  $("#fileList_"+uploadFormId).data("thumbnailYn");
+			 if(thumbnailYn==='Y'){
+				 metadata.thumbnailYn='Y';
+			 }
+
 			 processFile(metadata);
 		 }
 	 }
@@ -357,6 +363,7 @@ var uploadModule =(function() {
 		 formdata.append('file',  piece);
 		 formdata.append('metadata', JSON.stringify(metadata));
 
+		// console.log(JSON.stringify(metadata));
 		  $.ajax({
 
 
@@ -463,10 +470,10 @@ var uploadModule =(function() {
 		            }
 		        });
 		        if (!found) {
-		        	
+
 		        	// 첫 번째 파일 추가 시 리스트 표시
 		        	$("#fileList_" + uploadFormId).show();
-		        	
+
 		            tmpFileList.push(fileInfo);
 		            fileObj.refDocId = $("#refDocId_" + uploadFormId).val();
 		            fileObj.docId = $("#docId_" + uploadFormId).val();
@@ -482,23 +489,23 @@ var uploadModule =(function() {
 		                $("#" + refDocId + "_" + requiredAttachIndex).val("Y");
 		            }
 		            var fileFunStr = 'uploadModule.setFileDetail("' + fileInfo.docId + '","' + fileInfo.fileId + '", "' + fileInfo.fileNm + '");';
-		            
+
 		            // 파일 확장자에 따른 CSS 클래스 결정
 		            var fileExtension = getFileExtension(fileNm);
 		            var fileClass = getFileClass(fileExtension);
-		            
+
 		            // 파일명에서 작은따옴표 이스케이프 처리
 		            var safeFileNm = fileInfo.fileNm.replace(/'/g, "&#39;");
 		            var safeUploadFormId = uploadFormId.replace(/'/g, "&#39;");
-		            
+
 		            // li 태그로 감싸서 파일 목록 표시 - label 구조 유지하면서 다운로드 링크 분리
-		            
+
 		            if($("#refDocId_"+uploadFormId).val()=="NONE"){
 		            	 $("#fileList_" + uploadFormId).append(
 					                "<li>" +
-					                        "<label for='" + random + "-" + fileInfo.fileId + "'>" +
-					                            "<a href='javascript:void(0);' onclick=\"event.stopPropagation(); uploadModule.fileDownload('" + safeUploadFormId + "', '" + fileInfo.fileId + "', '" + safeFileNm + "','" + fileInfo.temp + "');\" class='" + fileClass + "' style='text-decoration:none;'>" + fileNm +" ["+Math.round(Number(fileInfo.fileSize/1024))+"k]</a>" +
-					                        "</label>" +
+
+				                            "<a href='javascript:void(0);' onclick=\"event.stopPropagation(); uploadModule.fileDownload('" + safeUploadFormId + "', '" + fileInfo.fileId + "', '" + safeFileNm + "','" + fileInfo.temp + "');\" class='" + fileClass + "' style='text-decoration:none;'>" + fileNm +" ["+Math.round(Number(fileInfo.fileSize/1024))+"k]</a>" +
+
 					                "</li>"
 					            );
 
@@ -534,9 +541,9 @@ var uploadModule =(function() {
 		        // 파일이 모두 삭제되면 빈 메시지 표시
 		        if (fileObj.fileInfo.length == 0 || fileObj.fileInfo.every(f => f.delYn == 'Y')) {
 		            $("#emptyMessage_" + uploadFormId).show();
-		            
+
 		            $("#fileList_" + uploadFormId).hide();
-		            
+
 		            var requiredAttachIndex = $("#fileList_" + uploadFormId).data("requiredAttachIndex");
 		            if (requiredAttachIndex != '') {
 		                var refDocId = $("#refDocId_" + uploadFormId).val();
@@ -546,8 +553,8 @@ var uploadModule =(function() {
 		    }
 		    $("#fileInfoList_" + uploadFormId).val(JSON.stringify(fileObj));
 		}
-	 
-	 
+
+
 	 function deleteAllFile(uploadFormId){
 
 		 $("input[name=file_"+uploadFormId+"]").prop("checked",true);
@@ -713,6 +720,26 @@ var uploadModule =(function() {
 
 		 var fileObj =  JSON.parse($("#fileInfoList_"+uploadFormId).val() );
 		 var downloadFile = [];
+
+
+		var fileInfo ={};
+
+	 	 fileObj.fileInfo.forEach(function(obj, index) {
+
+	 		 /*
+			 fileInfo.fileId = obj.fileId;
+			 fileInfo.fileNm= obj.fileNm;
+			 fileInfo.filePath= obj.filePath;
+
+			 console.log("fileInfofileInfofileInfofileInfofileInfo",fileInfo);
+*/
+			 downloadFile.push(obj);
+		 });
+
+
+
+
+		 /*
 		 $("input[name=file_"+uploadFormId+"]").each(function(){
 
 			 	$(this).prop("checked",true);
@@ -738,7 +765,7 @@ var uploadModule =(function() {
 			 alert("다운로드할 파일을 선택하세요");
 			 return;
 		 }
-
+*/
 
 		 $('#downloadFileInfo').val(JSON.stringify(downloadFile));
 		 $("#downloadForm").attr("action", basePath+"/file/download/zip");
@@ -786,6 +813,8 @@ var uploadModule =(function() {
 
     //파일 중복금지
     function getFileArray(uploadFormId, files){
+
+    	 $("#progressLabel_"+uploadFormId).html('');
 
     	 var fileObj = {};
     	 var fileList = [];
@@ -872,7 +901,7 @@ var uploadModule =(function() {
 		     }
 
 			 if(acceptFile.toUpperCase().indexOf(fileExt.toUpperCase()) == -1){
-				 $("#progressLabel_"+uploadFormId).append("["+fileNm+"] : 파일확장자가 "+fileExt+ "인 파일은 업로드 할수 없습니다.");
+				 $("#progressLabel_"+uploadFormId).append("<p>["+fileNm+"] : 파일확장자가 "+fileExt+ "인 파일은 업로드 할수 없습니다.</p>");
 				 continue;
 			 }
 
@@ -880,7 +909,7 @@ var uploadModule =(function() {
 			 if( isNotEmpty(maxFileSize)){
 				 tmpmaxFileSize = maxFileSize.substr(0, maxFileSize.length-1);
 				 if(files[i].size > tmpmaxFileSize*1024*1024 ){
-					 $("#progressLabel_"+uploadFormId).append("["+fileNm+"] : 파일사이즈가 "+maxFileSize+ "이하만 업로드 가능합니다.");
+					 $("#progressLabel_"+uploadFormId).append("<p>["+fileNm+"] : 파일사이즈가 "+maxFileSize+ "이하만 업로드 가능합니다.</p>");
 					 continue;
 				 }
 			 }else{
@@ -890,7 +919,7 @@ var uploadModule =(function() {
 
 			 if( tempFileList.indexOf(files[i].name) != -1){
 				 $("#progressLabel_"+uploadFormId).html('');
-				 $("#progressLabel_"+uploadFormId).append("["+fileNm+"] : 파일명이 같은 파일이 존재합니다.");
+				 $("#progressLabel_"+uploadFormId).append("<p>["+fileNm+"] : 파일명이 같은 파일이 존재합니다.</p>");
 				 continue;
 			 }
 			 fileList.push(files[i]);
@@ -1030,12 +1059,14 @@ var uploadModule =(function() {
 
 
 
-    function showFile(uploadFormId){
+    function showFile(uploadFormId, popupId,url){
 
 		 var showFile = [];
 		 var fileObj =  JSON.parse($("#fileInfoList_"+uploadFormId).val() );
+
+		 var fileInfo ={};
+
 		 $("input[name=file_"+uploadFormId+"]:checked").each(function(){
-			 	var fileInfo ={};
 
 			 	var tmpFileId=$(this).val();
 
@@ -1063,17 +1094,25 @@ var uploadModule =(function() {
 			 return;
 		 }
 
-		 hwpCtrlPopup(showFile[0].fileId,showFile[0].fileNm,showFile[0].temp);
-	 }	 
-    
-    
+
+		 if(showFile[0].fileNm.lastIndexOf('.hwp') == -1 && showFile[0].fileNm.lastIndexOf('.hwpx') == -1){
+		 		alert("hwp파일만 가능합니다.");
+		 		return;
+		 }
+
+
+		 fileInfo.hwpPopupUrl=url;
+		 openCustomPopup(popupId, '/file/hwpCtrlPopup', fileInfo);
+	 }
+
+
     //첨부파일 내용조회
-    function readFile(uploadFormId){        	
+    function readFile(uploadFormId){
     	var readFile = [];
     	var fileObj =  JSON.parse($("#fileInfoList_"+uploadFormId).val());
     	$("input[name=file_"+uploadFormId+"]:checked").each(function(){
     		var fileInfo ={};
-    		var tmpFileId=$(this).val();    		
+    		var tmpFileId=$(this).val();
 
     		fileObj.fileInfo.forEach(function(obj, index) {
     			if(obj.fileId == tmpFileId){
@@ -1096,33 +1135,33 @@ var uploadModule =(function() {
 			 alert("하나의 파일만 선택하세요");
 			 return;
 		 }
-		 
+
 		 var fileInfoList = {};
 		 fileInfoList.refDocId = "endDocId";
 		 fileInfoList.fileInfo = readFile;
 		 fileInfoList = JSON.stringify(fileInfoList);
-		 
+
 		 $.ajax({
 			 type : "post",
 			 url : "/common/fileView/readFileAjax",
 			 contentType:"application/x-www-form-urlencoded; charset=UTF-8",
 			 data : {fileInfoList : fileInfoList},
-			 success: function (result) {				 
+			 success: function (result) {
 				 var txt = result.fileText;
 				 txt = txt.replace(/<!--[^>](.*?)-->/g, "");
 				 txt = txt.replace(/\r\n/g, "<br>");
 				 txt = txt.replace(/\n/g, "<br>");
-				 
+
 				 CKEDITOR.instances.reply_cnts.setData(txt);  //ck editor 내용 입력
-				 				 
+
 				 //displayFileList(readFile[0], uploadFormId);  //삭제시
 			 }, error : function(jqXHR) {
 				alert("예외가 발생했습니다. 관리자에게 문의하세요.");
 			 }
 		 });
 	}
-    
-    
+
+
     function getFileExtension(filename) {
         return filename.split('.').pop().toLowerCase();
     }
@@ -1140,14 +1179,128 @@ var uploadModule =(function() {
             'pptx': 'ppt',
             'txt': 'txt',
             'zip': 'zip',
-            'jpg': 'img',
-            'jpeg': 'img',
-            'png': 'img',
-            'gif': 'img'
+            'jpg': 'jpg',
+            'jpeg': 'jpg',
+            'png': 'png',
+            'gif': 'gif',
+            'xml': 'xml',
+            'html': 'html',
+            'mp4': 'mp4',
+            'mpg': 'mpg',
+            'tit': 'tit',
+            'avi': 'avi',
+            'exe': 'exe',
+            'bmp': 'bmp'
         };
-        
+
         return fileClasses[extension] || 'etc';
     }
+
+
+    function checkedFileInfo(uploadFormId, openYn){
+		 var checkedFileInfo='';
+		 var fileObj =  JSON.parse($("#fileInfoList_"+uploadFormId).val() );
+		 $("input[name=file_"+uploadFormId+"]:checked").each(function(){
+			 	var tmpFileId=$(this).val();
+
+				 fileObj.fileInfo.forEach(function(obj, index) {
+					 if(obj.fileId == tmpFileId){
+						 checkedFileInfo+=obj.fileId+",";
+					 }
+				 });
+
+		 });
+
+		 if(checkedFileInfo.endsWith(",")){
+			 checkedFileInfo= checkedFileInfo.slice(0,-1);
+		 }
+
+		 toggleVisibility(uploadFormId, checkedFileInfo,openYn);
+
+    }
+
+/*
+
+    function updateVisibility(uploadFormId, itemsStr, openYn) {
+
+
+    	 console.log("itemsStr", itemsStr);
+    	 console.log("openYn", openYn);
+
+    	 const publicInput = $("#open_refDocId_" + uploadFormId);
+         const privateInput = $("#noOpen_refDocId_" + uploadFormId);
+
+        // 안전한 초기화 (빈 값 대비)
+        let publicItems = (publicInput.val() || '')
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+
+        let privateItems = (privateInput.val()  || '')
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+
+        const items = itemsStr
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+
+        // Set으로 중복 제거
+        const publicSet = new Set(publicItems);
+        const privateSet = new Set(privateItems);
+
+        items.forEach(item => {
+            if (openYn === 'Y') {
+                privateSet.delete(item);
+                publicSet.add(item);
+            } else if (openYn === 'N') {
+                publicSet.delete(item);
+                privateSet.add(item);
+            }
+        });
+
+
+        // 다시 저장
+        publicInput.val( Array.from(publicSet).join(','));
+        privateInput.val( Array.from(privateSet).join(','));
+
+
+    }
+
+*/
+
+    function toggleVisibility(uploadFormId, itemsStr,openYn) {
+
+        const publicInput = $("#open_refDocId_" + uploadFormId);
+        const privateInput = $("#noOpen_refDocId_" + uploadFormId);
+
+        let publicItems = (publicInput.value||"").split(',').filter(Boolean);
+        let privateItems = (privateInput.value||"").split(',').filter(Boolean);
+
+        // 넘어온 itemsStr을 배열로 변환
+        const items = itemsStr.split(',').map(s => s.trim()).filter(Boolean);
+
+        items.forEach(item => {
+            if (openYn=='Y') {
+                // 공개 → 비공개
+                privateItems = privateItems.filter(i => i !== item);
+                if (!publicItems.includes(item)) publicItems.push(item);
+
+            } else if (openYn=='N') {
+                // 비공개 → 공개
+            	 publicItems = publicItems.filter(i => i !== item);
+                 if (!privateItems.includes(item)) privateItems.push(item);
+            }
+        });
+
+
+		 $("#open_refDocId_" + uploadFormId).val(publicItems.join(','));
+		 $("#noOpen_refDocId_" + uploadFormId).val( privateItems.join(','));
+
+
+    }
+
 
 
 	 return {
@@ -1162,7 +1315,8 @@ var uploadModule =(function() {
 		 checkAll : checkAll,
 		 reload : reload,
 		 showFile : showFile,
-		 readFile : readFile
+		 readFile : readFile,
+		 checkedFileInfo :checkedFileInfo
 	 };
 
 

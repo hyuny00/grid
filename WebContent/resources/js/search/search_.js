@@ -20,53 +20,36 @@ class ODAFilterSystem {
 
 	    this.categoryCodeMapping = categoryCodeMapping || {};
 
+
 	    this.maxSelectionCounts = maxSelectionCounts ||{};
 
-	    this.formId = formId;
+	    this.formId = formId
 
 	    this.init();
-	}
-
-	// formId 기반으로 요소를 찾는 헬퍼 메서드
-	getFormElement(selector) {
-		if (!this.formId) {
-			// formId가 없는 경우 기존 방식 유지
-			return document.querySelector(selector) || document.getElementById(selector.replace(/[.#]/, ''));
-		}
-
-		const formElement = document.getElementById(this.formId);
-		if (!formElement) {
-			console.warn(`Form with id '${this.formId}' not found`);
-			return null;
-		}
-
-		return formElement.querySelector(selector);
-	}
-
-	// formId 기반으로 여러 요소를 찾는 헬퍼 메서드
-	getFormElements(selector) {
-		if (!this.formId) {
-			return document.querySelectorAll(selector);
-		}
-
-		const formElement = document.getElementById(this.formId);
-		if (!formElement) {
-			console.warn(`Form with id '${this.formId}' not found`);
-			return [];
-		}
-
-		return formElement.querySelectorAll(selector);
 	}
 
 	init() {
 		this.bindEvents();
 		this.updateSelectedDisplay();
 
-		const filterArea = this.getFormElement('.searchFilterArea') || this.getFormElement('#searchFilterArea');
+
+		//const filterArea = document.getElementById('searchFilterArea');
+
+		let filterArea = document.querySelector('.searchFilterArea');
+
+		if(!filterArea){
+			filterArea = document.getElementById('searchFilterArea');
+		}
 
 		if(filterArea){
 			filterArea.style.display = 'none';
 		}
+
+
+		//const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+		//applyFiltersBtn.style.display = 'none';
+
+
 	}
 
 	// 초기 필터 설정 - 데이터 검증 없이 바로 추가
@@ -131,9 +114,19 @@ class ODAFilterSystem {
 	    this.gridInstances.push(gridInstance);
 	}
 
+
 	bindEvents() {
 		// DOM 요소 존재 확인 후 이벤트 바인딩
-		const filterToggleBtn = this.getFormElement('.filterToggleBtn') || this.getFormElement('#filterToggleBtn');
+		//const filterToggleBtn = document.getElementById('filterToggleBtn');
+
+
+		let filterToggleBtn = document.querySelector('.filterToggleBtn');
+
+		if(!filterToggleBtn){
+			filterToggleBtn = document.getElementById('filterToggleBtn');
+		}
+
+
 
 		if (filterToggleBtn) {
 			filterToggleBtn.addEventListener('click', () => {
@@ -142,7 +135,7 @@ class ODAFilterSystem {
 		}
 
 		// 카테고리 버튼들
-		const categoryBtns = this.getFormElements('.filter-category-btn');
+		const categoryBtns = document.querySelectorAll('.filter-category-btn');
 		categoryBtns.forEach(btn => {
 			btn.addEventListener('click', (e) => {
 				e.stopPropagation();
@@ -153,7 +146,8 @@ class ODAFilterSystem {
 		});
 
 		// 텍스트 검색 버튼
-		const textSearchBtn = this.getFormElement('#textSearchBtn');
+
+		const textSearchBtn = document.getElementById('textSearchBtn');
 		if (textSearchBtn) {
 			textSearchBtn.addEventListener('click', () => {
 				this.performTextSearch();
@@ -161,7 +155,15 @@ class ODAFilterSystem {
 		}
 
 		// 조건검색 버튼
-		const applyFiltersBtn = this.getFormElement('.applyFiltersBtn') || this.getFormElement('#applyFiltersBtn');
+		//const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+
+		let applyFiltersBtn = document.querySelector('.applyFiltersBtn');
+
+		if(!applyFiltersBtn){
+			applyFiltersBtn = document.getElementById('applyFiltersBtn');
+		}
+
+
 
 		if (applyFiltersBtn) {
 			applyFiltersBtn.addEventListener('click', () => {
@@ -169,85 +171,129 @@ class ODAFilterSystem {
 			});
 		}
 
-		// 조건검색 버튼
-		const resetApplyFiltersBtn = this.getFormElement('.resetApplyFiltersBtn') || this.getFormElement('#resetApplyFiltersBtn');
+		let filterArea = document.querySelector('.searchFilterArea');
 
-		if (resetApplyFiltersBtn) {
-			resetApplyFiltersBtn.addEventListener('click', () => {
-				this.resetApplyFilters();
-			});
+		if(!filterArea){
+			filterArea = document.getElementById('searchFilterArea');
 		}
 
+		let resetFiltersBtn = document.querySelector('.resetFiltersBtn');
 
-		const filterArea = this.getFormElement('.searchFilterArea') || this.getFormElement('#searchFilterArea');
-		const resetFiltersBtn = this.getFormElement('.resetFiltersBtn') || this.getFormElement('#resetFiltersBtn');
+		if(!resetFiltersBtn){
+			resetFiltersBtn = document.getElementById('resetFiltersBtn');
+		}
 
 
 		if (resetFiltersBtn) {
+
 			resetFiltersBtn.addEventListener('click', () => {
-
-				//$("#"+this.formId)[0].reset();
-
-				//document.querySelectorAll("form").forEach(form => form.reset());
-
 				this.resetFilters();
+				//applyFiltersBtn.style.display = 'none';
+				//$('.contBox.type01').removeClass('on');
 				filterArea.style.display = 'none';
 				if (filterToggleBtn) filterToggleBtn.classList.remove('on');
+				$('.toggleFlt').css('display','none');
+				$('.fltList').find('.on').removeClass('on');
 
-				// formId 기반으로 jQuery 선택자 수정
-				if (this.formId) {
-					$(`#${this.formId} .toggleFlt`).css('display','none');
-					$(`#${this.formId} .fltList`).find('.on').removeClass('on');
-				} else {
-					$('.toggleFlt').css('display','none');
-					$('.fltList').find('.on').removeClass('on');
+			});
+
+		}
+
+		// 텍스트 입력 엔터키 처리
+		/*
+		const projectNameInput = document.getElementById('projectNameInput');
+		if (projectNameInput) {
+			projectNameInput.addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') {
+					this.performTextSearch();
 				}
 			});
 		}
+		*/
 	}
 
 	toggleFilterArea() {
-		const filterArea = this.getFormElement('.searchFilterArea') || this.getFormElement('#searchFilterArea');
-		const toggleBtn = this.getFormElement('.filterToggleBtn') || this.getFormElement('#filterToggleBtn');
+		//const filterArea = document.getElementById('searchFilterArea');
+
+		let filterArea = document.querySelector('.searchFilterArea');
+
+		if(!filterArea){
+			filterArea = document.getElementById('searchFilterArea');
+		}
+
+
+		//const toggleBtn = document.getElementById('filterToggleBtn');
+
+		let toggleBtn = document.querySelector('.filterToggleBtn');
+
+		if(!toggleBtn){
+			toggleBtn = document.getElementById('filterToggleBtn');
+		}
+
+
 
 		if (!filterArea || !toggleBtn) return;
 
 		this.isFilterOpen = !this.isFilterOpen;
 
-		//const applyFiltersBtn = this.getFormElement('.applyFiltersBtn') || this.getFormElement('#applyFiltersBtn');
-		const resetFiltersBtn = this.getFormElement('.resetFiltersBtn') || this.getFormElement('#resetFiltersBtn');
+
+
+		//const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+
+		let applyFiltersBtn = document.querySelector('.applyFiltersBtn');
+
+		if(!applyFiltersBtn){
+			applyFiltersBtn = document.getElementById('applyFiltersBtn');
+		}
+
+
+		let resetFiltersBtn = document.querySelector('.resetFiltersBtn');
+
+		if(!resetFiltersBtn){
+			resetFiltersBtn = document.getElementById('resetFiltersBtn');
+		}
+
 
 		if (this.isFilterOpen) {
-			// formId 기반으로 jQuery 선택자 수정
-			if (this.formId) {
-				$(`#${this.formId} .schRow.toggleFlt`).css('display','block');
-			} else {
-				$('.schRow.toggleFlt').css('display','block');
-			}
+
+			$('.schRow.toggleFlt').css('display','block');
+
+
 
 			filterArea.style.display = 'block';
 			toggleBtn.textContent = '검색 필터 닫기';
 
 			resetFiltersBtn.disabled = false;
-		} else {
-			// formId 기반으로 jQuery 선택자 수정
-			if (this.formId) {
-				$(`#${this.formId} .schRow.toggleFlt`).css('display','none');
-			} else {
-				$('.schRow.toggleFlt').css('display','none');
-			}
 
+			//applyFiltersBtn.style.display = 'inline-flex';
+
+		} else {
+
+			$('.schRow.toggleFlt').css('display','none');
 			filterArea.style.display = 'none';
 			toggleBtn.textContent = '검색 필터 열기';
 
+
+
+			//applyFiltersBtn.style.display = 'none';
 			this.clearActiveCategory();
 		}
 	}
 
 	toggleCategory(btn, category) {
+//	    if (this.activeCategory === category) {
+//
+//	    	console.log(".contBox.type01", $('.contBox.type01').hasClass('on'));
+//
+//	    	$('.contBox.type01').toggleClass('on');
+//
+//
+//	        return;
+//	    }
+
 	    this.clearAllFilterOptions();
 
-	    this.getFormElements('.filter-category-btn').forEach(b => {
+	    document.querySelectorAll('.filter-category-btn').forEach(b => {
 	        b.classList.remove('active');
 	    });
 
@@ -263,6 +309,23 @@ class ODAFilterSystem {
 	    } else {
 	        this.updateFilterOptions(category);
 	    }
+
+		//$('.contBox.type01').toggleClass('on');
+
+	    //$('.contBox.type01').addClass('on');
+
+
+	    //const filterArea = document.getElementById('searchFilterArea');
+
+//	    let filterArea = document.querySelector('searchFilterArea');
+//
+//		if(!filterArea){
+//			filterArea = document.getElementById('searchFilterArea');
+//		}
+//	    filterArea.style.display="block";
+//
+//	    $('.schRow.toggleFltCont').css('display','block');
+
 	}
 
 	resetStepState() {
@@ -273,18 +336,20 @@ class ODAFilterSystem {
 
 	// 모든 필터 옵션 정리하는 새로운 메서드
 	clearAllFilterOptions() {
+	  //  console.log('=== clearAllFilterOptions 실행 ===');
+
 	    // 모든 단계 컨테이너 숨기기
 	    this.hideAllStepContainers();
 
 	    // 1단계 필터 컨테이너 초기화
-	    const singleStepContainer = this.getFormElement('.filter-options-content');
+	    const singleStepContainer = document.querySelector('.filter-options-content');
 	    if (singleStepContainer) {
 	        singleStepContainer.style.display = 'none';
 	        singleStepContainer.innerHTML = '';
 	    }
 
 	    // 기존 선택 상태 초기화
-	    this.getFormElements('.filter-option-item.selected, .filter-option-item.on').forEach(btn => {
+	    document.querySelectorAll('.filter-option-item.selected, .filter-option-item.on').forEach(btn => {
 	        btn.classList.remove('selected', 'on');
 	    });
 	}
@@ -294,7 +359,7 @@ class ODAFilterSystem {
 	    const stepNames = ['first', 'second', 'third', 'fourth', 'fifth'];
 
 	    stepNames.forEach((stepName, index) => {
-	        const container = this.getFormElement(`.${stepName}-step-options`);
+	        const container = document.querySelector(`.${stepName}-step-options`);
 	        if (container) {
 	            container.style.display = 'none';
 	            const list = container.querySelector(`.${stepName}-step-list`);
@@ -310,7 +375,7 @@ class ODAFilterSystem {
 	}
 
 	clearActiveCategory() {
-		this.getFormElements('.filter-category-btn').forEach(btn => {
+		document.querySelectorAll('.filter-category-btn').forEach(btn => {
 			btn.classList.remove('active');
 		});
 		this.activeCategory = null;
@@ -319,8 +384,12 @@ class ODAFilterSystem {
 		this.clearFilterOptions();
 	}
 
+
 	// 2단계 필터 옵션 업데이트 (기존 구조 활용)
 	updateMultiStepFilterOptions(category) {
+	   // console.log('=== updateMultiStepFilterOptions 시작 ===');
+	  //  console.log('category:', category);
+
 	    // 모든 단계 컨테이너 숨기기
 	    this.hideAllStepContainers();
 
@@ -338,16 +407,27 @@ class ODAFilterSystem {
 	        return;
 	    }
 
-	    const container = this.getFormElement(`.${stepName}-step-options`);
+	    const container = document.querySelector(`.${stepName}-step-options`);
 	    if (!container) {
 	        console.log(`${step}단계 컨테이너를 찾을 수 없음`);
+	        //return;
 	    }
+
+	    // 컨테이너 표시
+	    //container.style.display = 'flex';
+
+	    // 제목 설정
+	    //const titleElement = container.querySelector('p');
+//	    if (titleElement && step === 1) {
+//	        titleElement.textContent = this.getCategoryTitle(category);
+//	    }
 
 	    // 초기 로드시에만 데이터 로드
 	    if (isInitialLoad || step === 1) {
 	        this.loadAndPopulateStepData(step, category, stepName);
 	    }
 	}
+
 
 	// 단계별 데이터 로드 및 표시
 	async loadAndPopulateStepData(step, category, stepName) {
@@ -361,6 +441,8 @@ class ODAFilterSystem {
 	        // 2단계 이상은 서버에서 로드
 	        items = await this.loadNextStepData(category, this.stepSelections.slice(0, step - 1));
 	    }
+
+	    //   	console.log(`${step}단계 items:`, items);
 
 	    //filterDrawContainer 클래스 초기화
 	    const elements = this.checkDOMElements();
@@ -420,6 +502,7 @@ class ODAFilterSystem {
 	    	$filterDrawContainer.addClass('contBox')
 	    }
 
+
 	    if (!items || !Array.isArray(items) || items.length === 0) {
 	    	ul.innerHTML = '<li><div class="empty-state">옵션이 없습니다</div></li>';
 	    	div.appendChild(ul);
@@ -463,6 +546,8 @@ class ODAFilterSystem {
 	async selectStepItem(button, itemData, currentStep) {
 	    const category = button.dataset.category;
 	    const value = button.dataset.value;
+
+	  //  console.log(`${currentStep}단계 선택:`, value, itemData.text);
 
 	    // 현재 단계의 선택 상태 업데이트
 	    this.updateStepSelection(currentStep, value, itemData.text, button);
@@ -511,7 +596,7 @@ class ODAFilterSystem {
 	    // 해당 단계 이후의 컨테이너들 숨기기
 	    const stepNames = ['', 'first', 'second', 'third', 'fourth', 'fifth'];
 	    for (let i = step + 1; i <= this.maxSteps; i++) {
-	        const container = this.getFormElement(`.${stepNames[i]}-step-options`);
+	        const container = document.querySelector(`.${stepNames[i]}-step-options`);
 	        if (container) {
 	            container.style.display = 'none';
 	            const list = container.querySelector(`.${stepNames[i]}-step-list`);
@@ -527,8 +612,8 @@ class ODAFilterSystem {
 	    const stepNames = ['', 'first', 'second', 'third', 'fourth', 'fifth'];
 	    const stepName = stepNames[step];
 
-	    // 해당 단계의 모든 버튼 선택 해제 - formId 기반으로 수정
-	    this.getFormElements(`.${stepName}-step-list .filter-option-item`).forEach(btn => {
+	    // 해당 단계의 모든 버튼 선택 해제
+	    document.querySelectorAll(`.${stepName}-step-list .filter-option-item`).forEach(btn => {
 	        btn.classList.remove('selected');
 	    });
 
@@ -541,6 +626,7 @@ class ODAFilterSystem {
 	        return [];
 	    }
 
+
 	    const key = this.buildStepDataKey(category, parentSelections);
 
 	    if (this.stepData[key]) {
@@ -548,6 +634,7 @@ class ODAFilterSystem {
 	    }
 
 	    var cdGroupSn = this.categoryCodeMapping[category];
+
 
 	    var schCodeDiv;
 	    if (category == 'schNtnCd') {
@@ -558,6 +645,7 @@ class ODAFilterSystem {
 	    	 schCodeDiv='bizFldCd';
 	    	 cdGroupSn=-1;
 	    }
+
 
 	    if(cdGroupSn == 16  && schCodeDiv=='ntnCd' && parentSelections.length == 2){
 	    	return [];
@@ -600,6 +688,7 @@ class ODAFilterSystem {
 
 	// 다단계 선택 완료
 	completeMultiStepSelection(category) {
+
 		if(this.maxSelectionCounts[category]){
 			const currentCount = this.geFilterCountByCategory(category);
 
@@ -608,6 +697,9 @@ class ODAFilterSystem {
 				return;
 			}
 		}
+
+
+	    //console.log('다단계 선택 완료:', this.stepSelections, this.stepTexts);
 
 	    // 모든 단계의 텍스트를 조합하여 표시 텍스트 생성
 	    const displayTexts = [];
@@ -649,8 +741,10 @@ class ODAFilterSystem {
 
 	// 2단계 필터 요소가 없을 때의 대체 메서드
 	updateFilterOptionsAsFallback(category) {
+	    //console.log('2단계 필터 대체 메서드 실행');
+
 	    // 1단계 필터 컨테이너 사용 시도
-	    const container = this.getFormElement('.filter-options-content');
+	    const container = document.querySelector('.filter-options-content');
 	    if (container) {
 	        return this.updateFilterOptions(category);
 	    }
@@ -661,11 +755,24 @@ class ODAFilterSystem {
 
 	// 기존 단일 단계 필터 옵션 업데이트
 	updateFilterOptions(category) {
+	    //console.log('=== updateFilterOptions 시작 ===');
+	    //console.log('category:', category);
+
 	    // DOM 요소 확인
 	    const elements = this.checkDOMElements();
 
+//	    const container = elements.singleStepContainer;
+//	    if (!container) {
+//	        console.log('filter-options-content 컨테이너를 찾을 수 없음');
+//	        // 대체 컨테이너 찾기 시도
+//	        return this.createFallbackContainer(category);
+//	    }
+
 	    //filterDrawContainer 클래스 초기화
 	    const filterDrawContainer = elements.filterDrawContainer;
+
+
+
 
 	    const $filterDrawContainer = $(filterDrawContainer);
 	    let contList = null;
@@ -673,15 +780,23 @@ class ODAFilterSystem {
 	    titleElement.textContent = this.activeCategoryTitle;
 	    $filterDrawContainer.attr('class','on');
 
+
+	    // 컨테이너 표시
+	    //container.style.display = 'block';
+
+	   // console.log('category:::: ', category);
+
 	    filterDrawContainer.innerHTML = '';
     	filterDrawContainer.appendChild(titleElement);
 
 	    const items = this.categoryData[category];
+	   // console.log('category:', category, 'items:', items);
 
 	    if (!items || !Array.isArray(items)) {
 	    	filterDrawContainer.innerHTML = '<div class="empty-state">옵션이 없습니다</div>';
 	        return;
 	    }
+
 
 	    // ul 요소 생성
 	    const ul = document.createElement('ul');
@@ -723,7 +838,13 @@ class ODAFilterSystem {
 	                 }
 	             });
 
+	             //ul.appendChild(li);
+	             //div.appendChild(ul);
+	             //filterDrawContainer.appendChild(div);
+
 	        } else if (itemData.type === 'budget') {  // 새로 추가
+
+	        		    //const li = document.createElement('li');
 	        		    filterDrawContainer.innerHTML = `
 	        		        <p>${this.activeCategoryTitle}</p>
 	        		        <div class="iptBox">
@@ -767,7 +888,14 @@ class ODAFilterSystem {
 	        		        }
 	        		    });
 
+
+	        		    //ul.appendChild(li);
+	        		    //div.appendChild(ul);
+	        		    //filterDrawContainer.appendChild(div);
+
 	      } else if (itemData.type === 'year') {  // 새로 추가
+
+	    	  //const li = document.createElement('li');
 	    	  const currentYear = new Date().getFullYear();
 	    	  const startYear = currentYear - 10;
 
@@ -800,7 +928,14 @@ class ODAFilterSystem {
 	    	      }
 	    	  });
 
-	    } else {
+	    	  //ul.appendChild(li);
+	    	  //div.appendChild(ul);
+	    	  //filterDrawContainer.appendChild(div);
+
+	    }else {
+
+
+
 	    		if ($filterDrawContainer.hasClass('contBox') === false) $filterDrawContainer.addClass('contBox');
 	    		if (!contList) {
 	    			contList = document.createElement('div');
@@ -832,22 +967,33 @@ class ODAFilterSystem {
 	                button.style.background = '#f8f9fa';
 	            });
 
+
+
 	            li.appendChild(button);
 	            ul.appendChild(li);
 	            div.appendChild(ul);
 	            contList.appendChild(div);
 
 
+	            console.log("contList",contList);
+
+	            console.log("filterDrawContainer",filterDrawContainer);
+
 	            filterDrawContainer.appendChild(contList);
 
+
+	            console.log("filterDrawContainerggggggggggggggg",filterDrawContainer);
 	        }
 	    });
+	   // console.log('1단계 필터 옵션 생성 완료');
 	}
 
 	validateAndUpdateDateRange(startInput, endInput, itemData) {
 	    const category = startInput.dataset.category;
 	    const startDate = startInput.value;
 	    const endDate = endInput.value;
+
+
 
 	    // 둘 다 입력되지 않은 경우 - 기존 필터 제거
 	    if (!startDate || !endDate) {
@@ -861,6 +1007,7 @@ class ODAFilterSystem {
 	    if (!this.validateDateRange(startDate, endDate)) {
 	        return;
 	    }
+
 
 	    // 둘 다 입력된 경우 필터 추가
 	    const text = `사업기간: ${startDate} ~ ${endDate}`;
@@ -881,6 +1028,8 @@ class ODAFilterSystem {
 	validateDateRange(startDate, endDate) {
 	    const start = new Date(startDate);
 	    const end = new Date(endDate);
+
+
 
 	    // 시작일이 종료일보다 늦은 경우
 	    if (start > end) {
@@ -908,6 +1057,7 @@ class ODAFilterSystem {
 	    return true;
 	}
 
+
 	selectYearItem(select, labelText, selectedYear) {
 	    const category = select.dataset.category;
 	    const value = select.dataset.value;
@@ -934,6 +1084,7 @@ class ODAFilterSystem {
 	    const value = input.dataset.value;
 	    // 숫자에 천단위 콤마 추가하여 표시
 	    const formattedValue = Number(budgetValue).toLocaleString();
+	    //const text = `${labelText}: ${formattedValue}원`;
 	    const text = `사업예산: ${formattedValue}원`;
 
 	    const key = `${category}-${value}`;
@@ -952,16 +1103,24 @@ class ODAFilterSystem {
 	}
 
 	createFallbackContainer(category) {
-	    // 필터 영역 찾기 - formId 기반으로 수정
-	    const filterArea = this.getFormElement('.searchFilterArea') || this.getFormElement('#searchFilterArea');
+	    //console.log('대체 컨테이너 생성 시도');
+
+	    // 필터 영역 찾기
+	    //const filterArea = document.getElementById('searchFilterArea');
+
+	    let filterArea = document.querySelector('.searchFilterArea');
+
+		if(!filterArea){
+			filterArea = document.getElementById('searchFilterArea');
+		}
 
 	    if (!filterArea) {
 	        console.log('필터 영역을 찾을 수 없음');
 	        return;
 	    }
 
-	    // 기존 대체 컨테이너가 있는지 확인 - formId 기반으로 수정
-	    let fallbackContainer = this.getFormElement('.fallback-filter-container');
+	    // 기존 대체 컨테이너가 있는지 확인
+	    let fallbackContainer = document.querySelector('.fallback-filter-container');
 	    if (!fallbackContainer) {
 	        fallbackContainer = document.createElement('div');
 	        fallbackContainer.className = 'fallback-filter-container';
@@ -975,9 +1134,9 @@ class ODAFilterSystem {
 
 	// 모든 필터 옵션 숨기기 (새로운 메서드)
 	hideAllFilterOptions() {
-	    // 2단계 필터 요소들 숨기기 - formId 기반으로 수정
-	    const firstStepContainer = this.getFormElement('.first-step-options');
-	    const secondStepContainer = this.getFormElement('.second-step-options');
+	    // 2단계 필터 요소들 숨기기
+	    const firstStepContainer = document.querySelector('.first-step-options');
+	    const secondStepContainer = document.querySelector('.second-step-options');
 
 	    if (firstStepContainer) {
 	        firstStepContainer.style.display = 'none';
@@ -986,8 +1145,8 @@ class ODAFilterSystem {
 	        secondStepContainer.style.display = 'none';
 	    }
 
-	    // 1단계 필터 요소 숨기기 - formId 기반으로 수정
-	    const singleStepContainer = this.getFormElement('.filter-options-content');
+	    // 1단계 필터 요소 숨기기
+	    const singleStepContainer = document.querySelector('.filter-options-content');
 	    if (singleStepContainer) {
 	        singleStepContainer.style.display = 'none';
 	    }
@@ -1002,6 +1161,8 @@ class ODAFilterSystem {
 	        container.innerHTML = '<div class="empty-state">옵션이 없습니다</div>';
 	        return;
 	    }
+
+	    console.log('bbbbbbbbbbbbbbbbb');
 
 	    const ul = document.createElement('ul');
 	    ul.style.cssText = 'list-style: none; padding: 0; margin: 0;';
@@ -1039,12 +1200,18 @@ class ODAFilterSystem {
 	    container.appendChild(ul);
 	}
 
+
 	// 나머지 기존 메서드들...
 	getCategoryTitle(category) {
 		return this.categoryTitles[category] || category;
 	}
 
+
+
 	selectFilterItem(item) {
+		console.log(item);
+
+
 		const category = item.dataset.category;
 		const value = item.dataset.value;
 		const text = item.titleValue +":"+item.textContent;
@@ -1073,26 +1240,37 @@ class ODAFilterSystem {
 	}
 
 	clearFilterOptions() {
+	   // console.log('=== clearFilterOptions 실행 ===');
+
 	    // clearAllFilterOptions 호출
 	    this.clearAllFilterOptions();
 
-	    // formId 기반으로 pTxt 선택자 수정
-	    if (this.formId) {
-	    	$(`#${this.formId} #pTxt`).text('');
-	    } else {
-	    	$('#pTxt').text('');
-	    }
+	    $('#pTxt').text('');
 	}
 
 	updateSelectedDisplay() {
-		const container = this.getFormElement('.selectedFilters') || this.getFormElement('#selectedFilters');
-		const resetBtn = this.getFormElement('.resetFiltersBtn') || this.getFormElement('#resetFiltersBtn');
+		//const container = document.getElementById('selectedFilters');
+
+
+		let container = document.querySelector('.selectedFilters');
+
+		if(!container){
+			container = document.getElementById('selectedFilters');
+		}
+
+
+		let resetBtn = document.querySelector('.resetFiltersBtn');
+
+		if(!resetBtn){
+			resetBtn = document.getElementById('resetFiltersBtn');
+		}
+
 
 		if (!container) return;
 
 		if (this.selectedFilters.size === 0) {
 			container.innerHTML = '<li class="empty-state"><p>검색 조건을 설정해주세요.</p></li>';
-		//	if (resetBtn) resetBtn.disabled = true;
+			if (resetBtn) resetBtn.disabled = true;
 			return;
 		}
 
@@ -1102,35 +1280,18 @@ class ODAFilterSystem {
 
 		this.selectedFilters.forEach((filter, key) => {
 			const li = document.createElement('li');
-
-			// 텍스트 부분
-			const p = document.createElement('p');
-			p.textContent = filter.text;
-
-			// 버튼 생성
-			const button = document.createElement('button');
-			button.type = 'button';
-			button.className = 'btn-del';
-
-			// 접근성 텍스트(span)
-			const span = document.createElement('span');
-			span.className = 'sr-only';
-			span.textContent = '검색조건 삭제';
-
-			button.appendChild(span);
-
-			// ✅ 여기서 this.removeFilter(key)와 연결
-			button.addEventListener('click', () => {
-				this.removeFilter(key); // this 유지됨
-			});
-
-			// li 조립
-			li.appendChild(p);
-			li.appendChild(button);
-
+			li.innerHTML = `
+				<p>${filter.text}</p>
+				<button type="button" class="btn-del" onclick="window.odaFilterSystem.removeFilter('${key}')">
+					<span class="sr-only">검색조건 삭제</span>
+				</button>
+			`;
 			container.appendChild(li);
 		});
 	}
+
+
+
 
 	removeFilter(key) {
 	    console.log('필터 제거 시도:', key);
@@ -1143,6 +1304,7 @@ class ODAFilterSystem {
 	        return;
 	    }
 
+	    console.log('제거할 필터:', filter);
 
 	    // 간단한 필터인 경우
 	    if (filter.isSimpleFilter) {
@@ -1158,17 +1320,26 @@ class ODAFilterSystem {
 	        // 다단계 필터의 모든 관련 버튼 상태 제거
 	        this.clearMultiStepButtonStates(key);
 	    } else {
-	        // 단일 단계 필터 - DOM에서 버튼 찾아서 상태 제거 - formId 기반으로 수정
-	    	let button = this.getFormElement(`.${key}`) || this.getFormElement(`#${key}`);
+	        // 단일 단계 필터 - DOM에서 버튼 찾아서 상태 제거
+	        //const button = document.getElementById(key);
+
+
+	    	let button = document.querySelector("."+key);
+
+			if(!button){
+				button = document.getElementById(key);
+			}
+
+
+
 
 	        if (button) {
 	            button.classList.remove('on', 'selected');
 	        } else {
-	            // jQuery로도 시도 - formId 기반으로 수정
-	            if (this.formId) {
-	            	$(`#${this.formId} #${key}`).removeClass('on selected');
-	            } else {
-	            	$('#' + key).removeClass('on selected');
+	            // jQuery로도 시도
+	            const $button = $('#' + key);
+	            if ($button.length) {
+	                $button.removeClass('on selected');
 	            }
 	        }
 	    }
@@ -1178,12 +1349,12 @@ class ODAFilterSystem {
 	    this.applyFiltersAfterRemoval();
 	}
 
+
 	// 다단계 필터 버튼 상태 제거
 	clearMultiStepButtonStates(key) {
 		const stepNames = ['first', 'second', 'third', 'fourth', 'fifth'];
 		stepNames.forEach(stepName => {
-			// formId 기반으로 수정
-			const buttons = this.getFormElements(`.${stepName}-step-list .filter-option-item.selected`);
+			const buttons = document.querySelectorAll(`.${stepName}-step-list .filter-option-item.selected`);
 			buttons.forEach(btn => {
 				if (btn.id.includes(key.split('-')[0])) { // 같은 카테고리면
 					btn.classList.remove('selected');
@@ -1195,17 +1366,23 @@ class ODAFilterSystem {
 	// 필터 제거 후 그리드 검색을 재실행하는 메서드
 	applyFiltersAfterRemoval() {
 		const filters = this.getSelectedFilters();
+		/*
+		const projectNameInput = document.getElementById('projectNameInput');
+		const searchTerm = projectNameInput ? projectNameInput.value.trim() : '';
+		*/
+		//console.log('필터 제거 후 재검색:', filters);
 		this.executeSearch({ filters, searchTerm: '' });
 	}
 
+
 	resetFilters() {
-	    // 모든 선택된 필터 버튼들의 상태 제거 - formId 기반으로 수정
+
+
+
+	    // 모든 선택된 필터 버튼들의 상태 제거
 	    this.selectedFilters.forEach((filter, key) => {
-	        if (this.formId) {
-	        	$(`#${this.formId} #${key}`).removeClass('on selected');
-	        } else {
-	        	$('#' + key).removeClass('on selected');
-	        }
+	        const $id = $('#' + key);
+	        $id.removeClass('on selected');
 	    });
 
 	    // 필터 데이터 초기화
@@ -1216,11 +1393,16 @@ class ODAFilterSystem {
 	    // 단계 상태 초기화
 	    this.resetStepState();
 
-	    this.clearAllGridParams();
-	    //this.executeSearch({ filters: {}, searchTerm: '' });
+	    // 텍스트 검색어 초기화
+	   // const projectNameInput = document.getElementById('projectNameInput');
+	   // if (projectNameInput) {
+	       // projectNameInput.value = '';
+	   // }
 
-	    this.executeResetSearch({ filters: {}, searchTerm: '' });
+	    this.clearAllGridParams();
+	    this.executeSearch({ filters: {}, searchTerm: '' });
 	}
+
 
 	// 모든 그리드 파라미터 초기화
 	clearAllGridParams() {
@@ -1245,27 +1427,43 @@ class ODAFilterSystem {
 	            }
 	        });
 
+	      //  const searchTermFields = searchForm.find('[name="searchTerm"], [name="projectName"]');
+	      //  searchTermFields.val('');
+
 	        if (grid.gridData) {
 	            Object.keys(this.categoryData).forEach(category => {
 	                delete grid.gridData[category];
 	            });
+	            //delete grid.gridData.searchTerm;
+	            //delete grid.gridData.projectName;
 	        }
 	    });
 	}
 
+
 	performTextSearch() {
+		/*
+		const projectNa
+		meInput = document.getElementById('projectNameInput');
+		const searchTerm = projectNameInput ? projectNameInput.value.trim() : '';
+
+		if (!searchTerm) {
+			alert('검색어를 입력하세요.');
+			return;
+		}
+		 */
 		this.executeSearch({ searchTerm:'' });
 	}
 
 	applyFilters() {
 		const filters = this.getSelectedFilters();
+
+
+		/*
+		const projectNameInput = document.getElementById('projectNameInput');
+		const searchTerm = projectNameInput ? projectNameInput.value.trim() : '';
+		*/
 		this.executeSearch({ filters, searchTerm:'' });
-	}
-
-
-	resetApplyFilters() {
-		const filters = this.getSelectedFilters();
-		this.executeResetSearch({ filters: {}, searchTerm: '' });
 	}
 
 
@@ -1292,6 +1490,12 @@ class ODAFilterSystem {
 	buildSearchParams(searchData) {
 	    const params = {};
 
+	    /*
+	    if (searchData.searchTerm) {
+	        params.searchTerm = searchData.searchTerm;
+	        params.projectName = searchData.searchTerm;
+	    }
+*/
 	    if (searchData.filters) {
 	        Object.entries(searchData.filters).forEach(([category, values]) => {
 	            if (values.length > 0) {
@@ -1306,29 +1510,24 @@ class ODAFilterSystem {
 	    return params;
 	}
 
+
 	executeSearch(searchData) {
+	   // console.log('검색 실행:', searchData);
+
+
 	    if (this.gridInstances && this.gridInstances.length > 0) {
 	        const searchParams = this.buildSearchParams(searchData);
 
 	        this.gridInstances.forEach((gridInstance, index) => {
 	            this.setGridSearchParams(searchParams, gridInstance);
+
 	            gridInstance.searchData();
 	        });
 	    }
 	}
 
-	executeResetSearch(searchData) {
-	    if (this.gridInstances && this.gridInstances.length > 0) {
-	        const searchParams = this.buildSearchParams(searchData);
-
-	        this.gridInstances.forEach((gridInstance, index) => {
-	            this.setGridSearchParams(searchParams, gridInstance);
-	            gridInstance.resetSearchData();
-	        });
-	    }
-	}
-
 	setGridSearchParams(params, gridInstance = null) {
+
 	    const targetGrids = gridInstance ? [gridInstance] : this.gridInstances;
 
 	    targetGrids.forEach((grid, index) => {
@@ -1360,7 +1559,10 @@ class ODAFilterSystem {
 	            }
 	        });
 	    });
+
 	}
+
+
 
 	clearGridFilterFields(searchForm) {
 	    console.log('그리드 필터 필드 초기화');
@@ -1373,7 +1575,13 @@ class ODAFilterSystem {
 
 	    console.log('활성 카테고리들:', Array.from(activeCategories));
 
-	    // categoryData에 있는 모든 카테고리 초기화
+	    // categoryData에 있는 모든 카테고리와 추가로 자주 사용되는 필드들 초기화
+	    /*
+	    const allCategories = new Set([
+	        ...Object.keys(this.categoryData),
+	        'schNtnCd', 'schBgnDe', 'schEndDe', 'searchTerm', 'projectName' // 공통 필드들 추가
+	    ]);
+	    */
 	    const allCategories = new Set([
 	        ...Object.keys(this.categoryData)
 	    ]);
@@ -1391,6 +1599,15 @@ class ODAFilterSystem {
 	            }
 	        }
 	    });
+
+	    // 텍스트 검색어도 확인
+	    /*
+	    const projectNameInput = document.getElementById('projectNameInput');
+	    if (!projectNameInput || !projectNameInput.value.trim()) {
+	        const searchTermFields = searchForm.find('[name="searchTerm"], [name="projectName"]');
+	        searchTermFields.val('');
+	    }
+	    */
 	}
 
 	// 테스트용 2단계 데이터 생성 메서드
@@ -1424,25 +1641,48 @@ class ODAFilterSystem {
 	}
 
 	checkDOMElements() {
-		// filterDrawContainer : 필터 그릴 영역 - formId 기반으로 수정
-		const filterOptions = this.getFormElement('.filterOptions') || this.getFormElement('#filterOptions');
+	   // console.log('=== DOM 요소 확인 ===');
+
+		// filterDrawContainer : 필터 그릴 영역
+		//const filterOptions = document.getElementById('filterOptions');
+
+		let filterOptions = document.querySelector('.filterOptions');
+
+		if(!filterOptions){
+			filterOptions = document.getElementById('filterOptions');
+		}
 
 	    const filterDrawContainer = $(filterOptions).children().children()[0];//li
 
-	    // 2단계 필터 요소들 - formId 기반으로 수정
-	    const firstStepContainer = this.getFormElement('.first-step-options');
-	    const secondStepContainer = this.getFormElement('.second-step-options');
-	    const firstStepList = this.getFormElement('.first-step-list');
-	    const secondStepList = this.getFormElement('.second-step-list');
 
-	    // 1단계 필터 요소들 - formId 기반으로 수정
-	    const singleStepContainer = this.getFormElement('.filter-options-content');
 
-	    // 전체 필터 영역 - formId 기반으로 수정
-	    const filterArea = this.getFormElement('.searchFilterArea') || this.getFormElement('#searchFilterArea');
+	    // 2단계 필터 요소들
+	    const firstStepContainer = document.querySelector('.first-step-options');
+	    const secondStepContainer = document.querySelector('.second-step-options');
+	    const firstStepList = document.querySelector('.first-step-list');
+	    const secondStepList = document.querySelector('.second-step-list');
 
-	    // 모든 가능한 컨테이너 확인 - formId 기반으로 수정
-	    const allContainers = this.getFormElements('[class*="filter"], [class*="step"], [class*="options"]');
+	   // console.log('first-step-options:', firstStepContainer);
+	   // console.log('second-step-options:', secondStepContainer);
+	   // console.log('first-step-list:', firstStepList);
+	   // console.log('second-step-list:', secondStepList);
+
+	    // 1단계 필터 요소들
+	    const singleStepContainer = document.querySelector('.filter-options-content');
+	  //  console.log('filter-options-content:', singleStepContainer);
+
+	    // 전체 필터 영역
+	    //const filterArea = document.getElementById('searchFilterArea');
+	    let filterArea = document.querySelector('.searchFilterArea');
+
+		if(!filterArea){
+			filterArea = document.getElementById('searchFilterArea');
+		}
+	   // console.log('searchFilterArea:', filterArea);
+
+	    // 모든 가능한 컨테이너 확인
+	    const allContainers = document.querySelectorAll('[class*="filter"], [class*="step"], [class*="options"]');
+	   // console.log('모든 필터 관련 요소들:', allContainers);
 
 	    return {
 	        firstStepContainer,
