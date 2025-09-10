@@ -1455,7 +1455,7 @@ public class FileUploadController extends AbstractController {
 						FileCopyUtils.copy(base64DecodeFileData, fos);
 
 						params.put("filePstnSecd", filePstnSecd);
-						params.put("fileSz", downloadFile.length());
+				 		params.put("fileSz", downloadFile.length());
 
 						fileUploadService.updateFilePstnSecd(params);
 
