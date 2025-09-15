@@ -295,8 +295,23 @@ public class FileUploadController extends AbstractController {
 		}
 	}
 
+
+	/**
+	 * 외부사용자 파일다운로드(홈페이지 , 기타).csrf 해제필요  ROLE_ANONYMOUS 권한, 외부사용자도 쿠기설정되느지 확인필요
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/api/file/download")
+	public void apiFiledownload(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		download( request,  response);
+	}
+
+
 	@RequestMapping(value = "/file/download")
 	public void download(HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+
 
 		String[] remoteIps=null;
 
@@ -345,66 +360,114 @@ public class FileUploadController extends AbstractController {
 				}
 
 
-				if(filePstnSecd.equals(fileInfoVo.getFilePstnSecd())) {
 
-					if(fileInfoVo.getFileId().length()==32) {
-						downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
-					}else {
-						downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId()).toFile();
-					}
-
+				if(fileInfoVo.getFileId().length()==32) {
+					downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
 				}else {
-
-					String jwtToken = null;
-
-				    Cookie[] cookies = request.getCookies();
-				    if (cookies != null) {
-				        for (Cookie cookie : cookies) {
-				            if ("JWT".equals(cookie.getName())) {
-				                jwtToken = cookie.getValue();
-				                break;
-				            }
-				        }
-				    }
-
-				    LOGGER.debug("jwtToken....{}", jwtToken);
-
-					// 최적의 청크 수 계산
-					int optimalChunks = calculateOptimalChunks(fileInfoVo.getFileSize());
-
-					// 임시 파일 경로 생성
-					String tempFileName = fileInfoVo.getFileId() + "_" + System.currentTimeMillis() + ".tmp";
-					downloadFile = Paths.get(tempUploadPath, tempFileName).toFile();
-
-					fullRemoteUrl = "http://"+selectedIp+"/file/remoteDownload/" + fileInfoVo.getFileId();
-
-					// 여기서 사용!
-					remoteFileDownloader.downloadFileFromOtherWAS(fullRemoteUrl, jwtToken, downloadFile.getAbsolutePath(),
-							optimalChunks);
-
+					downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId()).toFile();
 				}
 
 
+				if(!filePstnSecd.equals(fileInfoVo.getFilePstnSecd())) {
+
+					if(!downloadFile.exists()) {
+						LOGGER.debug("다른서버에서 파일 조회....{}", downloadFile.toString());
+
+
+
+
+
+						 // 1. JWT 가져오기
+				        String authHeader = request.getHeader("Authorization");
+				        String jwtToken = null;
+
+				        // Authorization 헤더 확인
+				        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+				            jwtToken = authHeader.substring(7);
+				        }
+
+				        if(jwtToken==null) {
+				        	Cookie[] cookies = request.getCookies();
+						    if (cookies != null) {
+						        for (Cookie cookie : cookies) {
+						            if ("JWT".equals(cookie.getName())) {
+						                jwtToken = cookie.getValue();
+						                break;
+						            }
+						        }
+						    }
+				        }
+
+
+					    LOGGER.debug("jwtToken....{}", jwtToken);
+
+						// 최적의 청크 수 계산
+						int optimalChunks = calculateOptimalChunks(fileInfoVo.getFileSize());
+
+						// 임시 파일 경로 생성
+						String tempFileName = fileInfoVo.getFileId() + "_" + System.currentTimeMillis() + ".tmp";
+						downloadFile = Paths.get(tempUploadPath, tempFileName).toFile();
+
+						fullRemoteUrl = "http://"+selectedIp+"/file/remoteDownload/" + fileInfoVo.getFileId();
+
+						// 여기서 사용!
+						remoteFileDownloader.downloadFileFromOtherWAS(fullRemoteUrl, jwtToken, downloadFile.getAbsolutePath(), optimalChunks);
+					}
+
+				}
 
 
 			}
 
 			if (downloadFile.isFile() && downloadFile.exists()) {
 
+
+
+				////////////////////////
+				//평가   && !fileInfoVo.getTaskSecd().equals("06")
+				if(!filePstnSecd.equals(fileInfoVo.getFilePstnSecd()) && !StringUtils.defaultString(fileInfoVo.getTemp(), "").equals("Y")) {
+
+					File fileToMove = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
+
+					LOGGER.debug("기존서버파일 활용....{}", fileToMove.toString());
+
+					if(!fileToMove.exists()) {
+
+						LOGGER.debug("다른서버에 파일저장....{}", fileToMove.toString());
+
+						FileUtils.forceMkdir(fileToMove.getParentFile());
+						Files.move(downloadFile.toPath(), fileToMove.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+
+						downloadFile=fileToMove;
+					}
+
+				}
+
+				///////////////////
+
 				response.setContentType("application/octet-stream; charset=utf-8");
 
+				/*
 				if (downloadFile.length() > 1024 * 1024 * 20) { // 20M
 					response.setHeader("Content-Transfer-Encoding", "chunked");
 				} else {
 					response.setContentLength((int) downloadFile.length());
 					response.setHeader("Content-Transfer-Encoding", "binary");
 				}
+				*/
+				long fileLength= downloadFile.length();
+				//response.setContentLength((int) downloadFile.length());
+				response.setContentLengthLong( downloadFile.length());
+
+
 				response.setHeader("Content-Disposition",
 						"attachment; filename=\"" + java.net.URLEncoder.encode(fileInfoVo.getFileNm(), "utf-8") + "\";");
 
-				try (OutputStream out = response.getOutputStream(); FileInputStream fis = new FileInputStream(downloadFile);) {
+				try ( FileInputStream fis = new FileInputStream(downloadFile);) {
 					// FileCopyUtils.copy(fis, out);
-					CommonUtil.copy(fis, out);
+					OutputStream out = response.getOutputStream();
+					CommonUtil.copy(fis, out, fileLength);
 				} catch (Exception e) {
 					e.printStackTrace();
 					throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
@@ -421,7 +484,7 @@ public class FileUploadController extends AbstractController {
 	        // 원격에서 받은 임시 파일 정리
 	        if (StringUtils.isNotEmpty(fullRemoteUrl) && downloadFile != null) {
 	            try {
-	              Files.deleteIfExists(downloadFile.toPath());
+	            //  Files.deleteIfExists(downloadFile.toPath());
 	            } catch (Exception ignored) {}
 	        }
 	    }
@@ -530,13 +593,15 @@ public class FileUploadController extends AbstractController {
 					 response.setContentType("application/octet-stream; charset=utf-8");
 				}
 
-				response.setContentLength((int) fileInfoVo.getFileSize());
-				response.setHeader("Content-Transfer-Encoding", "binary");
+				//response.setContentLength((int) fileInfoVo.getFileSize());
+				//response.setHeader("Content-Transfer-Encoding", "binary");
+				response.setContentLengthLong(downloadFile.length());
 
 
-				try (OutputStream out = response.getOutputStream(); FileInputStream fis = new FileInputStream(downloadFile);) {
+				try ( FileInputStream fis = new FileInputStream(downloadFile);) {
 					// FileCopyUtils.copy(fis, out);
-					CommonUtil.copy(fis, out);
+					OutputStream out = response.getOutputStream();
+					CommonUtil.copy(fis, out, fileInfoVo.getFileSize());
 				} catch (Exception e) {
 					e.printStackTrace();
 					throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
@@ -641,23 +706,54 @@ public class FileUploadController extends AbstractController {
 	            response.setHeader("Content-Range", String.format("bytes %d-%d/%d", start, end, fileLength));
 	        }
 
-	        response.setContentLength((int) contentLength);
+	       // response.setContentLength((int) contentLength);
+
+	        response.setContentLengthLong(contentLength);
 
 	        // 파일 전송
-	        try (OutputStream out = response.getOutputStream();
-	             FileInputStream fis = new FileInputStream(downloadFile);) {
-
+	        try (FileInputStream fis = new FileInputStream(downloadFile);) {
+	        	OutputStream out = response.getOutputStream();
 	            // 시작 위치로 이동
-	            fis.skip(start);
+	            //fis.skip(start);
+	        	if (start > 0) {
+	        	    byte[] skipBuffer = new byte[8192];
+	        	    long remaining = start;
+	        	    while (remaining > 0) {
+	        	        int toRead = (int) Math.min(skipBuffer.length, remaining);
+	        	        int bytesRead = fis.read(skipBuffer, 0, toRead);
+	        	        if (bytesRead == -1) {
+	        	            throw new IOException("EOF reached before start position");
+	        	        }
+	        	        remaining -= bytesRead;
+	        	    }
+	        	}
 
 	            byte[] buffer = new byte[8192];
 	            long remaining = contentLength;
 	            int bytesRead;
 
+	            /*
 	            while (remaining > 0 && (bytesRead = fis.read(buffer, 0, (int) Math.min(buffer.length, remaining))) != -1) {
 	                out.write(buffer, 0, bytesRead);
 	                remaining -= bytesRead;
+	            }*/
+	            while (remaining > 0 && (bytesRead = fis.read(buffer, 0, (int) Math.min(buffer.length, remaining))) != -1) {
+	                try {
+	                    out.write(buffer, 0, bytesRead);
+	                    remaining -= bytesRead;
+
+	                    // 주기적으로 flush (선택사항)
+	                    if (remaining % (8192 * 10) == 0) {
+	                        out.flush();
+	                    }
+	                } catch (IOException e) {
+	                    // 클라이언트 연결 중단 등
+	                    LOGGER.warn("Client disconnected during download");
+	                    break;
+	                }
 	            }
+
+	            out.flush();
 
 	        } catch (Exception e) {
 	            e.printStackTrace();
@@ -749,18 +845,25 @@ public class FileUploadController extends AbstractController {
 
 				response.setContentType("application/octet-stream; charset=utf-8");
 
+				/*
 				if (downloadFile.length() > 1024 * 1024 * 20) { // 20M
 					response.setHeader("Content-Transfer-Encoding", "chunked");
 				} else {
 					response.setContentLength((int) downloadFile.length());
 					response.setHeader("Content-Transfer-Encoding", "binary");
 				}
+				*/
+				//response.setContentLength((int)downloadFile.length());
+
+				response.setContentLengthLong(downloadFile.length());
+
 				response.setHeader("Content-Disposition",
 						"attachment; filename=\"" + java.net.URLEncoder.encode(fileInfoVo.getFileNm(), "utf-8") + "\";");
 
-				try (OutputStream out = response.getOutputStream(); FileInputStream fis = new FileInputStream(downloadFile);) {
+				try ( FileInputStream fis = new FileInputStream(downloadFile);) {
 					// FileCopyUtils.copy(fis, out);
-					CommonUtil.copy(fis, out);
+					OutputStream out = response.getOutputStream();
+					CommonUtil.copy(fis, out, downloadFile.length());
 				} catch (Exception e) {
 					e.printStackTrace();
 					throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
@@ -861,24 +964,59 @@ public class FileUploadController extends AbstractController {
 	            response.setHeader("Content-Range", String.format("bytes %d-%d/%d", start, end, fileLength));
 	        }
 
-	        response.setContentLength((int) contentLength);
+	        response.setContentLengthLong(contentLength);
 
 	        // 파일 전송
-	        try (OutputStream out = response.getOutputStream();
-	             FileInputStream fis = new FileInputStream(downloadFile);) {
+	        try ( FileInputStream fis = new FileInputStream(downloadFile);) {
 
+	        	OutputStream out = response.getOutputStream();
 	            // 시작 위치로 이동
-	            fis.skip(start);
+	            //fis.skip(start);
+
+	        	// 개선된 코드 - 더 안전한 방법
+	        	if (start > 0) {
+	        	    byte[] skipBuffer = new byte[8192];
+	        	    long remaining = start;
+	        	    while (remaining > 0) {
+	        	        int toRead = (int) Math.min(skipBuffer.length, remaining);
+	        	        int bytesRead = fis.read(skipBuffer, 0, toRead);
+	        	        if (bytesRead == -1) {
+	        	            throw new IOException("EOF reached before start position");
+	        	        }
+	        	        remaining -= bytesRead;
+	        	    }
+	        	}
+
+
 
 	            byte[] buffer = new byte[8192];
 	            long remaining = contentLength;
 	            int bytesRead;
 
+	            /*
 	            while (remaining > 0 && (bytesRead = fis.read(buffer, 0, (int) Math.min(buffer.length, remaining))) != -1) {
 	                out.write(buffer, 0, bytesRead);
 	                remaining -= bytesRead;
+	            }*/
+
+	            while (remaining > 0 && (bytesRead = fis.read(buffer, 0, (int) Math.min(buffer.length, remaining))) != -1) {
+	                try {
+	                    out.write(buffer, 0, bytesRead);
+	                    remaining -= bytesRead;
+
+	                    // 주기적으로 flush (선택사항)
+	                    if (remaining % (8192 * 10) == 0) {
+	                        out.flush();
+	                    }
+	                } catch (IOException e) {
+	                    // 클라이언트 연결 중단 등
+	                    LOGGER.warn("Client disconnected during download");
+	                    break;
+	                }
 	            }
 
+
+	            out.flush();
 	        } catch (Exception e) {
 	            e.printStackTrace();
 	            throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
@@ -1052,6 +1190,7 @@ public class FileUploadController extends AbstractController {
 	            throw new FileDownloadException("다운로드 가능한 파일이 없습니다.");
 	        }
 
+
 	        // ZIP 파일 생성 - 임시 폴더의 파일들로 생성
 	        FileInfoVo[] processedFileArray = processedFileInfos.toArray(new FileInfoVo[0]);
 	        String zipFileName = FileUtil.getRandomId() + ".zip";
@@ -1062,18 +1201,24 @@ public class FileUploadController extends AbstractController {
 	        File zipFile = Paths.get(tempZipPath, zipFileName).toFile();
 	        if (zipFile.isFile() && zipFile.exists()) {
 	            res.setContentType("application/octet-stream; charset=utf-8");
+
+	            /*
 	            if (zipFile.length() > 1024 * 1024 * 20) { // 20M
 	                res.setHeader("Content-Transfer-Encoding", "chunked");
 	            } else {
 	                res.setContentLength((int) zipFile.length());
 	                res.setHeader("Content-Transfer-Encoding", "binary");
-	            }
+	            }*/
+
+
+	            res.setContentLengthLong(zipFile.length());
+
 	            res.setHeader("Content-Disposition",
 	                    "attachment; filename=\"" + java.net.URLEncoder.encode(zipFileName, "utf-8") + "\";");
 
-	            try (OutputStream out = res.getOutputStream();
-	                 FileInputStream fis = new FileInputStream(zipFile)) {
-	                CommonUtil.copy(fis, out);
+	            try (FileInputStream fis = new FileInputStream(zipFile)) {
+	            	OutputStream out = res.getOutputStream();
+	                CommonUtil.copy(fis, out,zipFile.length());
 	            } catch (IOException e) {
 	                e.printStackTrace();
 	                throw new FileDownloadException("ZIP 파일 다운로드 중 오류가 발생했습니다.");
@@ -1108,98 +1253,37 @@ public class FileUploadController extends AbstractController {
 	    }
 	}
 
-	/*
-	@RequestMapping(value = "/file/download/zip")
-	public void downloadZip(HttpServletRequest request, HttpServletResponse res) throws Exception {
 
-
-
-
-		FtMap params = getFtMap(request);
-
-		String downloadFileInfo = params.getString("downloadFileInfo");
-
-		Gson gson = new Gson();
-		FileInfoVo[] fileInfoVos = gson.fromJson(downloadFileInfo, FileInfoVo[].class);
-
-		String zipFileName = FileUtil.getRandomId() + ".zip";
-
-		fileUploadService.createZip(fileInfoVos, tempZipPath + File.separator + zipFileName);
-
-		// 파일다운로드
-		File downloadFile = Paths.get(tempZipPath, zipFileName).toFile();
-
-		if (downloadFile.isFile() && downloadFile.exists()) {
-
-			res.setContentType("application/octet-stream; charset=utf-8");
-
-			if (downloadFile.length() > 1024 * 1024 * 20) { // 20M
-				res.setHeader("Content-Transfer-Encoding", "chunked");
-			} else {
-				res.setContentLength((int) downloadFile.length());
-				res.setHeader("Content-Transfer-Encoding", "binary");
-			}
-
-			res.setHeader("Content-Disposition",
-					"attachment; filename=\"" + java.net.URLEncoder.encode(zipFileName, "utf-8") + "\";");
-
-			try (OutputStream out = res.getOutputStream(); FileInputStream fis = new FileInputStream(downloadFile);) {
-				// FileCopyUtils.copy(fis, out);
-				CommonUtil.copy(fis, out);
-				if (downloadFile.exists())
-					downloadFile.delete();
-			} catch (IOException e) {
-				if (downloadFile.exists())
-					downloadFile.delete();
-				e.printStackTrace();
-			}
-
-		} else {
-			throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
-		}
-	}
-*/
 	@RequestMapping(value = "/file/isExistFile")
 	@ResponseBody
 	public Map<String, Object> isExistFile(HttpServletRequest request, FileInfoVo fileInfoVo) throws Exception {
 
 
-		/*
 		FtMap params = getFtMap(request);
 
-		boolean fileDownloadCheck = true;
-
-		File downloadFile = null;
+		boolean isExistFile=false;
 
 		if (StringUtils.defaultString(params.getString("temp"), "").equals("Y")) {
-			downloadFile = Paths.get(tempUploadPath, fileInfoVo.getFileId() + ".TEMP").toFile();
-
+			isExistFile=true;
 		} else {
 			params.put("fileId", fileInfoVo.getFileId());
 			fileInfoVo = fileUploadService.getFileInfo(params);
 
-			// 파일다운로드 권한
-			fileDownloadCheck = FileUtil.hasFileDownloadAuth(fileInfoVo);
 
-			downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
+			if(!fileInfoVo.getDelYn().equals("Y")) {
+				isExistFile=true;
+			}
 
 		}
 
 		Map<String, Object> map = new HashMap<String, Object>();
 
-		if (!downloadFile.exists()) {
-			map.put("msg", ErrorCode.FILE_NOT_FOUND.getMessage());
-		} else if (!fileDownloadCheck) {
-			map.put("msg", ErrorCode.FILE_ACCESS_DENIED.getMessage());
-		} else {
+		if (isExistFile) {
 			map.put("msg", "SUCCESS");
+		} else {
+			map.put("msg", ErrorCode.FILE_NOT_FOUND.getMessage());
 		}
 
-		return map;
-		*/
-
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("msg", "SUCCESS");
 		return map;
 
 	}
@@ -1455,34 +1539,32 @@ public class FileUploadController extends AbstractController {
 						FileCopyUtils.copy(base64DecodeFileData, fos);
 
 						params.put("filePstnSecd", filePstnSecd);
-				 		params.put("fileSz", downloadFile.length());
+						params.put("fileSz", downloadFile.length());
 
-						fileUploadService.updateFilePstnSecd(params);
+						fileUploadService.updateNewFileInfo(params);
 
 					}
 
 					//파일 원본과 파일호출이 내부망 외부망 다를경우
-
 					if (!StringUtils.defaultString(params.getString("temp"), "").equals("Y")) {
 
 						if(!filePstnSecd.equals(fileInfoVo.getFilePstnSecd())) {
 
-							File file = downloadFile;
+							FileOutputStream fos = new FileOutputStream(downloadFile);
+							FileCopyUtils.copy(base64DecodeFileData, fos);
+
+							params.put("filePstnSecd", filePstnSecd);
+							params.put("fileSz", downloadFile.length());
+
 							File fileToMove = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
 
 							FileUtils.forceMkdir(fileToMove.getParentFile());
-							FileUtils.moveFile(file, fileToMove);
+							Files.move(downloadFile.toPath(), fileToMove.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-
-							params.put("filePstnSecd", filePstnSecd);
-							params.put("fileSz", fileToMove.length());
-
-							fileUploadService.updateFilePstnSecd(params);
+							fileUploadService.updateNewFileInfo(params);
 
 						}
 					}
-
-
 
 					result = "OK";
 

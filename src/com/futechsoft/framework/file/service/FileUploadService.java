@@ -10,8 +10,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -419,6 +421,9 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 				FtMap param = new FtMap();
 				param.put("fileId", fileInfoVo.getFileId());
 				param.put("fileOrd", fileInfoVo.getFileOrd());
+
+				param.put("hmpgRlsYn", fileInfoVo.getHmpgRlsYn());
+				param.put("iipsRlsYn", fileInfoVo.getIipsRlsYn());
 				mapper.updateFileOrd(param);
 			}
 
@@ -532,94 +537,106 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 	}
 
 
-	// 임시 폴더의 파일들로 ZIP 생성하는 메소드
+	// 임시 폴더의 파일들로 ZIP 생성하는 메소드 (파일명 중복 처리 개선)
 	public void createZipFromTempFolder(FileInfoVo[] fileInfoVos, String target, String tempFolder) throws Exception {
+	    File targetDir = new File(target).getParentFile();
+	    boolean check = false;
+	    if (!targetDir.exists()) {
+	        check = targetDir.mkdirs();
+	        if (!check) throw new ZipParsingException("디렉토리 생성 실패");
+	    }
+	    File zipFileName = Paths.get(target).toFile();
 
-		    File targetDir = new File(target).getParentFile();
-		    boolean check = false;
-		    if (!targetDir.exists()) {
-		        check = targetDir.mkdirs();
-		        if (!check) throw new ZipParsingException("디렉토리 생성 실패");
-		    }
-		    File zipFileName = Paths.get(target).toFile();
-		    try (ZipOutputStream zipStream = new ZipOutputStream(new FileOutputStream(zipFileName))) {
-		        for (FileInfoVo fileInfoVo : fileInfoVos) {
-		            //파일다운로드 권한 (이미 체크했지만 한번 더)
-		            boolean fileDownloadCheck = FileUtil.hasFileDownloadAuth(fileInfoVo);
-		            if(fileDownloadCheck) {
-		                // 임시 폴더의 파일 참조
-		                File file = Paths.get(tempFolder, fileInfoVo.getFileId() + ".FILE").toFile();
-		                if (file.exists()) {
-		                    addToZipFile(file, fileInfoVo.getFileNm(), zipStream);
-		                }
-		            }
-		        }
-		    } catch (IOException | ZipParsingException e) {
-		        LOGGER.error(e.toString());
-		        throw new ZipParsingException(e.getMessage());
-		    }
-		}
+	    // 파일명 중복 체크를 위한 Set
+	    Set<String> usedFileNames = new HashSet<>();
+
+	    try (ZipOutputStream zipStream = new ZipOutputStream(new FileOutputStream(zipFileName))) {
+	        for (FileInfoVo fileInfoVo : fileInfoVos) {
+	            //파일다운로드 권한 (이미 체크했지만 한번 더)
+	            boolean fileDownloadCheck = FileUtil.hasFileDownloadAuth(fileInfoVo);
+	            if(fileDownloadCheck) {
+	                // 임시 폴더의 파일 참조
+	                File file = Paths.get(tempFolder, fileInfoVo.getFileId() + ".FILE").toFile();
+	                if (file.exists()) {
+	                    // 중복되지 않는 파일명 생성
+	                    String uniqueFileName = getUniqueFileName(fileInfoVo.getFileNm(), usedFileNames);
+	                    usedFileNames.add(uniqueFileName);
+	                    addToZipFile(file, uniqueFileName, zipStream);
+	                }
+	            }
+	        }
+	    } catch (IOException | ZipParsingException e) {
+	        LOGGER.error(e.toString());
+	        throw new ZipParsingException(e.getMessage());
+	    }
+	}
+
 
 	/**
-	 * 압축할 파일을 추가한다
-	 * @param file
-	 * @param zipStream
+	 * 중복되지 않는 고유한 파일명을 생성
+	 * @param originalFileName 원본 파일명
+	 * @param usedFileNames 이미 사용된 파일명들
+	 * @return 고유한 파일명
+	 */
+	private String getUniqueFileName(String originalFileName, Set<String> usedFileNames) {
+	    if (!usedFileNames.contains(originalFileName)) {
+	        return originalFileName;
+	    }
+
+	    // 파일명과 확장자 분리
+	    String nameWithoutExt = originalFileName;
+	    String extension = "";
+
+	    int lastDotIndex = originalFileName.lastIndexOf('.');
+	    if (lastDotIndex > 0) {
+	        nameWithoutExt = originalFileName.substring(0, lastDotIndex);
+	        extension = originalFileName.substring(lastDotIndex);
+	    }
+
+	    // 중복되지 않는 파일명 찾기
+	    int counter = 1;
+	    String uniqueName;
+	    do {
+	        uniqueName = nameWithoutExt + "_" + counter + extension;
+	        counter++;
+	    } while (usedFileNames.contains(uniqueName));
+
+	    return uniqueName;
+	}
+
+
+	/**
+	 * 압축할 파일을 추가한다 (파일명을 직접 지정)
+	 * @param file 추가할 파일
+	 * @param fileName ZIP 내에서 사용할 파일명
+	 * @param zipStream ZIP 출력 스트림
 	 * @throws ZipParsingException
 	 */
-	private void addToZipFile(Path file, ZipOutputStream zipStream) throws ZipParsingException {
+	private void addToZipFile(File file, String fileName, ZipOutputStream zipStream) throws ZipParsingException {
+	    if (file.isDirectory()) return;
 
-		if (file.toFile().isDirectory()) return;
-		String inputFileName = file.toFile().getPath();
+	    try (FileInputStream inputStream = new FileInputStream(file)) {
+	        ZipEntry entry = new ZipEntry(fileName);
+	        entry.setCreationTime(FileTime.fromMillis(file.lastModified()));
+	        entry.setComment("");
+	        zipStream.putNextEntry(entry);
 
-		try (FileInputStream inputStream = new FileInputStream(inputFileName)) {
-
-			ZipEntry entry = new ZipEntry(file.toFile().getName());
-			entry.setCreationTime(FileTime.fromMillis(file.toFile().lastModified()));
-			entry.setComment("");
-			zipStream.putNextEntry(entry);
-
-			byte[] readBuffer = new byte[2048];
-			int amountRead;
-
-			while ((amountRead = inputStream.read(readBuffer)) > 0) {
-				zipStream.write(readBuffer, 0, amountRead);
-			}
-
-		} catch (IOException e) {
-			throw new ZipParsingException("Unable to process " + inputFileName, e);
-		}
+	        byte[] readBuffer = new byte[2048];
+	        int amountRead;
+	        while ((amountRead = inputStream.read(readBuffer)) > 0) {
+	            zipStream.write(readBuffer, 0, amountRead);
+	        }
+	        zipStream.closeEntry(); // 엔트리 닫기 추가
+	    } catch (IOException e) {
+	        throw new ZipParsingException("Unable to process " + fileName, e);
+	    }
 	}
 
 	/**
-	 * 압축할 파일을 추가한다
-	 * @param file
-	 * @param fileNm
-	 * @param zipStream
-	 * @throws ZipParsingException
+	 * 기존 addToZipFile 메소드 (Path 버전) - 호환성 유지
 	 */
-	private void addToZipFile(File file, String fileNm, ZipOutputStream zipStream) throws ZipParsingException {
-
-		if (file.isDirectory())
-			return;
-
-		try (FileInputStream inputStream = new FileInputStream(file)) {
-
-			ZipEntry entry = new ZipEntry(fileNm);
-
-			// entry.setCreationTime(FileTime.fromMillis(file.lastModified()));
-			entry.setComment("");
-			zipStream.putNextEntry(entry);
-
-			byte[] readBuffer = new byte[2048];
-			int amountRead;
-
-			while ((amountRead = inputStream.read(readBuffer)) > 0) {
-				zipStream.write(readBuffer, 0, amountRead);
-			}
-
-		} catch (IOException e) {
-			throw new ZipParsingException("Unable to process " + fileNm, e);
-		}
+	private void addToZipFile(Path file, ZipOutputStream zipStream) throws ZipParsingException {
+	    addToZipFile(file.toFile(), file.toFile().getName(), zipStream);
 	}
 
 	/**
@@ -834,7 +851,10 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 		mapper.updateFileGroupDtDelYn(docId);
 	}
 
-	public void updateFilePstnSecd(FtMap params)throws Exception{
+	@Transactional
+	public void updateNewFileInfo(FtMap params)throws Exception{
+
 		 mapper.updateFilePstnSecd(params);
 	}
 }
+

@@ -14,7 +14,7 @@
 				'N' temp,
 				reg_dt as rgst_dttm,
 				reg_user_id  as rgstp_no,
-				file_pstn_secd,
+
 				file_extn_cn as file_ext
 
 			FROM tcm_file_dt WHERE file_group_id=#{docId} AND  del_yn = 'N' ORDER BY file_seq
@@ -30,7 +30,7 @@
 				file_sz as file_size,
 				file_path_cn as file_path,
 				del_yn,
-				file_pstn_secd,
+
 				file_extn_cn as file_ext
 			FROM tcm_file_dt WHERE file_id=#{fileId} AND del_yn='N'
 	 </select>
@@ -61,7 +61,7 @@
 				reg_user_id,
 				mdfcn_dt,
 				mdfcn_user_id,
-				file_pstn_secd
+
 
 			FROM tcm_file_dt WHERE doc_id=#{docId} AND del_yn= 'N' ORDER BY file_seq
 	 </select>
@@ -111,8 +111,7 @@
 				  reg_user_id,
 				  mdfcn_dt,
 				  mdfcn_user_id,
-				  del_yn,
-				  file_pstn_secd
+				  del_yn
 				   )
 			VALUES (
 			 		#{docId} ,
@@ -128,8 +127,7 @@
 				   #{userId} ,
 				    sysdatetime,
 				   #{userId} ,
-				   'N' ,
-				    #{filePstnSecd}
+				   'N'
 				    )
 	 </insert>
 
@@ -179,7 +177,7 @@
 
 
   <update id="updateFilePstnSecd" parameterType="ftMap">
-    	update tcm_file_dt set file_pstn_secd=#{filePstnSecd},  file_sz= #{fileSz}
+    	update tcm_file_dt set  file_sz= #{fileSz}
     	WHERE
     		file_id = #{fileId}
   </update>

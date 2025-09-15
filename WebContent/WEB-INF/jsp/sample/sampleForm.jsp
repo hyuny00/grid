@@ -31,28 +31,28 @@ function closePopup(){
 
 
 
- 
+
 			<div class="pgtBox">
 					<div class="lt">
 						<h2>자체평가 평가계획 등록 </h2>
 					</div>
-					
+
 					<ul class="breadcrumb">
 						<li class="home"><a href="javascript:;">홈</a></li>
 						<li><a href="javascript:;">평가</a></li>
 						<li><a href="javascript:;">자체평가</a></li>
 					</ul>
-					
+
 					<div class="rt"></div>
 				</div>
-				
+
 				<div class="titBox">
 					<div class="lt">
 						<h3>기본정보</h3>
 					</div>
-					
+
 					<div class="rt">
-					
+
 					</div>
 				</div>
 
@@ -93,7 +93,7 @@ function closePopup(){
                                 <th scope="row">regUser</th>
                                 <td><input type="text" name="regUser" value="${result.regUser}" maxlength="10" class="w100" /></td>
                             </tr>
-<%-- 
+<%--
                             <tr>
                             <!-- refDocId (필수) : 문서아이디 :  DB 컬럼명 -->
 					    		<!-- docId (필수) : 문서아이디 : DB 컬럼값 -->
@@ -124,9 +124,9 @@ function closePopup(){
                                     </jsp:include>
                                 </td>
                             </tr>
-                            
-                            
-                            
+
+
+
                             <tr>
                                 <th scope="row">파일조회</th>
                                 <td>
@@ -151,7 +151,7 @@ function closePopup(){
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="tblBox">
 				    <table class="tbl row">
 						<caption></caption>
@@ -159,7 +159,7 @@ function closePopup(){
 						  <col style="width: 152px;">
 						  <col style="width: calc(100% - 152px);">
 						</colgroup>
-						
+
 						<tbody>
 						  <tr>
 							<th scope="row">서류명</th>
@@ -168,14 +168,14 @@ function closePopup(){
                                         <jsp:param name="refDocId" value="attcDocId"/>
                                         <jsp:param name="docId" value="${result.attcDocId}"/>
                                     </jsp:include>
-								
+
 							</td>
 						  </tr>
 						</tbody>
 					</table>
 				</div>
-				
-				  
+
+
                 <div class="tblBox">
 				    <table class="tbl row">
 						<caption></caption>
@@ -183,7 +183,7 @@ function closePopup(){
 						  <col style="width: 152px;">
 						  <col style="width: calc(100% - 152px);">
 						</colgroup>
-						
+
 						<tbody>
 						  <tr>
 							<th scope="row">서류명</th>
@@ -197,9 +197,9 @@ function closePopup(){
 						</tbody>
 					</table>
 				</div>
-				
-				
-				
+
+
+
 				 <div class="tblBox">
 				    <table class="tbl row">
 						<caption></caption>
@@ -207,7 +207,7 @@ function closePopup(){
 						  <col style="width: 152px;">
 						  <col style="width: calc(100% - 152px);">
 						</colgroup>
-						
+
 						<tbody>
 						  <tr>
 							<th scope="row">서류명</th>
@@ -217,14 +217,14 @@ function closePopup(){
                                         <jsp:param name="docId" value="${result.attcDocId}"/>
                                           <jsp:param name="mode" value="view"/>
                                     </jsp:include>
-								
+
 							</td>
 						  </tr>
 						</tbody>
 					</table>
 				</div>
-				
-				
+
+
 
                 <div class="btn-wrap mt-3">
                     <button type="button" class="btn btn-secondary" onclick="sampleList();">목록</button>
@@ -234,8 +234,17 @@ function closePopup(){
                     <button type="reset" class="btn btn-light">초기화</button>
                 </div>
             </form>
-      
 
+
+
+	<div title="Data Download" id="preparing-file-modal" style="display: none;">
+	    <div id="progressbar" style="width: 100%; height: 22px; margin-top: 20px;"></div>
+	</div>
+
+	<!-- 파일 로딩중인 이미지입니다. -->
+	<div class="file-loading" id="processingBar">
+		<img src="${basePath}/img/processing4.gif" alt="처리중">
+	</div>
 
 <!-- 팝업 레이어 -->
 <div id="popLayer" style="display:none;width:1500px;height:1000px;border:4px solid #ddd;background:#fff;"></div>

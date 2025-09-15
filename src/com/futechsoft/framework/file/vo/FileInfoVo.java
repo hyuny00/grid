@@ -34,18 +34,17 @@ public class FileInfoVo implements Serializable {
 	private String thumbnailYn;
 
 	private String fileType;
-	
+
 	private String isOnlyZip;
-	
+
 	private String filePstnSecd;
 
-	public String getFilePstnSecd() {
-		return filePstnSecd;
-	}
+	private String hmpgRlsYn;
 
-	public void setFilePstnSecd(String filePstnSecd) {
-		this.filePstnSecd = filePstnSecd;
-	}
+	private String iipsRlsYn;
+
+	private String taskSecd;
+
 
 	public FileInfoVo() {
 	}
@@ -162,7 +161,7 @@ public class FileInfoVo implements Serializable {
 		this.fileAuth = fileAuth;
 	}
 
-	
+
 
 	public String getFileMsg() {
 		return fileMsg;
@@ -203,7 +202,7 @@ public class FileInfoVo implements Serializable {
 	public void setFileType(String fileType) {
 		this.fileType = fileType;
 	}
-	
+
 
 
 	public String getIsOnlyZip() {
@@ -212,6 +211,38 @@ public class FileInfoVo implements Serializable {
 
 	public void setIsOnlyZip(String isOnlyZip) {
 		this.isOnlyZip = isOnlyZip;
+	}
+
+	public String getFilePstnSecd() {
+		return filePstnSecd;
+	}
+
+	public void setFilePstnSecd(String filePstnSecd) {
+		this.filePstnSecd = filePstnSecd;
+	}
+
+	public String getHmpgRlsYn() {
+		return hmpgRlsYn;
+	}
+
+	public void setHmpgRlsYn(String hmpgRlsYn) {
+		this.hmpgRlsYn = hmpgRlsYn;
+	}
+
+	public String getIipsRlsYn() {
+		return iipsRlsYn;
+	}
+
+	public void setIipsRlsYn(String iipsRlsYn) {
+		this.iipsRlsYn = iipsRlsYn;
+	}
+
+	public String getTaskSecd() {
+		return taskSecd;
+	}
+
+	public void setTaskSecd(String taskSecd) {
+		this.taskSecd = taskSecd;
 	}
 
 }

@@ -6,6 +6,7 @@ var uploadModule =(function() {
 
 	 var random;
 
+
 	 $(document).ready(function(){
 		 random=Math.random();
 		 $('[data-file-list]').each(function(){
@@ -13,6 +14,8 @@ var uploadModule =(function() {
 			 basePath = $(this).data("basePath");
 
 			 var noButton = $(this).data("noButton");
+
+
 
 
 			 getFileList(this);
@@ -26,6 +29,8 @@ var uploadModule =(function() {
 
 
 		$('body').append('<form name="downloadForm" id="downloadForm" method="post" action="'+basePath+'/file/download/zip" style="display:none"><input type="hidden" name="downloadFileInfo" id="downloadFileInfo" value=""><input type="hidden" name="_csrf" value="'+token+'"></form>');
+
+
 
 	 });
 
@@ -349,6 +354,9 @@ var uploadModule =(function() {
 
 			 var startTime= new Date().getTime();
 			 metadata.startTime=startTime;
+
+
+
 			 slice(metadata);
 		 }
 
@@ -361,9 +369,11 @@ var uploadModule =(function() {
 		 //metadata.fileNm =  encodeURIComponent(metadata.fileNm);
 
 		 formdata.append('file',  piece);
+
 		 formdata.append('metadata', JSON.stringify(metadata));
 
 		// console.log(JSON.stringify(metadata));
+
 		  $.ajax({
 
 
@@ -498,29 +508,45 @@ var uploadModule =(function() {
 		            var safeFileNm = fileInfo.fileNm.replace(/'/g, "&#39;");
 		            var safeUploadFormId = uploadFormId.replace(/'/g, "&#39;");
 
+		            var homepageOpenYn = $("#fileList_" + uploadFormId).data("homepageOpenYn");
+		            var iipsOpenYn = $("#fileList_" + uploadFormId).data("iipsOpenYn");
+
+		            // 홈페이지 공개여부 스팬 생성
+		            var homePageOpenYnStr = "";
+		            if (homepageOpenYn == 'Y') {
+		                homePageOpenYnStr = `<span id='homepageOpenLabel_${fileInfo.fileId}' class='${fileInfo.hmpgRlsYn == 'Y' ? 'public' : 'private'}' style='margin:0 5px 0 5px; padding:2px 6px; border-radius:3px; font-size:11px;'>${fileInfo.hmpgRlsYn == 'Y' ? '홈페이지 공개' : '홈페이지 비공개'}</span>`;
+		            }
+
+
+		            // iips 공개여부 스팬 생성
+		            var iipsOpenYnStr = "";
+		            if (iipsOpenYn == 'Y') {
+		                iipsOpenYnStr = `<span id='odaOpenLabel_${fileInfo.fileId}' class='${fileInfo.iipsRlsYn == 'Y' ? 'public' : 'private'}' style='margin:0 5px 0 0; padding:2px 6px; border-radius:3px; font-size:11px;'>${fileInfo.iipsRlsYn == 'Y' ? '포털 공개' : '포털  비공개'}</span>`;
+		            }
+
 		            // li 태그로 감싸서 파일 목록 표시 - label 구조 유지하면서 다운로드 링크 분리
 
 		            if($("#refDocId_"+uploadFormId).val()=="NONE"){
 		            	 $("#fileList_" + uploadFormId).append(
-					                "<li>" +
-
-				                            "<a href='javascript:void(0);' onclick=\"event.stopPropagation(); uploadModule.fileDownload('" + safeUploadFormId + "', '" + fileInfo.fileId + "', '" + safeFileNm + "','" + fileInfo.temp + "');\" class='" + fileClass + "' style='text-decoration:none;'>" + fileNm +" ["+Math.round(Number(fileInfo.fileSize/1024))+"k]</a>" +
-
-					                "</li>"
-					            );
-
-			          }else{
-			            $("#fileList_" + uploadFormId).append(
-			                "<li>" +
-			                    "<div data-file-Id='" + fileInfo.fileId + "' style='padding-left:8px'>" +
-			                        "<input onclick='" + fileFunStr + "' class='check' id='" + random + "-" + fileInfo.fileId + "' type='checkbox' " + checked + " name='file_" + uploadFormId + "' value='" + fileInfo.fileId + "'> " +
-			                        "<label class='label' for='" + random + "-" + fileInfo.fileId + "'>" +
+				                "<li>" +
 			                            "<a href='javascript:void(0);' onclick=\"event.stopPropagation(); uploadModule.fileDownload('" + safeUploadFormId + "', '" + fileInfo.fileId + "', '" + safeFileNm + "','" + fileInfo.temp + "');\" class='" + fileClass + "' style='text-decoration:none;'>" + fileNm +" ["+Math.round(Number(fileInfo.fileSize/1024))+"k]</a>" +
-			                        "</label>" +
-			                    "</div>" +
-			                "</li>"
-			            );
-			          }
+				                "</li>"
+				            );
+
+		          }else{
+		        	  $("#fileList_" + uploadFormId).append(
+		        			    "<li>" +
+		        			        "<div data-file-Id='" + fileInfo.fileId + "' style='padding-left:8px'>" +
+		        			            "<input onclick='" + fileFunStr + "' class='check' id='" + random + "-" + fileInfo.fileId + "' type='checkbox' " + checked + " name='file_" + uploadFormId + "' value='" + fileInfo.fileId + "'> " +
+		        			            "<label class='label' for='" + random + "-" + fileInfo.fileId + "'>" +
+		        			                "<a href='javascript:void(0);' onclick=\"event.stopPropagation(); uploadModule.fileDownload('" + safeUploadFormId + "', '" + fileInfo.fileId + "', '" + safeFileNm + "','" + fileInfo.temp + "');\" class='" + fileClass + "' style='text-decoration:none;'>" + fileNm +" ["+Math.round(Number(fileInfo.fileSize/1024))+"k]</a>" +
+		        			            "</label>" +
+		        			            homePageOpenYnStr +
+		        			            iipsOpenYnStr +
+		        			        "</div>" +
+		        			    "</li>"
+		        	 );
+		          }
 		        }
 		    } else {
 		        // 파일 삭제 처리
@@ -553,7 +579,6 @@ var uploadModule =(function() {
 		    }
 		    $("#fileInfoList_" + uploadFormId).val(JSON.stringify(fileObj));
 		}
-
 
 	 function deleteAllFile(uploadFormId){
 
@@ -716,6 +741,7 @@ var uploadModule =(function() {
 	 }
 
 
+	 /*
 	 function allDownload(uploadFormId){
 
 		 var fileObj =  JSON.parse($("#fileInfoList_"+uploadFormId).val() );
@@ -725,47 +751,8 @@ var uploadModule =(function() {
 		var fileInfo ={};
 
 	 	 fileObj.fileInfo.forEach(function(obj, index) {
-
-	 		 /*
-			 fileInfo.fileId = obj.fileId;
-			 fileInfo.fileNm= obj.fileNm;
-			 fileInfo.filePath= obj.filePath;
-
-			 console.log("fileInfofileInfofileInfofileInfofileInfo",fileInfo);
-*/
 			 downloadFile.push(obj);
 		 });
-
-
-
-
-		 /*
-		 $("input[name=file_"+uploadFormId+"]").each(function(){
-
-			 	$(this).prop("checked",true);
-
-			 	var fileInfo ={};
-
-			 	var tmpFileId=$(this).val();
-			 	 fileObj.fileInfo.forEach(function(obj, index) {
-					 if(obj.fileId == tmpFileId){
-
-						 fileInfo.fileId = obj.fileId;
-						 fileInfo.fileNm= obj.fileNm;
-						 fileInfo.filePath= obj.filePath;
-
-						 downloadFile.push(fileInfo);
-					 }
-				 });
-
-		 });
-
-
-		 if(downloadFile.length==0){
-			 alert("다운로드할 파일을 선택하세요");
-			 return;
-		 }
-*/
 
 		 $('#downloadFileInfo').val(JSON.stringify(downloadFile));
 		 $("#downloadForm").attr("action", basePath+"/file/download/zip");
@@ -773,7 +760,9 @@ var uploadModule =(function() {
 		 $("#downloadForm").submit();
 
 	 }
+	 */
 
+	 /*
 	 function fileDownload(uploadFormId, fileId, fileNm, temp){
 
 		var fileInfo ={};
@@ -807,6 +796,477 @@ var uploadModule =(function() {
 		});
 
 	 }
+*/
+
+	// 전역 변수로 현재 다운로드 xhr 객체 저장
+	// ========== 전역 변수 선언 ==========
+	// 모든 다운로드 xhr 객체들을 uploadFormId를 키로 저장
+	let activeDownloads = {};
+
+	 async function allDownload(uploadFormId) {
+
+		 // 다운로드 시작 시간 기록
+		    const startTime = new Date().getTime();
+		    let totalFileSize = 0;
+
+		    // 로딩 및 진행률 표시 시작
+		   // $("#loading").show();
+		    $("#download-cancel-btn_"+uploadFormId).show();
+		    $("#progressBar_"+uploadFormId).show();
+		    $("#progressLabel_"+uploadFormId).show()
+		    $("#progressBar_"+uploadFormId).val(0);
+		    $("#progressLabel_"+uploadFormId).html("Download.. 0%");
+
+
+
+		    const fileObj = JSON.parse($("#fileInfoList_" + uploadFormId).val());
+	        const downloadFile = fileObj.fileInfo; // 배열 그대로
+
+
+		    // FormData 사용 (XMLHttpRequest와 함께 사용)
+		    const formData = new FormData();
+		    formData.append("downloadFileInfo", JSON.stringify(downloadFile));
+		    formData.append('_csrf', token);
+
+
+		    return new Promise((resolve, reject) => {
+		        const xhr = new XMLHttpRequest();
+		        activeDownloads[uploadFormId] = xhr; // 개별 다운로드로 저장
+
+
+		        let fakeProgress = 3;
+		        let fakeProgressTimer;
+		        // 요청 시작 시 진행률 표시 (작은 파일 대비)
+		        xhr.onloadstart = function() {
+		            $("#progressBar_"+uploadFormId).val(3);
+		            $("#progressLabel_"+uploadFormId).html("Download.. 3%");
+		           // console.log("다운로드 시작 - uploadFormId:", uploadFormId);
+
+		            // 가짜 진행률 증가 타이머 시작
+		            fakeProgressTimer = setInterval(() => {
+		                // 최대 45%까지만 증가
+		                if (fakeProgress < 20) {
+		                    fakeProgress += 0.1;
+		                    $("#progressBar_" + uploadFormId).val(fakeProgress.toFixed(1));
+		                    $("#progressLabel_" + uploadFormId).html("Preparing ZIP... " + fakeProgress.toFixed(1) + "%");
+		                } else {
+		                    clearInterval(fakeProgressTimer); // 더 이상 증가시키지 않음
+		                }
+		            }, 2000);
+		        };
+
+		        // 응답 헤더 수신 시 (작은 파일도 이 이벤트는 발생)
+		        xhr.onreadystatechange = function() {
+		            if (xhr.readyState === XMLHttpRequest.HEADERS_RECEIVED) {
+
+		            	// 실다운로드 시작되었으므로 가짜 진행률 중지
+		                if (fakeProgressTimer) {
+		                    clearInterval(fakeProgressTimer);
+		                }
+
+		                // Content-Length에서 파일 크기 추출
+		                const contentLength = xhr.getResponseHeader('Content-Length');
+		                const transferEncoding = xhr.getResponseHeader('Transfer-Encoding');
+
+		               // console.log("=== 응답 헤더 정보 ("+uploadFormId+") ===");
+		                //console.log("Content-Length:", contentLength);
+		               // console.log("Transfer-Encoding:", transferEncoding);
+		              //  console.log("모든 응답 헤더:", xhr.getAllResponseHeaders());
+
+		                if (contentLength) {
+		                    totalFileSize = parseInt(contentLength, 10);
+		                    console.log("파일 크기:", (totalFileSize/(1024*1024)).toFixed(2), "MB");
+		                } else {
+		                    console.warn("Content-Length 헤더가 없습니다! 진행률 표시가 제한될 수 있습니다.");
+		                }
+
+		                $("#progressBar_"+uploadFormId).val(30);
+		                $("#progressLabel_"+uploadFormId).html("Download.. 30%");
+		               // console.log("응답 헤더 수신");
+		            } else if (xhr.readyState === XMLHttpRequest.LOADING) {
+		                // onprogress 이벤트가 발생하지 않는 경우를 위한 백업
+		                if ($("#progressBar_"+uploadFormId).val() < 50) {
+		                    $("#progressBar_"+uploadFormId).val(50);
+		                    $("#progressLabel_"+uploadFormId).html("Download.. 50%");
+		                }
+		            }
+		        };
+
+		        // 진행률 이벤트 핸들러
+		        xhr.onprogress = function(e) {
+		          //  console.log("=== onprogress 이벤트 발생 ("+uploadFormId+") ===");
+		           // console.log("lengthComputable:", e.lengthComputable);
+		          //  console.log("loaded:", e.loaded, "total:", e.total);
+
+		            if (e.lengthComputable) {
+		                totalFileSize = e.total; // 파일 크기 업데이트
+		                const progress = Math.round((e.loaded / e.total) * 100);
+
+		                // 현재 시간과 다운로드 속도 계산
+		                const currentTime = new Date().getTime();
+		                const elapsedTime = (currentTime - startTime) / 1000; // 초 단위
+		                const downloadedMB = e.loaded / (1024 * 1024);
+		                const speed = elapsedTime > 0 ? (downloadedMB / elapsedTime).toFixed(2) : "0.00";
+
+		                $("#progressBar_"+uploadFormId).val(progress);
+		                $("#progressLabel_"+uploadFormId).html("Download.. "+progress + "% [" + speed + "MB/sec]");
+		               // console.log(`다운로드 진행률: ${progress}%, 속도: ${speed}MB/sec`);
+		            } else {
+		                // lengthComputable이 false인 경우에도 진행률 표시 (대안)
+		                const currentTime = new Date().getTime();
+		                const elapsedTime = (currentTime - startTime) / 1000;
+		                const downloadedMB = e.loaded / (1024 * 1024);
+		                const speed = elapsedTime > 0 ? (downloadedMB / elapsedTime).toFixed(2) : "0.00";
+
+		                // 시간 경과에 따른 대략적인 진행률 (최대 90%까지만)
+		                const timeProgress = Math.min(90, Math.round(elapsedTime * 2)); // 2% per second
+
+		                $("#progressBar_"+uploadFormId).val(timeProgress);
+		                $("#progressLabel_"+uploadFormId).html("Download.. " + downloadedMB.toFixed(2) + "MB [" + speed + "MB/sec]");
+		              //  console.log(`다운로드 중: ${downloadedMB.toFixed(2)}MB, 속도: ${speed}MB/sec (진행률 계산 불가)`);
+		            }
+		        };
+
+		        // 중단(abort) 이벤트 핸들러
+		        xhr.onabort = function() {
+		            const errorMsg = "사용자가 다운로드를 취소했습니다.";
+		            console.log(errorMsg + " - uploadFormId:", uploadFormId);
+		           // $("#loading").hide();
+		            $("#download-cancel-btn_"+uploadFormId).hide();
+		            $("#progressBar_"+uploadFormId).val(0);
+		            $("#progressLabel_"+uploadFormId).html("Download.. 0%");
+		            delete activeDownloads[uploadFormId]; // 개별 삭제
+		            reject(new Error(errorMsg));
+		        };
+
+		        // 완료 이벤트 핸들러
+		        xhr.onload = function() {
+		            try {
+		               // console.log("xhr status:", xhr.status, xhr.statusText);
+
+		                if (!xhr.status || xhr.status < 200 || xhr.status >= 300) {
+		                    throw new Error("서버 에러: " + xhr.status);
+		                }
+
+		                // Content-Type 확인
+		                const ct = xhr.getResponseHeader("Content-Type");
+		              //  console.log("response Content-Type:", ct);
+
+		                if (!ct || (!ct.includes("application/octet-stream") && !ct.includes("application/vnd"))) {
+		                    console.error("응답이 파일이 아님");
+		                    throw new Error("다운로드 컨텐츠가 아님 (응답 확인 필요)");
+		                }
+
+		                // Blob 생성
+		                const blob = new Blob([xhr.response]);
+
+
+		                // 파일명 Content-Disposition에서 추출 시도
+		               /*
+		                const dispo = xhr.getResponseHeader("Content-Disposition") || "";
+		                let filename = fileNm || "download";
+		                const m = dispo.match(/filename\*?=(?:UTF-8'')?\"?([^\";]+)/i);
+		                if (m && m[1]) filename = decodeURIComponent(m[1]);
+*/
+
+		                const dispo = xhr.getResponseHeader("Content-Disposition") || "";
+				        let filename = "download.zip";
+				        const m = dispo.match(/filename\*?=(?:UTF-8'')?\"?([^\";]+)/i);
+				        if (m && m[1]) filename = decodeURIComponent(m[1]);
+
+
+
+		                // 파일 다운로드 실행
+		                const url = window.URL.createObjectURL(blob);
+		                const a = document.createElement("a");
+		                a.href = url;
+		                a.download = filename;
+		                document.body.appendChild(a);
+		                a.click();
+		                a.remove();
+		                window.URL.revokeObjectURL(url);
+
+		                resolve();
+
+		            } catch (err) {
+		                alert("다운로드 실패: " + (err.message || err));
+		                reject(err);
+		            } finally {
+		                // 다운로드 완료 후 속도 계산
+		                const endTime = new Date().getTime();
+		                const downloadTime = endTime - startTime;
+		                const fileSizeMB = totalFileSize / (1024 * 1024);
+		                const spd = downloadTime > 0 ? (fileSizeMB / (downloadTime / 1000)).toFixed(2) : "0.00";
+
+		                let speedText = "";
+		                if (spd == "0.00" || !totalFileSize) {
+		                    speedText = '';
+		                } else {
+		                    speedText = " [" + spd + "MB/sec]";
+		                }
+
+		              //  $("#loading").hide();
+		                $("#download-cancel-btn_"+uploadFormId).hide(); // 개별 취소 버튼 숨김
+		                $("#progressBar_"+uploadFormId).val(100);
+		                $("#progressLabel_"+uploadFormId).html("download completed: 100%" + speedText);
+		                delete activeDownloads[uploadFormId]; // 개별 삭제
+		            }
+		        };
+
+		        // 에러 이벤트 핸들러
+		        xhr.onerror = function() {
+		            const errorMsg = "네트워크 오류가 발생했습니다.";
+		            alert("다운로드 실패: " + errorMsg);
+		            //$("#loading").hide();
+		            $("#download-cancel-btn_"+uploadFormId).hide();
+		            $("#progressBar_"+uploadFormId).val(0);
+		            $("#progressLabel_"+uploadFormId).html("Download.. 0%");
+		            delete activeDownloads[uploadFormId]; // 개별 삭제
+		            reject(new Error(errorMsg));
+		        };
+
+		        // 요청 설정 및 전송
+		        xhr.open('POST', '/file/download/zip', true);
+		        xhr.responseType = 'blob';
+		        // 타임아웃 제거 - 무제한 대기 (사용자가 취소 버튼으로 중단)
+		        xhr.send(formData);
+		    });
+		}
+
+
+
+
+	// ========== 다운로드 함수 ==========
+	async function fileDownload(uploadFormId, fileId, fileNm, temp) {
+	    // 다운로드 시작 시간 기록
+	    const startTime = new Date().getTime();
+	    let totalFileSize = 0;
+
+	    // 로딩 및 진행률 표시 시작
+	   // $("#loading").show();
+	    $("#download-cancel-btn_"+uploadFormId).show();
+	    $("#progressBar_"+uploadFormId).show();
+	    $("#progressLabel_"+uploadFormId).show()
+	    $("#progressBar_"+uploadFormId).val(0);
+	    $("#progressLabel_"+uploadFormId).html("Download.. 0%");
+
+	    // 파라미터 설정
+	    var fileInfo = {};
+	    fileInfo.fileId = fileId;
+	    fileInfo.fileNm = fileNm;
+	    fileInfo.temp = temp;
+	    if (temp != 'Y') fileInfo.temp = 'N';
+
+	    var downloadFileInfo = JSON.stringify(fileInfo);
+
+	    // FormData 사용 (XMLHttpRequest와 함께 사용)
+	    const formData = new FormData();
+	    formData.append("downloadFileInfo", downloadFileInfo);
+	    formData.append('_csrf', token);
+
+	    return new Promise((resolve, reject) => {
+	        const xhr = new XMLHttpRequest();
+	        activeDownloads[uploadFormId] = xhr; // 개별 다운로드로 저장
+
+
+
+	        // 요청 시작 시 진행률 표시 (작은 파일 대비)
+	        xhr.onloadstart = function() {
+	            $("#progressBar_"+uploadFormId).val(10);
+	            $("#progressLabel_"+uploadFormId).html("Download.. 10%");
+	           // console.log("다운로드 시작 - uploadFormId:", uploadFormId);
+
+	        };
+
+	        // 응답 헤더 수신 시 (작은 파일도 이 이벤트는 발생)
+	        xhr.onreadystatechange = function() {
+	            if (xhr.readyState === XMLHttpRequest.HEADERS_RECEIVED) {
+
+	                // Content-Length에서 파일 크기 추출
+	                const contentLength = xhr.getResponseHeader('Content-Length');
+	                const transferEncoding = xhr.getResponseHeader('Transfer-Encoding');
+
+	               // console.log("=== 응답 헤더 정보 ("+uploadFormId+") ===");
+	               //// console.log("Content-Length:", contentLength);
+	               // console.log("Transfer-Encoding:", transferEncoding);
+	              //  console.log("모든 응답 헤더:", xhr.getAllResponseHeaders());
+
+	                if (contentLength) {
+	                    totalFileSize = parseInt(contentLength, 10);
+	                    console.log("파일 크기:", (totalFileSize/(1024*1024)).toFixed(2), "MB");
+	                } else {
+	                    console.warn("Content-Length 헤더가 없습니다! 진행률 표시가 제한될 수 있습니다.");
+	                }
+
+	                $("#progressBar_"+uploadFormId).val(30);
+	                $("#progressLabel_"+uploadFormId).html("Download.. 30%");
+	               // console.log("응답 헤더 수신");
+	            } else if (xhr.readyState === XMLHttpRequest.LOADING) {
+	                // onprogress 이벤트가 발생하지 않는 경우를 위한 백업
+	                if ($("#progressBar_"+uploadFormId).val() < 50) {
+	                    $("#progressBar_"+uploadFormId).val(50);
+	                    $("#progressLabel_"+uploadFormId).html("Download.. 50%");
+	                }
+	            }
+	        };
+
+	        // 진행률 이벤트 핸들러
+	        xhr.onprogress = function(e) {
+	            //console.log("=== onprogress 이벤트 발생 ("+uploadFormId+") ===");
+	            //console.log("lengthComputable:", e.lengthComputable);
+	           // console.log("loaded:", e.loaded, "total:", e.total);
+
+	            if (e.lengthComputable) {
+	                totalFileSize = e.total; // 파일 크기 업데이트
+	                const progress = Math.round((e.loaded / e.total) * 100);
+
+	                // 현재 시간과 다운로드 속도 계산
+	                const currentTime = new Date().getTime();
+	                const elapsedTime = (currentTime - startTime) / 1000; // 초 단위
+	                const downloadedMB = e.loaded / (1024 * 1024);
+	                const speed = elapsedTime > 0 ? (downloadedMB / elapsedTime).toFixed(2) : "0.00";
+
+	                $("#progressBar_"+uploadFormId).val(progress);
+	                $("#progressLabel_"+uploadFormId).html("Download.. "+progress + "% [" + speed + "MB/sec]");
+	               // console.log(`다운로드 진행률: ${progress}%, 속도: ${speed}MB/sec`);
+	            } else {
+	                // lengthComputable이 false인 경우에도 진행률 표시 (대안)
+	                const currentTime = new Date().getTime();
+	                const elapsedTime = (currentTime - startTime) / 1000;
+	                const downloadedMB = e.loaded / (1024 * 1024);
+	                const speed = elapsedTime > 0 ? (downloadedMB / elapsedTime).toFixed(2) : "0.00";
+
+	                // 시간 경과에 따른 대략적인 진행률 (최대 90%까지만)
+	                const timeProgress = Math.min(90, Math.round(elapsedTime * 2)); // 2% per second
+
+	                $("#progressBar_"+uploadFormId).val(timeProgress);
+	                $("#progressLabel_"+uploadFormId).html("Download.. " + downloadedMB.toFixed(2) + "MB [" + speed + "MB/sec]");
+	                console.log(`다운로드 중: ${downloadedMB.toFixed(2)}MB, 속도: ${speed}MB/sec (진행률 계산 불가)`);
+	            }
+	        };
+
+	        // 중단(abort) 이벤트 핸들러
+	        xhr.onabort = function() {
+	            const errorMsg = "사용자가 다운로드를 취소했습니다.";
+	            console.log(errorMsg + " - uploadFormId:", uploadFormId);
+	           // $("#loading").hide();
+	            $("#download-cancel-btn_"+uploadFormId).hide();
+	            $("#progressBar_"+uploadFormId).val(0);
+	            $("#progressLabel_"+uploadFormId).html("Download.. 0%");
+	            delete activeDownloads[uploadFormId]; // 개별 삭제
+	            reject(new Error(errorMsg));
+	        };
+
+	        // 완료 이벤트 핸들러
+	        xhr.onload = function() {
+	            try {
+	                console.log("xhr status:", xhr.status, xhr.statusText);
+
+	                if (!xhr.status || xhr.status < 200 || xhr.status >= 300) {
+	                    throw new Error("서버 에러: " + xhr.status);
+	                }
+
+	                // Content-Type 확인
+	                const ct = xhr.getResponseHeader("Content-Type");
+	                console.log("response Content-Type:", ct);
+
+	                if (!ct || (!ct.includes("application/octet-stream") && !ct.includes("application/vnd"))) {
+	                    console.error("응답이 파일이 아님");
+	                    throw new Error("다운로드 컨텐츠가 아님 (응답 확인 필요)");
+	                }
+
+	                // Blob 생성
+	                const blob = new Blob([xhr.response]);
+
+	                // 파일명 Content-Disposition에서 추출 시도
+	                const dispo = xhr.getResponseHeader("Content-Disposition") || "";
+	                let filename = fileNm || "download";
+	                const m = dispo.match(/filename\*?=(?:UTF-8'')?\"?([^\";]+)/i);
+	                if (m && m[1]) filename = decodeURIComponent(m[1]);
+
+	                // 파일 다운로드 실행
+	                const url = window.URL.createObjectURL(blob);
+	                const a = document.createElement("a");
+	                a.href = url;
+	                a.download = filename;
+	                document.body.appendChild(a);
+	                a.click();
+	                a.remove();
+	                window.URL.revokeObjectURL(url);
+
+	                resolve();
+
+	            } catch (err) {
+	                alert("다운로드 실패: " + (err.message || err));
+	                reject(err);
+	            } finally {
+	                // 다운로드 완료 후 속도 계산
+	                const endTime = new Date().getTime();
+	                const downloadTime = endTime - startTime;
+	                const fileSizeMB = totalFileSize / (1024 * 1024);
+	                const spd = downloadTime > 0 ? (fileSizeMB / (downloadTime / 1000)).toFixed(2) : "0.00";
+
+	                let speedText = "";
+	                if (spd == "0.00" || !totalFileSize) {
+	                    speedText = '';
+	                } else {
+	                    speedText = " [" + spd + "MB/sec]";
+	                }
+
+	                //$("#loading").hide();
+	                $("#download-cancel-btn_"+uploadFormId).hide(); // 개별 취소 버튼 숨김
+	                $("#progressBar_"+uploadFormId).val(100);
+	                $("#progressLabel_"+uploadFormId).html("download completed: 100%" + speedText);
+	                delete activeDownloads[uploadFormId]; // 개별 삭제
+	            }
+	        };
+
+	        // 에러 이벤트 핸들러
+	        xhr.onerror = function() {
+	            const errorMsg = "네트워크 오류가 발생했습니다.";
+	            alert("다운로드 실패: " + errorMsg);
+	           // $("#loading").hide();
+	            $("#download-cancel-btn_"+uploadFormId).hide();
+	            $("#progressBar_"+uploadFormId).val(0);
+	            $("#progressLabel_"+uploadFormId).html("Download.. 0%");
+	            delete activeDownloads[uploadFormId]; // 개별 삭제
+	            reject(new Error(errorMsg));
+	        };
+
+	        // 요청 설정 및 전송
+	        xhr.open('POST', '/file/download', true);
+	        xhr.responseType = 'blob';
+	        // 타임아웃 제거 - 무제한 대기 (사용자가 취소 버튼으로 중단)
+	        xhr.send(formData);
+	    });
+	}
+
+	// ========== 취소 함수들 ==========
+	// 개별 다운로드 취소 함수
+	function cancelDownload(uploadFormId) {
+	    const xhr = activeDownloads[uploadFormId];
+	    if (xhr && xhr.readyState !== XMLHttpRequest.DONE) {
+	        if (confirm("다운로드를 취소하시겠습니까?")) {
+	            xhr.abort(); // 해당 다운로드만 중단
+	            $("#progressBar_"+uploadFormId).hide();
+	            $("#progressLabel_"+uploadFormId).hide()
+	        }
+	    }
+
+	    return false;
+	}
+
+	// 모든 다운로드 취소 함수 (필요시 사용)
+	function cancelAllDownloads() {
+	    if (confirm("모든 다운로드를 취소하시겠습니까?")) {
+	        Object.keys(activeDownloads).forEach(uploadFormId => {
+	            const xhr = activeDownloads[uploadFormId];
+	            if (xhr && xhr.readyState !== XMLHttpRequest.DONE) {
+	                xhr.abort();
+	            }
+	        });
+	    }
+	}
 
 
 
@@ -1042,11 +1502,13 @@ var uploadModule =(function() {
 
 
     function checkAll(uploadFormId){
+
     	if( $("#checkAll_"+uploadFormId).prop("checked") ){
     		$("input[name=file_"+uploadFormId+"]").prop("checked",true);
     	}else{
     		$("input[name=file_"+uploadFormId+"]").prop("checked",false);
     	}
+
 	 }
 
     function getFileInfo(obj){
@@ -1301,6 +1763,133 @@ var uploadModule =(function() {
 
     }
 
+    function homepageOpenYn(uploadFormId) {
+        var fileObj = {};
+        var tmpFileList = [];
+
+        if ($("#fileInfoList_" + uploadFormId).val() != '') {
+            fileObj = JSON.parse($("#fileInfoList_" + uploadFormId).val());
+            tmpFileList = fileObj.fileInfo;
+
+            var check=false;
+
+            $("input[name=file_" + uploadFormId + "]:checked").each(function() {
+
+            	check=true;
+
+                var checkedFileId = $(this).val();
+
+                tmpFileList.forEach(function(item, index) {
+                    if (item.fileId == checkedFileId) {
+                        item.hmpgRlsYn = item.hmpgRlsYn == 'Y' ? 'N' : 'Y';
+
+                        // UI 업데이트
+                        var openLabel = $("#homepageOpenLabel_" + checkedFileId);
+                        if (item.hmpgRlsYn == 'Y') {
+                            openLabel.text('홈페이지 공개').removeClass('private').addClass('public');
+                        } else {
+                            openLabel.text('홈페이지 비공개').removeClass('public').addClass('private');
+                        }
+                    }
+                });
+            });
+
+            if(!check){
+            	alert("항목을 선택하세요.");
+            }
+            // 업데이트된 정보 저장
+            $("#fileInfoList_" + uploadFormId).val(JSON.stringify(fileObj));
+        }
+    }
+
+    function iipsOpenYn(uploadFormId) {
+        var fileObj = {};
+        var tmpFileList = [];
+
+        if ($("#fileInfoList_" + uploadFormId).val() != '') {
+            fileObj = JSON.parse($("#fileInfoList_" + uploadFormId).val());
+            tmpFileList = fileObj.fileInfo;
+
+            var check=false;
+
+            // 체크된 파일들의 공개/비공개 상태 토글
+            $("input[name=file_" + uploadFormId + "]:checked").each(function() {
+
+            	check=true;
+
+                var checkedFileId = $(this).val();
+
+                tmpFileList.forEach(function(item, index) {
+                    if (item.fileId == checkedFileId) {
+                        item.iipsRlsYn = item.iipsRlsYn == 'Y' ? 'N' : 'Y';
+
+                        // UI 업데이트
+                        var openLabel = $("#odaOpenLabel_" + checkedFileId);
+                        if (item.iipsRlsYn == 'Y') {
+                            openLabel.text('포털 공개').removeClass('private').addClass('public');
+                        } else {
+                            openLabel.text('포털 비공개').removeClass('public').addClass('private');
+                        }
+                    }
+                });
+            });
+
+            if(!check){
+            	alert("항목을 선택하세요.");
+            }
+
+            // 업데이트된 정보 저장
+            $("#fileInfoList_" + uploadFormId).val(JSON.stringify(fileObj));
+        }
+    }
+
+
+
+
+ // 전체 선택 함수
+ function selectAllFiles(uploadFormId) {
+     $("#fileList_" + uploadFormId + " input[type='checkbox']").each(function() {
+         $(this).prop('checked', true);
+         // 파일 상태 업데이트를 위해 onclick 이벤트 트리거
+         if ($(this).attr('onclick')) {
+             eval($(this).attr('onclick'));
+         }
+     });
+ }
+
+ // 전체 선택해제 함수
+ function deselectAllFiles(uploadFormId) {
+     $("#fileList_" + uploadFormId + " input[type='checkbox']").each(function() {
+         $(this).prop('checked', false);
+         // 파일 상태 업데이트를 위해 onclick 이벤트 트리거
+         if ($(this).attr('onclick')) {
+             eval($(this).attr('onclick'));
+         }
+     });
+ }
+
+	 // 선택된 파일 개수 반환 함수
+	 function getSelectedFileCount(uploadFormId) {
+	     return $("#fileList_" + uploadFormId + " input[type='checkbox']:checked").length;
+	 }
+
+	 // 전체 파일 개수 반환 함수
+	 function getTotalFileCount(uploadFormId) {
+	     return $("#fileList_" + uploadFormId + " input[type='checkbox']").length;
+	 }
+
+	 // 전체선택/해제 토글 함수 (선택된 파일이 전체와 같으면 해제, 아니면 전체선택)
+	 function toggleSelectAllFiles(uploadFormId) {
+	     var totalCount = getTotalFileCount(uploadFormId);
+	     var selectedCount = getSelectedFileCount(uploadFormId);
+
+	     if (selectedCount === totalCount && totalCount > 0) {
+	         deselectAllFiles(uploadFormId);
+	     } else {
+	         selectAllFiles(uploadFormId);
+	     }
+	 }
+
 
 
 	 return {
@@ -1316,7 +1905,11 @@ var uploadModule =(function() {
 		 reload : reload,
 		 showFile : showFile,
 		 readFile : readFile,
-		 checkedFileInfo :checkedFileInfo
+		 checkedFileInfo :checkedFileInfo,
+		 homepageOpenYn:homepageOpenYn,
+		 iipsOpenYn:iipsOpenYn,
+		 toggleSelectAllFiles:toggleSelectAllFiles,
+		 cancelDownload:cancelDownload
 	 };
 
 

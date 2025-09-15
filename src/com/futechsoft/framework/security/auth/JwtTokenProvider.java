@@ -1,6 +1,8 @@
 package com.futechsoft.framework.security.auth;
 
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -10,6 +12,7 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,38 +27,53 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtTokenProvider {
-    
+
     /*
 	    private String secretKeyString="DSADsads";
 
 	    private SecretKey secretKey;
 	    private final long validityInMilliseconds = 3600000; // 1시간
-	    
+
 	    @PostConstruct
 	    protected void init() {
 	        // 256비트 키 자동 생성
 	        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 	    }
 	    */
-	    
-	    private String secretKeyString = "your-secret-key-which-should-be-at-least-256-bits-long"; // 256 비트 이상의 키 문자열
+
+	  //  private String secretKeyString = "your-secret-key-which-should-be-at-least-256-bits-long"; // 256 비트 이상의 키 문자열
 	    private SecretKey secretKey;
-	    
+
+	    @Value("${jwt.secretKey}")
+	    private String secretKeyString;
+
 	    //private final long validityInMilliseconds = 3600000; // 1시간
 	    private final long validityInMilliseconds = 1800000; // 30분
 
 	    @PostConstruct
 	    protected void init() {
+	    	/*
 	        // secretKeyString을 바이트 배열로 변환
 	        byte[] keyBytes = secretKeyString.getBytes(StandardCharsets.UTF_8);
-	        
+
 	        // 키 길이가 256비트 이상이어야 한다.
 	        if (keyBytes.length < 32) {
 	            throw new IllegalArgumentException("Secret key must be at least 256 bits (32 bytes).");
 	        }
-	        
+
 	        // SecretKey 객체 생성
 	        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+	        */
+
+	        byte[] keyBytes = Base64.getDecoder().decode(secretKeyString);
+	        this.secretKey  = Keys.hmacShaKeyFor(keyBytes);
+	    }
+
+	    public static void main(String[] args) {
+	        byte[] keyBytes = new byte[32]; // 32바이트 = 256비트
+	        new SecureRandom().nextBytes(keyBytes);
+	        String secretKey = Base64.getEncoder().encodeToString(keyBytes);
+	        System.out.println("Your JWT Secret Key: " + secretKey);
 	    }
 
 	    /**
@@ -78,8 +96,8 @@ public class JwtTokenProvider {
 	                .signWith(secretKey, SignatureAlgorithm.HS256)
 	                .compact();
 	    }
-	    
-	    
+
+
 	    public boolean willExpireSoon(String token) {
 	        try {
 	            Claims claims = Jwts.parserBuilder()
@@ -92,10 +110,10 @@ public class JwtTokenProvider {
 	            Date now = new Date();
 
 	            long remainingTimeInSeconds = (expiration.getTime() - now.getTime()) / 1000;
-	            
+
 	            System.out.println("remainingTimeInSeconds......."+remainingTimeInSeconds);
-	            
-	            
+
+
 	            return remainingTimeInSeconds < 600;
 
 	        } catch (Exception e) {
@@ -104,7 +122,7 @@ public class JwtTokenProvider {
 	        }
 	    }
 
-	    
+
 
 	    /**
 	     * 토큰 검증 및 파싱
@@ -150,6 +168,19 @@ public class JwtTokenProvider {
 	            return false;
 	        }
 	    }
+
+
+	    /**
+	     * 토큰이 유효한지 확인
+	     */
+	    public boolean isValidTokenApiUser(String token) {
+	        try {
+	            return  !isTokenExpired(token);
+	        } catch (JwtException e) {
+	            return false;
+	        }
+	    }
+
 
 	    /**
 	     * 토큰의 유효기간 확인

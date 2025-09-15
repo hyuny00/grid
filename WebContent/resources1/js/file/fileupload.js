@@ -1007,16 +1007,16 @@ var uploadModule =(function() {
 		 }
 
 		 hwpCtrlPopup(showFile[0].fileId,showFile[0].fileNm,showFile[0].temp);
-	 }	 
-    
-    
+	 }
+
+
     //첨부파일 내용조회
-    function readFile(uploadFormId){        	
+    function readFile(uploadFormId){
     	var readFile = [];
     	var fileObj =  JSON.parse($("#fileInfoList_"+uploadFormId).val());
     	$("input[name=file_"+uploadFormId+"]:checked").each(function(){
     		var fileInfo ={};
-    		var tmpFileId=$(this).val();    		
+    		var tmpFileId=$(this).val();
 
     		fileObj.fileInfo.forEach(function(obj, index) {
     			if(obj.fileId == tmpFileId){
@@ -1039,25 +1039,25 @@ var uploadModule =(function() {
 			 alert("하나의 파일만 선택하세요");
 			 return;
 		 }
-		 
+
 		 var fileInfoList = {};
 		 fileInfoList.refDocId = "endDocId";
 		 fileInfoList.fileInfo = readFile;
 		 fileInfoList = JSON.stringify(fileInfoList);
-		 
+
 		 $.ajax({
 			 type : "post",
 			 url : "/common/fileView/readFileAjax",
 			 contentType:"application/x-www-form-urlencoded; charset=UTF-8",
 			 data : {fileInfoList : fileInfoList},
-			 success: function (result) {				 
+			 success: function (result) {
 				 var txt = result.fileText;
 				 txt = txt.replace(/<!--[^>](.*?)-->/g, "");
 				 txt = txt.replace(/\r\n/g, "<br>");
 				 txt = txt.replace(/\n/g, "<br>");
-				 
+
 				 CKEDITOR.instances.reply_cnts.setData(txt);  //ck editor 내용 입력
-				 				 
+
 				 //displayFileList(readFile[0], uploadFormId);  //삭제시
 			 }, error : function(jqXHR) {
 				alert("예외가 발생했습니다. 관리자에게 문의하세요.");

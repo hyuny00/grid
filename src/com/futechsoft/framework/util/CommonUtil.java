@@ -1,5 +1,6 @@
 package com.futechsoft.framework.util;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -115,22 +116,24 @@ public class CommonUtil {
 	}
 
 
-	public static void copy(InputStream in, OutputStream out) throws IOException {
-		int BUFFER_SIZE = 4096;
+	public static void copy(InputStream in, OutputStream out, long length) throws IOException {
+	    // 최적화된 버전
+	    int BUFFER_SIZE = Math.min(64 * 1024, (int)(length / 100)); // 동적 계산
+	    BUFFER_SIZE = Math.max(8 * 1024, BUFFER_SIZE); // 최소 8KB
 
-		int byteCount = 0;
-		byte[] buffer = new byte[BUFFER_SIZE];
-		int bytesRead = -1;
-		while ((bytesRead = in.read(buffer)) != -1) {
-			out.write(buffer, 0, bytesRead);
-			byteCount += bytesRead;
+	    byte[] buffer = new byte[BUFFER_SIZE];
+	    int bytesRead;
 
-			if(byteCount > 1024*1024) {  //1M마다 메모리 비움
-				byteCount=0;
-				out.flush();
-			}
-		}
-		out.flush();
+	    // BufferedOutputStream 사용하되 원본 스트림은 닫지 않음
+	    BufferedOutputStream bufferedOut = new BufferedOutputStream(out, BUFFER_SIZE);
+	    try {
+	        while ((bytesRead = in.read(buffer)) != -1) {
+	            bufferedOut.write(buffer, 0, bytesRead);
+	        }
+	        bufferedOut.flush(); // flush만 하고 close는 하지 않음
+	    } finally {
+	        // bufferedOut.close() 하지 않음 - 원본 out이 닫힐 수 있음
+	    }
 	}
 
 	/**

@@ -68,7 +68,7 @@
 	padding-left:20px;
 }
 [data-file-list][data-mode="view"] label {
-	
+
 }
 
 /* 파일 목록 아이템 간격 조정 - 간격을 최소화 */
@@ -84,6 +84,9 @@
 }
 
 [data-file-list] li > div {
+	display:flex;
+	align-items:center;
+	position:relative;
     padding-top: 1px; /* 최소 상단 패딩 */
     padding-bottom: 1px; /* 최소 하단 패딩 */
     box-sizing:border-box;
@@ -108,7 +111,7 @@
         min-height: 50px;
         padding: 8px;
     }
-    
+
     .drag-message,
     .drop-success {
         font-size: 12px;
@@ -270,3 +273,17 @@
 }
 
 .file-upload ul li label::before {position: relative;margin-right: 8px;}
+
+
+
+.public {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.private {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
