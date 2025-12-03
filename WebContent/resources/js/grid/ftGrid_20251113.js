@@ -333,23 +333,23 @@ class TreeGridManager {
 
         // 정렬 아이콘 업데이트
         this.updateSortIcons();
-
+		
 		if (this.sortNoSearch) {
-			// 조회하지 않고 화면내에서 현재 페이징된 데이터로만 정렬처리
+			// HINA
 			let ds;
 			if (this.isTreeMode) {
-				ds = this.getFlatDataList();
+				ds = this.getFlatDataList();	
 			} else {
 				ds = this.getData();
 			}
-
+			
 			this.sortDataList(ds, sortField);
-
+			
 		} else {
 			// 데이터 다시 조회
-			this.searchData();
+			this.searchData();			
 		}
-
+					
     }
 
     updateSortIcons() {
@@ -521,13 +521,7 @@ class TreeGridManager {
                 if(	$("#loading").length){
                 	$("#loading").hide();
                 }
-                console.log(xhr.status);
-                if(xhr.status == '403'){
-                	 alert("페이지를 조회할 권한이 없습니다.");
-                }else{
-                	 alert("데이터를 불러오는데 실패했습니다.");
-                }
-
+                alert("데이터를 불러오는데 실패했습니다.");
             }
         });
     }
@@ -1924,34 +1918,6 @@ class TreeGridManager {
         if (result && result.node) {
             result.node[field] = value;
 
-            // ★ 추가: hidden 필드와 data-value 속성 업데이트
-            // 같은 행의 모든 hidden input과 data-value 속성을 가진 요소들도 함께 업데이트
-            const $row = $el.closest('tr');
-            if ($row.length) {
-                // 1. 같은 이름의 hidden input 업데이트
-                const hiddenInputs = $row.find(`input[type="hidden"][name="${field}"], input[type="hidden"][data-field="${field}"]`);
-                hiddenInputs.each(function() {
-                    $(this).val(value);
-                });
-
-                // 2. 같은 필드의 다른 요소들의 data-value 업데이트
-                const $elements = $row.find(`[data-field="${field}"]`);
-                $elements.each(function() {
-                    $(this).data('value', value);
-                });
-
-                // 3. 같은 행의 모든 hidden 필드의 data-value 업데이트 (자동 동기화)
-                const allHiddenFields = $row.find('input[type="hidden"][data-field]');
-                allHiddenFields.each(function() {
-                    const hiddenField = $(this).data('field');
-                    const nodeField = result.node[hiddenField];
-                    if (nodeField !== undefined) {
-                        $(this).val(nodeField);
-                        $(this).data('value', nodeField);
-                    }
-                });
-            }
-
             // 엑셀 모드인 경우 원본 엑셀 데이터도 업데이트
             if (this.isExcelMode && result.node.isExcel) {
                 const nodeIndex = this.data.indexOf(result.node);
@@ -2979,7 +2945,7 @@ class TreeGridManager {
 
         // 페이지 사이즈 선택 드롭다운 (선택사항)
         const pageSizeOptions = [5, 10, 20, 50, 100];
-        const pageSizeSelect = $(`<select name="pageSize" title="목록 수" id="${this.gridId}-pageSize"></select>`);
+        const pageSizeSelect = $(`<select name="pageSize" id="${this.gridId}-pageSize"></select>`);
 
         pageSizeOptions.forEach(size => {
             const option = $(`<option value="${size}" ${size === this.pageSize ? 'selected' : ''}>${size}</option>`);
@@ -4286,71 +4252,70 @@ class TreeGridManager {
 	    // 이동한 행 다시 선택
 	    $(`#${this.gridId}-body tr[data-id="${nodeId}"] input.row-check`).prop('checked', true);
 	}
-
+	
 	// 데이터 정렬
-	sortDataList(ds, field) {
+	sortDataList(ds, field) {		
 		if (!Array.isArray(ds) || !ds.length || !field) {
-			return;
+			return;	
 		}
-
-		const dsSort = JSON.parse(JSON.stringify(ds));
-		const booDesc = this.currentSortDirection === 'desc';
+		
+		const dsSort = JSON.parse(JSON.stringify(ds)); 
+		const booDesc = this.currentSortDirection === 'desc'; 
 		dsSort.sort( (a, b) => {
 			// 필드값 비교
 			const nCompare = this.compareFiledValue(a[field], b[field]);
-
+									
 			if (booDesc) {
 				return -1 * nCompare;
 			}
-
+			
 			return nCompare;
 		});
-
-		// total 은 그리드의 원래 총건수
-		const dm =
+		
+		const dm = 
 			{
 			data : dsSort,
-			total : this.totalCount
+			total : dsSort.length	
 			}
-		// 정렬된 데이터를 로드
+		// 정렬된 데이터를 로드	
 		this.setData(dm);
-	}
-
+	} 
+	
 	// 데이터 필드값 비교
 	compareFiledValue(a, b) {
 		if (typeof a === 'number' && typeof b === 'number') {
 			const nA = a || 0;
 			const nB = b || 0;
-			return nA - nB;
+			return nA - nB; 	
 		}
-
+			
 		const sA = String(a || '');
 		const sB = String(b || '');
 
 		if (sA > sB) {
-			return 1;
+			return 1;	
 		}
 
 		if (sA < sB) {
-			return -1;
+			return -1;	
 		}
-
-		return 0;
+					
+		return 0; 		
 	}
-
+	
 	addSortIcons() {
 		$(`#${this.gridId}-container table th.sortable`).each(function() {
-			const comp = $(this);
+			const comp = $(this);	
 			const nHasChk = comp.find(".tblChk").length;
 			if (nHasChk === 0) {
 				const nHasSortIcon = comp.find(".sort-icon").length;
 				if (nHasSortIcon === 0) {
-					const sHtml = CodeUtil.toDefaultString(comp.html(), "") + '<span class="sort-icon"></span>';
-					comp.html(sHtml);
+					const sHtml = CodeUtil.toDefaultString(comp.html(), "") + '<span class="sort-icon"></span>';	
+					comp.html(sHtml);	
 				}
 			}
-		});
-	}
+		});		
+	}  
 }
 
 //

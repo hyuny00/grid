@@ -335,7 +335,7 @@ class TreeGridManager {
         this.updateSortIcons();
 
 		if (this.sortNoSearch) {
-			// 조회하지 않고 화면내에서 현재 페이징된 데이터로만 정렬처리
+			// HINA
 			let ds;
 			if (this.isTreeMode) {
 				ds = this.getFlatDataList();
@@ -521,13 +521,10 @@ class TreeGridManager {
                 if(	$("#loading").length){
                 	$("#loading").hide();
                 }
-                console.log(xhr.status);
-                if(xhr.status == '403'){
-                	 alert("페이지를 조회할 권한이 없습니다.");
-                }else{
-                	 alert("데이터를 불러오는데 실패했습니다.");
-                }
 
+                alert(status);
+                alert(error);
+                alert("데이터를 불러오는데 실패했습니다.");
             }
         });
     }
@@ -1924,34 +1921,6 @@ class TreeGridManager {
         if (result && result.node) {
             result.node[field] = value;
 
-            // ★ 추가: hidden 필드와 data-value 속성 업데이트
-            // 같은 행의 모든 hidden input과 data-value 속성을 가진 요소들도 함께 업데이트
-            const $row = $el.closest('tr');
-            if ($row.length) {
-                // 1. 같은 이름의 hidden input 업데이트
-                const hiddenInputs = $row.find(`input[type="hidden"][name="${field}"], input[type="hidden"][data-field="${field}"]`);
-                hiddenInputs.each(function() {
-                    $(this).val(value);
-                });
-
-                // 2. 같은 필드의 다른 요소들의 data-value 업데이트
-                const $elements = $row.find(`[data-field="${field}"]`);
-                $elements.each(function() {
-                    $(this).data('value', value);
-                });
-
-                // 3. 같은 행의 모든 hidden 필드의 data-value 업데이트 (자동 동기화)
-                const allHiddenFields = $row.find('input[type="hidden"][data-field]');
-                allHiddenFields.each(function() {
-                    const hiddenField = $(this).data('field');
-                    const nodeField = result.node[hiddenField];
-                    if (nodeField !== undefined) {
-                        $(this).val(nodeField);
-                        $(this).data('value', nodeField);
-                    }
-                });
-            }
-
             // 엑셀 모드인 경우 원본 엑셀 데이터도 업데이트
             if (this.isExcelMode && result.node.isExcel) {
                 const nodeIndex = this.data.indexOf(result.node);
@@ -2473,15 +2442,6 @@ class TreeGridManager {
                 return andConditions.map(condition => {
                     condition = condition.trim();
 
-                    // 'not empty' 패턴 확인 (not equals보다 먼저 체크)
-                    const notEmptyMatch = condition.match(/^(.+?)\s+not\s+empty$/);
-                    if (notEmptyMatch) {
-                        return {
-                            left: notEmptyMatch[1].trim(),
-                            operator: 'not empty'
-                        };
-                    }
-
                     // 'not equals' 패턴 확인
                     const notEqualsMatch = condition.match(/^(.+?)\s+not\s+equals\s+(.+)$/);
                     if (notEqualsMatch) {
@@ -2489,15 +2449,6 @@ class TreeGridManager {
                             left: notEqualsMatch[1].trim(),
                             operator: 'not equals',
                             right: notEqualsMatch[2].trim()
-                        };
-                    }
-
-                    // 'empty' 패턴 확인
-                    const emptyMatch = condition.match(/^(.+?)\s+empty$/);
-                    if (emptyMatch) {
-                        return {
-                            left: emptyMatch[1].trim(),
-                            operator: 'empty'
                         };
                     }
 
@@ -2516,15 +2467,6 @@ class TreeGridManager {
             });
         }
 
-        // 값이 비어있는지 확인하는 헬퍼 함수
-        function isEmpty(value) {
-            if (value === null || value === undefined) return true;
-            if (typeof value === 'string' && value.trim() === '') return true;
-            if (Array.isArray(value) && value.length === 0) return true;
-            if (typeof value === 'object' && Object.keys(value).length === 0) return true;
-            return false;
-        }
-
         // 조건 평가 함수 (and, or 지원)
         function evaluateConditions(conditionGroups) {
             // OR 조건: 하나의 그룹이라도 true이면 전체가 true
@@ -2532,16 +2474,11 @@ class TreeGridManager {
                 // AND 조건: 그룹 내 모든 조건이 true여야 함
                 return andGroup.every(condition => {
                     const leftValue = parseValue(condition.left);
+                    const rightValue = parseValue(condition.right);
 
-                    if (condition.operator === 'empty') {
-                        return isEmpty(leftValue);
-                    } else if (condition.operator === 'not empty') {
-                        return !isEmpty(leftValue);
-                    } else if (condition.operator === 'equals') {
-                        const rightValue = parseValue(condition.right);
+                    if (condition.operator === 'equals') {
                         return leftValue == rightValue;
                     } else if (condition.operator === 'not equals') {
-                        const rightValue = parseValue(condition.right);
                         return leftValue != rightValue;
                     }
 
@@ -2593,40 +2530,6 @@ class TreeGridManager {
                 const leftValue = parseValue(key);
                 const rightValue = parseValue(value);
                 return leftValue != rightValue ? content : '';
-            });
-
-        // 3-1단계: NOT EMPTY 조건 처리
-        // {{#if key not empty}}...{{else}}...{{/if}}
-        result = result.replace(
-            /\{\{#if\s+([^}]+?)\s+not\s+empty\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g,
-            function(match, key, trueContent, falseContent) {
-                const value = parseValue(key);
-                return !isEmpty(value) ? trueContent : falseContent;
-            });
-
-        // {{#if key not empty}}...{{/if}} (else 없는 버전)
-        result = result.replace(
-            /\{\{#if\s+([^}]+?)\s+not\s+empty\}\}([\s\S]*?)\{\{\/if\}\}/g,
-            function(match, key, content) {
-                const value = parseValue(key);
-                return !isEmpty(value) ? content : '';
-            });
-
-        // 3-2단계: EMPTY 조건 처리
-        // {{#if key empty}}...{{else}}...{{/if}}
-        result = result.replace(
-            /\{\{#if\s+([^}]+?)\s+empty\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g,
-            function(match, key, trueContent, falseContent) {
-                const value = parseValue(key);
-                return isEmpty(value) ? trueContent : falseContent;
-            });
-
-        // {{#if key empty}}...{{/if}} (else 없는 버전)
-        result = result.replace(
-            /\{\{#if\s+([^}]+?)\s+empty\}\}([\s\S]*?)\{\{\/if\}\}/g,
-            function(match, key, content) {
-                const value = parseValue(key);
-                return isEmpty(value) ? content : '';
             });
 
         // 4단계: 기존 EQUALS 조건 처리
@@ -2979,7 +2882,7 @@ class TreeGridManager {
 
         // 페이지 사이즈 선택 드롭다운 (선택사항)
         const pageSizeOptions = [5, 10, 20, 50, 100];
-        const pageSizeSelect = $(`<select name="pageSize" title="목록 수" id="${this.gridId}-pageSize"></select>`);
+        const pageSizeSelect = $(`<select name="pageSize" id="${this.gridId}-pageSize"></select>`);
 
         pageSizeOptions.forEach(size => {
             const option = $(`<option value="${size}" ${size === this.pageSize ? 'selected' : ''}>${size}</option>`);
@@ -4306,11 +4209,10 @@ class TreeGridManager {
 			return nCompare;
 		});
 
-		// total 은 그리드의 원래 총건수
 		const dm =
 			{
 			data : dsSort,
-			total : this.totalCount
+			total : dsSort.length
 			}
 		// 정렬된 데이터를 로드
 		this.setData(dm);

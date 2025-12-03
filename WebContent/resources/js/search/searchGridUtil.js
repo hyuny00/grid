@@ -6,7 +6,7 @@ class CommonGridManager {
     constructor() {
         this.categoryData = {};
         this.codeMap = {};
-        this.basePath='';
+        this.basePath=window.basePath;
     }
 
     /**
@@ -55,7 +55,7 @@ class CommonGridManager {
             }
 
             $.ajax({
-                url:  this.basePath+'/common/selectCode',
+                url: this.basePath+'/common/selectCode',
                 type: 'get',
                 contentType: "application/x-www-form-urlencoded; charset=UTF-8",
                 data: requestData,

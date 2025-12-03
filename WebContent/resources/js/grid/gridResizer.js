@@ -128,10 +128,7 @@ class ColgroupTableResizer {
         const cols = colgroup.querySelectorAll('col');
         const currentCol = cols[this.currentColumn];
 
-
         const tableId = this.currentTable.id;
-
-
 
         if (currentCol) {
             currentCol.style.width = newWidth.toFixed(1) + '%';

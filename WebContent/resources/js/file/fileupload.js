@@ -6,6 +6,10 @@ var uploadModule =(function() {
 
 	 var random;
 
+	 var fileToken;
+	// console.log("token..........",token);
+
+
 
 	 $(document).ready(function(){
 		 random=Math.random();
@@ -15,6 +19,11 @@ var uploadModule =(function() {
 
 			 var noButton = $(this).data("noButton");
 
+			 var tmpToken = $(this).data("token");
+
+			 if(typeof tmpToken != 'undefined' && tmpToken != null && tmpToken!=''){
+				 fileToken=tmpToken;
+			 }
 
 
 
@@ -27,10 +36,7 @@ var uploadModule =(function() {
 
 		 });
 
-
 		$('body').append('<form name="downloadForm" id="downloadForm" method="post" action="'+basePath+'/file/download/zip" style="display:none"><input type="hidden" name="downloadFileInfo" id="downloadFileInfo" value=""><input type="hidden" name="_csrf" value="'+token+'"></form>');
-
-
 
 	 });
 
@@ -318,6 +324,7 @@ var uploadModule =(function() {
 				 metadata.isOnlyZip = 'N';
 			 }
 
+
 			 processFile(metadata);
 		 }
 	 }
@@ -403,11 +410,8 @@ var uploadModule =(function() {
 			    		return;
 			    	}
 
-
 			    	var fileInfo = result.fileInfo[0];
 			    	var fileInfoArray = result.fileInfo;
-
-
 
 			    	metadata.chunkIndex++;
 
@@ -427,7 +431,7 @@ var uploadModule =(function() {
 				    	  var number=Math.round(100*metadata.start/metadata.fileSize);
 				    	  $("#progressBar_"+metadata.uploadFormId).show();
 				    	  $("#progressBar_"+metadata.uploadFormId).val(number);
-
+				    	  $("#progressLabel_"+metadata.uploadFormId).show();
 
 
 				    	  slice(metadata);
@@ -459,8 +463,6 @@ var uploadModule =(function() {
 		    			processFile(metadata);
 
 			    		//displayFileList(fileInfo, metadata.uploadFormId);
-		    			 // 🔹 fileInfo가 배열이면 각각 처리, 아니면 단일 처리
-
 
 		    			 if(metadata.extractZipYn==='Y'){
 		    				 if (Array.isArray(fileInfoArray)) {
@@ -471,8 +473,6 @@ var uploadModule =(function() {
 		    			 }else{
 		    				 displayFileList(fileInfo, metadata.uploadFormId);
 		    			 }
-
-
 
 
 
@@ -497,7 +497,6 @@ var uploadModule =(function() {
 		        if (fileInfo.fileNm != '') {
 		            // 빈 메시지 숨기기
 		            $("#emptyMessage_" + uploadFormId).hide();
-		         // 파일 리스트 표시 (핵심 수정사항)
 		            $("#fileList_" + uploadFormId).show();
 		        }
 		    } else {
@@ -555,16 +554,65 @@ var uploadModule =(function() {
 		                iipsOpenYnStr = `<span id='odaOpenLabel_${fileInfo.fileId}' class='${fileInfo.iipsRlsYn == 'Y' ? 'public' : 'private'}' style='margin:0 5px 0 0; padding:2px 6px; border-radius:3px; font-size:11px;'>${fileInfo.iipsRlsYn == 'Y' ? '포털 공개' : '포털  비공개'}</span>`;
 		            }
 
+
+
+		            var synapViewerYnStr="" ;
+		            var synapViewerYn ;
+		            if(
+		            		fileExtension=='hwp'  ||
+		            		fileExtension=='hwpx' ||
+		            		fileExtension=='doc'  ||
+		            		fileExtension=='docx' ||
+		            		fileExtension=='pdf'  ||
+		            		fileExtension=='xls'  ||
+		            		fileExtension=='xlsx' ||
+		            		fileExtension=='ppt'  ||
+		            		fileExtension=='pptx' ||
+		            		fileExtension=='txt'
+
+
+		            ){
+		            	if(fileInfo.temp=='N'){
+		            		synapViewerYn = "Y";
+		            	}else{
+		            		synapViewerYn = "N";
+		            	}
+
+		            }else{
+		            	synapViewerYn = "N";
+		            }
+
+		            /*
+		           if (synapViewerYnStr == 'Y') {
+		            synapViewerYnStr = `<span id='synapOpenLabel_${fileInfo.fileId}' class='synap'>
+		            	<a href="http://10.47.25.178:34000/SynapDocViewServer/job?fid=${fileInfo.fileId}&convertType=1&sync=true&fileType=URL&filePath=http://10.47.25.173:8090/file/download/${fileInfo.fileId}/${fileToken}" target='_blank'>
+		            	파일보기
+		            	</a>
+		            </span>`
+		            }
+		            */
+
+		            if (synapViewerYn == 'Y') {
+			            synapViewerYnStr = `<span id='synapOpenLabel_${fileInfo.fileId}' class='synap'>
+			            	<a href="/file/synap/conv/${fileInfo.fileId}/${fileToken}" target='_blank'>
+			            	파일보기
+			            	</a>
+			            </span>`
+			            }
+
 		            // li 태그로 감싸서 파일 목록 표시 - label 구조 유지하면서 다운로드 링크 분리
 
 		            if($("#refDocId_"+uploadFormId).val()=="NONE"){
 		            	 $("#fileList_" + uploadFormId).append(
 				                "<li>" +
 			                            "<a href='javascript:void(0);' onclick=\"event.stopPropagation(); uploadModule.fileDownload('" + safeUploadFormId + "', '" + fileInfo.fileId + "', '" + safeFileNm + "','" + fileInfo.temp + "');\" class='" + fileClass + "' style='text-decoration:none;'>" + fileNm +" ["+Math.round(Number(fileInfo.fileSize/1024))+"k]</a>" +
-				                "</li>"
+			                            synapViewerYnStr+
+			                            homePageOpenYnStr +
+		        			            iipsOpenYnStr +
+			                            "</li>"
 				            );
 
-		          }else{
+		            }else{
 		        	  $("#fileList_" + uploadFormId).append(
 		        			    "<li>" +
 		        			        "<div data-file-Id='" + fileInfo.fileId + "' style='padding-left:8px'>" +
@@ -572,6 +620,7 @@ var uploadModule =(function() {
 		        			            "<label class='label' for='" + random + "-" + fileInfo.fileId + "'>" +
 		        			                "<a href='javascript:void(0);' onclick=\"event.stopPropagation(); uploadModule.fileDownload('" + safeUploadFormId + "', '" + fileInfo.fileId + "', '" + safeFileNm + "','" + fileInfo.temp + "');\" class='" + fileClass + "' style='text-decoration:none;'>" + fileNm +" ["+Math.round(Number(fileInfo.fileSize/1024))+"k]</a>" +
 		        			            "</label>" +
+		        			            synapViewerYnStr+
 		        			            homePageOpenYnStr +
 		        			            iipsOpenYnStr +
 		        			        "</div>" +
@@ -697,6 +746,8 @@ var uploadModule =(function() {
 			});
 
 	 }
+
+
 
 
 	 function slice(metadata) {
@@ -828,6 +879,42 @@ var uploadModule =(function() {
 
 	 }
 */
+
+	 function commonFileDownload(fileId, fileNm, temp){
+
+			var fileInfo ={};
+			fileInfo.fileId=fileId;
+			fileInfo.fileNm=fileNm;
+
+			fileInfo.temp=temp;
+			if(temp !='Y')
+			fileInfo.temp='N';
+
+			$.ajax({
+				url		: basePath+"/file/isExistFile",
+				type	: "post",
+				data	: fileInfo,
+				dataType : "json",
+				success : function(data, textStatus) {
+
+					if(data.msg=="SUCCESS"){
+						$('#downloadFileInfo').val(JSON.stringify(fileInfo));
+						$("#downloadForm").attr("action", basePath+"/file/download");
+
+
+						$("#downloadForm").submit();
+					}else{
+						alert(data.msg);
+					}
+				},
+				error: function(){
+					alert("FAIL");
+				}
+			});
+
+	}
+
+
 
 	// 전역 변수로 현재 다운로드 xhr 객체 저장
 	// ========== 전역 변수 선언 ==========
@@ -985,7 +1072,7 @@ var uploadModule =(function() {
 
 		                if (!ct || (!ct.includes("application/octet-stream") && !ct.includes("application/vnd"))) {
 		                    console.error("응답이 파일이 아님");
-		                    throw new Error("다운로드 컨텐츠가 아님 (응답 확인 필요)");
+		                    throw new Error("파일이 존재하지 않습니다.");
 		                }
 
 		                // Blob 생성
@@ -1057,7 +1144,7 @@ var uploadModule =(function() {
 		        };
 
 		        // 요청 설정 및 전송
-		        xhr.open('POST', '/file/download/zip', true);
+		        xhr.open('POST', basePath+'/file/download/zip', true);
 		        xhr.responseType = 'blob';
 		        // 타임아웃 제거 - 무제한 대기 (사용자가 취소 버튼으로 중단)
 		        xhr.send(formData);
@@ -1188,6 +1275,7 @@ var uploadModule =(function() {
 	            reject(new Error(errorMsg));
 	        };
 
+	        let downloadCheck=true;
 	        // 완료 이벤트 핸들러
 	        xhr.onload = function() {
 	            try {
@@ -1203,7 +1291,8 @@ var uploadModule =(function() {
 
 	                if (!ct || (!ct.includes("application/octet-stream") && !ct.includes("application/vnd"))) {
 	                    console.error("응답이 파일이 아님");
-	                    throw new Error("다운로드 컨텐츠가 아님 (응답 확인 필요)");
+	                    downloadCheck=false;
+	                    throw new Error("파일이 존재하지 않습니다.");
 	                }
 
 	                // Blob 생성
@@ -1231,6 +1320,7 @@ var uploadModule =(function() {
 	                alert("다운로드 실패: " + (err.message || err));
 	                reject(err);
 	            } finally {
+
 	                // 다운로드 완료 후 속도 계산
 	                const endTime = new Date().getTime();
 	                const downloadTime = endTime - startTime;
@@ -1247,7 +1337,16 @@ var uploadModule =(function() {
 	                //$("#loading").hide();
 	                $("#download-cancel-btn_"+uploadFormId).hide(); // 개별 취소 버튼 숨김
 	                $("#progressBar_"+uploadFormId).val(100);
-	                $("#progressLabel_"+uploadFormId).html("download completed: 100%" + speedText);
+
+	                $("#progressBar_"+uploadFormId).hide();
+
+	                if(downloadCheck){
+	                	 $("#progressLabel_"+uploadFormId).html("download completed: 100%" + speedText);
+	                }else{
+	                	 $("#progressBar_"+uploadFormId).val(0);
+	                	 $("#progressLabel_"+uploadFormId).html("download Fail : "+fileNm);
+	                }
+
 	                delete activeDownloads[uploadFormId]; // 개별 삭제
 	            }
 	        };
@@ -1265,7 +1364,7 @@ var uploadModule =(function() {
 	        };
 
 	        // 요청 설정 및 전송
-	        xhr.open('POST', '/file/download', true);
+	        xhr.open('POST', basePath+'/file/download', true);
 	        xhr.responseType = 'blob';
 	        // 타임아웃 제거 - 무제한 대기 (사용자가 취소 버튼으로 중단)
 	        xhr.send(formData);
@@ -1551,6 +1650,46 @@ var uploadModule =(function() {
 	 }
 
 
+    function synapViewer(uploadFormId){
+
+    	 var showFile = [];
+		 var fileObj =  JSON.parse($("#fileInfoList_"+uploadFormId).val() );
+
+		 var fileInfo ={};
+
+		 $("input[name=file_"+uploadFormId+"]:checked").each(function(){
+
+			 	var tmpFileId=$(this).val();
+
+				 fileObj.fileInfo.forEach(function(obj, index) {
+					 if(obj.fileId == tmpFileId){
+
+						 fileInfo.fileId = obj.fileId;
+						 fileInfo.docId= obj.docId;
+						 fileInfo.temp = obj.temp;
+						 fileInfo.fileNm= obj.fileNm;
+
+						 showFile.push(fileInfo);
+					 }
+				 });
+
+		 });
+
+		 if(showFile.length==0){
+			 alert("조회할 파일을 선택하세요");
+			 return;
+		 }
+
+		 if(showFile.length >1 ){
+			 alert("하나의 파일만 선택하세요");
+			 return;
+		 }
+
+
+		// openSynapViewer(fileInfo);
+
+
+    }
 
     function showFile(uploadFormId, popupId,url){
 
@@ -1595,7 +1734,7 @@ var uploadModule =(function() {
 
 
 		 fileInfo.hwpPopupUrl=url;
-		 openCustomPopup(popupId, '/file/hwpCtrlPopup', fileInfo);
+		 openCustomPopup(popupId, basePath+'/file/hwpCtrlPopup', fileInfo);
 	 }
 
 
@@ -1636,7 +1775,7 @@ var uploadModule =(function() {
 
 		 $.ajax({
 			 type : "post",
-			 url : "/common/fileView/readFileAjax",
+			 url : basePath+"/common/fileView/readFileAjax",
 			 contentType:"application/x-www-form-urlencoded; charset=UTF-8",
 			 data : {fileInfoList : fileInfoList},
 			 success: function (result) {
@@ -1689,7 +1828,7 @@ var uploadModule =(function() {
         return fileClasses[extension] || 'etc';
     }
 
-
+/*
     function checkedFileInfo(uploadFormId, openYn){
 		 var checkedFileInfo='';
 		 var fileObj =  JSON.parse($("#fileInfoList_"+uploadFormId).val() );
@@ -1711,7 +1850,7 @@ var uploadModule =(function() {
 		 toggleVisibility(uploadFormId, checkedFileInfo,openYn);
 
     }
-
+*/
 /*
 
     function updateVisibility(uploadFormId, itemsStr, openYn) {
@@ -1763,6 +1902,7 @@ var uploadModule =(function() {
 
 */
 
+    /*
     function toggleVisibility(uploadFormId, itemsStr,openYn) {
 
         const publicInput = $("#open_refDocId_" + uploadFormId);
@@ -1790,9 +1930,8 @@ var uploadModule =(function() {
 
 		 $("#open_refDocId_" + uploadFormId).val(publicItems.join(','));
 		 $("#noOpen_refDocId_" + uploadFormId).val( privateItems.join(','));
-
-
     }
+*/
 
     function homepageOpenYn(uploadFormId) {
         var fileObj = {};
@@ -1922,6 +2061,37 @@ var uploadModule =(function() {
 	 }
 
 
+	 function allFileInfo(uploadFormId){
+
+		 var showFile = [];
+
+		 alert(uploadFormId);
+		 var fileObj =  JSON.parse($("#fileInfoList_"+uploadFormId).val() );
+
+		 var fileInfo ={};
+
+		 $("input[name=file_"+uploadFormId+"]").each(function(){
+
+			 	var tmpFileId=$(this).val();
+
+				 fileObj.fileInfo.forEach(function(obj, index) {
+					 if(obj.fileId == tmpFileId){
+
+						 fileInfo.fileId = obj.fileId;
+						 fileInfo.docId= obj.docId;
+						 fileInfo.temp = obj.temp;
+						 fileInfo.fileNm= obj.fileNm;
+						 showFile.push(fileInfo);
+					 }
+				 });
+
+		 });
+
+		return showFile;
+	 }
+
+
+
 
 	 return {
 		 upload : upload,
@@ -1936,11 +2106,13 @@ var uploadModule =(function() {
 		 reload : reload,
 		 showFile : showFile,
 		 readFile : readFile,
-		 checkedFileInfo :checkedFileInfo,
 		 homepageOpenYn:homepageOpenYn,
 		 iipsOpenYn:iipsOpenYn,
 		 toggleSelectAllFiles:toggleSelectAllFiles,
-		 cancelDownload:cancelDownload
+		 cancelDownload:cancelDownload,
+		 commonFileDownload:commonFileDownload,
+		 synapViewer:synapViewer,
+		 allFileInfo:allFileInfo
 	 };
 
 

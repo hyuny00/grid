@@ -24,7 +24,7 @@ class ODAFilterSystem {
 
 	    this.formId = formId;
 
-	    this.basePath='';
+	    this.basePath=window.basePath;
 
 	    this.init();
 	}
@@ -135,11 +135,12 @@ class ODAFilterSystem {
 
 	bindEvents() {
 		// DOM 요소 존재 확인 후 이벤트 바인딩
-		const filterToggleBtn = this.getFormElement('.filterToggleBtn') || this.getFormElement('#filterToggleBtn');
+		const filterToggleBtn = this.getFormElement('.filterToggleBtn') || this.getFormElement('#filterToggleBtn') || this.getFormElement('.btn-flt');
 
 		if (filterToggleBtn) {
 			filterToggleBtn.addEventListener('click', () => {
-				//this.toggleFilterArea();
+				this.toggleFilterArea();
+
 			});
 		}
 
@@ -159,6 +160,7 @@ class ODAFilterSystem {
 		if (textSearchBtn) {
 			textSearchBtn.addEventListener('click', () => {
 				this.performTextSearch();
+				this.resetFilterArea();
 			});
 		}
 
@@ -168,8 +170,20 @@ class ODAFilterSystem {
 		if (applyFiltersBtn) {
 			applyFiltersBtn.addEventListener('click', () => {
 				this.applyFilters();
+				this.resetFilterArea();
 			});
 		}
+
+		// 조건검색 버튼2
+		const applyFiltersBtn2 = this.getFormElement('.applyFiltersNoResetBtn') || this.getFormElement('#applyFiltersNoResetBtn');
+
+		if (applyFiltersBtn2) {
+			applyFiltersBtn2.addEventListener('click', () => {
+				this.noResetApplyFilters();
+				this.resetFilterArea();
+			});
+		}
+
 
 		// 조건검색 버튼
 		const resetApplyFiltersBtn = this.getFormElement('.resetApplyFiltersBtn') || this.getFormElement('#resetApplyFiltersBtn');
@@ -177,6 +191,7 @@ class ODAFilterSystem {
 		if (resetApplyFiltersBtn) {
 			resetApplyFiltersBtn.addEventListener('click', () => {
 				this.resetApplyFilters();
+
 			});
 		}
 
@@ -193,24 +208,34 @@ class ODAFilterSystem {
 				//document.querySelectorAll("form").forEach(form => form.reset());
 
 				this.resetFilters();
-				filterArea.style.display = 'none';
-				if (filterToggleBtn) filterToggleBtn.classList.remove('on');
-
-				// formId 기반으로 jQuery 선택자 수정
-				if (this.formId) {
-					$(`#${this.formId} .toggleFlt`).css('display','none');
-					$(`#${this.formId} .fltList`).find('.on').removeClass('on');
-				} else {
-					$('.toggleFlt').css('display','none');
-					$('.fltList').find('.on').removeClass('on');
-				}
+				this.resetFilterArea();
 			});
 		}
 	}
 
+	resetFilterArea() {
+		const filterToggleBtn = this.getFormElement('.filterToggleBtn') || this.getFormElement('#filterToggleBtn') || this.getFormElement('.btn-flt');;
+		const filterArea = this.getFormElement('.searchFilterArea') || this.getFormElement('#searchFilterArea');
+
+		filterArea.style.display = 'none';
+		if (filterToggleBtn) filterToggleBtn.classList.remove('on');
+
+		// formId 기반으로 jQuery 선택자 수정
+		if (this.formId) {
+			$(`#${this.formId} .toggleFlt`).css('display','none');
+			$(`#${this.formId} .fltList`).find('.on').removeClass('on');
+		} else {
+			$('.toggleFlt').css('display','none');
+			$('.fltList').find('.on').removeClass('on');
+		}
+
+		this.isFilterOpen = false;
+		filterToggleBtn.textContent = '검색 필터 열기';
+	}
+
 	toggleFilterArea() {
 		const filterArea = this.getFormElement('.searchFilterArea') || this.getFormElement('#searchFilterArea');
-		const toggleBtn = this.getFormElement('.filterToggleBtn') || this.getFormElement('#filterToggleBtn');
+		const toggleBtn = this.getFormElement('.filterToggleBtn') || this.getFormElement('#filterToggleBtn') || this.getFormElement('.btn-flt');
 
 		if (!filterArea || !toggleBtn) return;
 
@@ -222,26 +247,20 @@ class ODAFilterSystem {
 		if (this.isFilterOpen) {
 			// formId 기반으로 jQuery 선택자 수정
 			if (this.formId) {
-				$(`#${this.formId} .schRow.toggleFlt`).css('display','block');
+				$(`#${this.formId} .schRow.toggleFlt`).css('display','');
 			} else {
-				$('.schRow.toggleFlt').css('display','block');
+				$('.schRow.toggleFlt').css('display','');
 			}
 
-			filterArea.style.display = 'block';
+			//filterArea.style.display = 'block';
 			toggleBtn.textContent = '검색 필터 닫기';
-
+			toggleBtn.classList.add('on');
 			resetFiltersBtn.disabled = false;
 		} else {
 			// formId 기반으로 jQuery 선택자 수정
-			if (this.formId) {
-				$(`#${this.formId} .schRow.toggleFlt`).css('display','none');
-			} else {
-				$('.schRow.toggleFlt').css('display','none');
-			}
-
-			filterArea.style.display = 'none';
 			toggleBtn.textContent = '검색 필터 열기';
 
+			this.resetFilterArea();
 			this.clearActiveCategory();
 		}
 	}
@@ -567,7 +586,7 @@ class ODAFilterSystem {
 
 	    try {
 	        const response = await $.ajax({
-	            url:  this.basePath+'/common/selectCode',
+	            url: this.basePath+'/common/selectCode',
 	            type: 'get',
 	            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
 	            data: {
@@ -782,7 +801,7 @@ class ODAFilterSystem {
 	    	      <p>${this.activeCategoryTitle}</p>
 	    	      <div class="iptBox">
 	    	          <select data-category="${category}" data-value="${itemData.value}">
-	    	              <option value="">년도를 선택하세요</option>
+	    	              <option value="">연도를 선택하세요</option>
 	    	              ${yearOptions}
 	    	          </select>
 	    	          <button type="button" class="btn cnf">확인</button>
@@ -1264,6 +1283,10 @@ class ODAFilterSystem {
 		this.executeSearch({ filters, searchTerm:'' });
 	}
 
+	noResetApplyFilters(){
+		const filters = this.getSelectedFilters();
+		this.executeResetSearch({ filters, searchTerm:'' });
+	}
 
 	resetApplyFilters() {
 		const filters = this.getSelectedFilters();
@@ -1456,4 +1479,103 @@ class ODAFilterSystem {
 	        filterDrawContainer
 	    };
 	}
+
+    /**
+     * 현재 선택된 필터 조건을 쿼리 스트링으로 변환하여 엑셀 다운로드 요청
+     * @param {string} url - 엑셀 다운로드 컨트롤러 URL
+     */
+    async downloadExcel(url) {
+        try {
+            // 1. 파라미터 준비 (기존 로직 유지)
+            const filters = this.getSelectedFilters();
+            const params = this.buildSearchParams({ filters: filters });
+            const queryString = new URLSearchParams(params).toString();
+            const finalUrl = `${url}?${queryString}`;
+
+            // 2. 로딩 시작
+            this.toggleLoading(true);
+
+            // 3. 비동기 요청 (Fetch)
+            const response = await fetch(finalUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            // 4. 파일명 추출 (Content-Disposition 헤더 확인)
+            // 서버에서 헤더를 주지 않으면 기본값 'download.xlsx' 사용
+            let filename = 'download.xlsx';
+            const disposition = response.headers.get('Content-Disposition');
+            if (disposition && disposition.includes('filename=')) {
+                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                const matches = filenameRegex.exec(disposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                    // 한글 파일명 디코딩 처리
+                    filename = decodeURIComponent(filename);
+                }
+            }
+
+            // 5. Blob 데이터 생성
+            const blob = await response.blob();
+
+            // 6. 가상의 a 태그를 만들어 다운로드 트리거
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = filename; // 추출한 파일명 지정
+            document.body.appendChild(a);
+            a.click();
+
+            // 7. 리소스 정리
+            window.URL.revokeObjectURL(downloadUrl);
+            document.body.removeChild(a);
+
+        } catch (error) {
+            console.error("Excel Download Error:", error);
+            alert("엑셀 다운로드 중 오류가 발생했습니다.");
+        } finally {
+            // 8. 로딩 종료 (성공하든 실패하든 실행)
+            this.toggleLoading(false);
+        }
+    };
+
+    /**
+     * 간단한 로딩 UI 제어 함수
+     */
+    toggleLoading(isLoading) {
+        const loadingId = 'custom-loading-overlay';
+        let loader = document.getElementById(loadingId);
+
+        if (isLoading) {
+            if (!loader) {
+                // 로딩 오버레이 동적 생성
+                loader = document.createElement('div');
+                loader.id = loadingId;
+                loader.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0, 0, 0, 0.5); z-index: 9999;
+                    display: flex; justify-content: center; align-items: center;
+                    color: white; font-size: 20px; font-weight: bold; flex-direction: column;
+                `;
+                // 스피너와 텍스트
+                loader.innerHTML = `
+                    <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px;"></div>
+                    <div>엑셀 생성 중...</div>
+                    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+                `;
+                document.body.appendChild(loader);
+            }
+            loader.style.display = 'flex';
+        } else {
+            if (loader) {
+                loader.style.display = 'none';
+            }
+        }
+    };
 }

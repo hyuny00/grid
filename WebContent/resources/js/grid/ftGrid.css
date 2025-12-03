@@ -1,4 +1,4 @@
-
+\
 
 .tree-row {
     display: table-row;
@@ -8,8 +8,8 @@
     display: none;
 }
 
-.date-input { 
-    width: 120px; 
+.date-input {
+    width: 120px;
 }
 /*
 .tree-indent {
@@ -54,30 +54,32 @@
 
 .sort-icon {
     display: inline-block;
-    width: 0;
-    height: 0;
-    margin-left: 5px;
+    width: 22px;
+    height: 22px;
+    margin-left: 4px;
     vertical-align: middle;
 }
 
 .sort-icon::before {
-    content: '↕';
-    color: #ccc;
+    content:'';display:block;width:22px;height:22px;background:url(../../img/ico_sort.svg) no-repeat center;
 }
 
 .sort-icon.asc::before {
-    content: '↑';
-    color: #333;
+	background-image:url(../../img/ico_sort_asc.svg);
 }
 
 .sort-icon.desc::before {
-    content: '↓';
-    color: #333;
+    background-image:url(../../img/ico_sort_desc.svg);
 }
 
+.sort-icon.remote::before {
+    background:url(../../img/ico_sort_remote.svg) no-repeat center;
+}
 
-button[class^="btn-tblnode"] {display:flex;align-items:center;gap:5px;width:auto;height:auto;font-size:inherit;color:#7d7d7d;border:0 none;background:none;}
-button[class^="btn-tblnode"]::before {content:'';display:block;width:20px;height:20px;background-repeat:no-repeat;background-position:center;}
-.btn-tblnode::before {background-image: url(./ico_tbl_plus.svg);}
-.btn-tblnode.opened::before {background-image: url(./ico_tbl_minus.svg);}
-.tableNode .line {display:block;width:20px;height:20px;background:url(./ico_tbl_depth.svg) no-repeat center;}
+.sort-icon.remote.asc::before {
+	background-image:url(../../img/ico_sort_remote_asc.svg);
+}
+
+.sort-icon.remote.desc::before {
+    background-image:url(../../img/ico_sort_remote_desc.svg);
+}

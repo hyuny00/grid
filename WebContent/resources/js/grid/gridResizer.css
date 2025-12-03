@@ -2,7 +2,7 @@
         .tbl {
             width: 100%;
             border-collapse: collapse;
-            min-width: 800px;
+            /*min-width: 800px;*/
         }
 
         .schList .tbl th,
