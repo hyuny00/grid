@@ -1,10 +1,13 @@
 package kr.go.odakorea.gis.service;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,141 @@ public class GeocodeUpdateService {
 
     @Autowired
     private GeocodingService geocodingService;
+
+    /**
+     * CSV 파일을 읽어서 위도경도가 없는 경우 geocoding API를 호출하고 새로운 CSV 파일을 생성합니다.
+     * 입력 CSV 포맷: 국가번호,지역번호,국가명,지역명,행정구역명,경도,위도
+     * 출력 CSV 포맷: 국가번호,지역번호,국가명,지역명,행정구역명,경도,위도
+     *
+     * @param inputCsvFilePath 입력 CSV 파일 경로
+     * @param outputCsvFilePath 출력 CSV 파일 경로
+     * @return 처리 결과 메시지
+     */
+    public String processCSVAndUpdateCoordinates(String inputCsvFilePath, String outputCsvFilePath) {
+        int totalCount = 0;
+        int updatedCount = 0;
+        int existingCount = 0;
+        int failCount = 0;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputCsvFilePath));
+             BufferedWriter writer = new BufferedWriter(new FileWriter(outputCsvFilePath))) {
+
+            String line;
+            boolean isFirstLine = true;
+
+            // 출력 CSV 헤더 작성
+            writer.write("국가번호,지역번호,국가명,지역명,행정구역명,경도,위도");
+            writer.newLine();
+
+            while ((line = reader.readLine()) != null) {
+                // 첫 번째 줄(헤더) 건너뛰기
+                if (isFirstLine) {
+                    isFirstLine = false;
+                    continue;
+                }
+
+                // 빈 라인이거나 공백만 있는 경우 처리 종료
+                if (line.trim().isEmpty()) {
+                    logger.info("빈 라인 발견, CSV 처리 종료");
+                    break;
+                }
+
+                String[] fields = parseCsvLine(line);
+                if (fields.length >= 7) {
+                    String ntnNo = fields[0].trim();
+                    String rgnNo = fields[1].trim();
+                    String ntnNm = fields[2].trim();
+                    String rgnNm = fields[3].trim();
+                    String admNm = fields[4].trim();
+                    String longitude = fields[5].trim();
+                    String latitude = fields[6].trim();
+
+                    // 필수 필드가 모두 비어있으면 처리 종료
+                    if (ntnNo.isEmpty() && rgnNo.isEmpty() && ntnNm.isEmpty() && rgnNm.isEmpty()) {
+                        logger.info("더 이상 유효한 데이터가 없음, CSV 처리 종료");
+                        break;
+                    }
+
+                    totalCount++;
+                    double lng = 0.0;
+                    double lat = 0.0;
+
+                    // 경도, 위도가 비어있는 경우 geocoding API 호출
+                    if (longitude.isEmpty() || latitude.isEmpty()) {
+                        try {
+                            // Geocoding API 호출
+                            String query = ntnNm + " " + rgnNm+ " " + admNm;
+                            logger.info("좌표 업데이트 중 [{}]: {} (국가번호: {}, 지역번호: {})", totalCount, query, ntnNo, rgnNo);
+
+                            Coordinates coordinates = geocodingService.geocode(query);
+
+                            if (coordinates != null) {
+                                lng = coordinates.getLongitude();
+                                lat = coordinates.getLatitude();
+                                updatedCount++;
+                                logger.info("성공 [{}]: {} -> 경도: {}, 위도: {}", totalCount, query, lng, lat);
+                            } else {
+                                failCount++;
+                                logger.warn("Geocoding 실패 [{}]: {}", totalCount, query);
+                            }
+
+                            // API 호출 간격 조절 (서버 부하 방지)
+                            Thread.sleep(200);
+
+                        } catch (Exception e) {
+                            failCount++;
+                            logger.error("처리 실패 [{}] - 국가번호: {}, 지역번호: {} - {}", totalCount, ntnNo, rgnNo, e.getMessage());
+                        }
+                    } else {
+                        // 기존 좌표가 있는 경우
+                        try {
+                            lng = Double.parseDouble(longitude);
+                            lat = Double.parseDouble(latitude);
+                            existingCount++;
+                            logger.info("기존 좌표 사용 [{}]: {} {} (경도: {}, 위도: {})", totalCount, ntnNm, rgnNm, lng, lat);
+                        } catch (NumberFormatException e) {
+                            logger.warn("좌표 형식 오류 [{}]: 경도={}, 위도={}", totalCount, longitude, latitude);
+                            failCount++;
+                        }
+                    }
+
+                    // CSV 라인 작성 (국가번호,지역번호,국가명,지역명,행정구역명,경도,위도)
+                    if (lng != 0.0 && lat != 0.0) {
+                        writer.write(String.format("%s,%s,%s,%s,%s,%s,%s",
+                                ntnNo, rgnNo, ntnNm, rgnNm, admNm, lng, lat));
+                        writer.newLine();
+                    } else {
+                        // 좌표를 가져오지 못한 경우에도 빈 값으로 기록
+                        writer.write(String.format("%s,%s,%s,%s,%s,,",
+                                ntnNo, rgnNo, ntnNm, rgnNm, admNm));
+                        writer.newLine();
+                    }
+                }
+            }
+
+            String result = String.format("CSV 처리 완료 - 총: %d, 업데이트: %d, 기존 사용: %d, 실패: %d",
+                    totalCount, updatedCount, existingCount, failCount);
+            logger.info(result);
+            logger.info("출력 파일: {}", outputCsvFilePath);
+
+            return result;
+
+        } catch (IOException e) {
+            logger.error("CSV 파일 처리 실패: {}", e.getMessage());
+            throw new RuntimeException("CSV 파일 처리 중 오류 발생", e);
+        }
+    }
+
+    /**
+     * CSV 라인을 파싱합니다.
+     *
+     * @param line CSV 라인
+     * @return 파싱된 필드 배열
+     */
+    private String[] parseCsvLine(String line) {
+        // 간단한 CSV 파싱 (쉼표로 구분)
+        return line.split(",", -1);
+    }
 
     /**
      * CSV 파일을 읽어서 geocoding API를 호출하고 UPDATE SQL을 생성합니다.
@@ -94,17 +232,6 @@ public class GeocodeUpdateService {
         }
 
         return sqlQueries;
-    }
-
-    /**
-     * CSV 라인을 파싱합니다.
-     *
-     * @param line CSV 라인
-     * @return 파싱된 필드 배열
-     */
-    private String[] parseCsvLine(String line) {
-        // 간단한 CSV 파싱 (쉼표로 구분)
-        return line.split(",", -1);
     }
 
     /**

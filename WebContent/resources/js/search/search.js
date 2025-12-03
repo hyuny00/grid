@@ -24,6 +24,8 @@ class ODAFilterSystem {
 
 	    this.formId = formId;
 
+	    this.basePath='';
+
 	    this.init();
 	}
 
@@ -565,7 +567,7 @@ class ODAFilterSystem {
 
 	    try {
 	        const response = await $.ajax({
-	            url: '/common/selectCode',
+	            url:  this.basePath+'/common/selectCode',
 	            type: 'get',
 	            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
 	            data: {

@@ -2,14 +2,14 @@
 <%@ include file="/WEB-INF/jsp/framework/_includes/includeTags.jspf" %>
   <link rel="stylesheet" href="/css/gis/leaflet.css" />
 <script type="text/javascript">
-   
+
     // JWT 쿠키 확인 후 /admin/user/userList로 이동
     function redirectToUserList() {
-      
+
           //  window.location.href = "/admin/user/userList";
-       
+
     }
- 
+
     // 페이지 로드 시 자동 실행
     window.onload = function () {
         redirectToUserList();
@@ -24,7 +24,7 @@
 <section id="section" class="section" >
     <div class="main-cont-box">
         main-cont-boxmain-cont-boxmain-cont-box
-        
+
          <div id="map"></div>
   <script src="/js/gis/leaflet.js"></script>
 
@@ -37,14 +37,14 @@
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attribution">CARTO</a>, &copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a>,    &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a>'
     }).addTo(map);
 
-    
-    
+
+
     // 마커 생성
   //  const marker = L.marker([-6.2088, 106.8456]).addTo(map);
-    
+
   //  const marker = L.marker(23.885942,45.079162]).addTo(map);
-    
-    
+
+
 	const locations = [
   {
     lat: -6.2088,
@@ -63,7 +63,7 @@
 ];
 
 locations.forEach(loc => {
-	
+
   const popupHtml = `
     <table border="1" style="border-collapse: collapse; width: 200px;">
       <tr><th colspan="2">${loc.name}</th></tr>
@@ -72,7 +72,7 @@ locations.forEach(loc => {
     </table>
   `;
 
-  
+
   L.marker([loc.lat, loc.lng])
     .addTo(map)
     .bindPopup(popupHtml);
@@ -80,7 +80,7 @@ locations.forEach(loc => {
 });
 
 
-    	
+
 
     // 마커에 팝업 내용 설정
    // marker.bindPopup('<b>자카르타</b><br>인도네시아의 수도');
@@ -90,7 +90,7 @@ locations.forEach(loc => {
      // marker.openPopup();
    // });
   </script>
- <!-- 
+ <!--
 
    <script>
         // 지도를 초기화하고 중심 좌표와 줌 설정
@@ -104,11 +104,11 @@ locations.forEach(loc => {
             maxZoom: 18
         }).addTo(map);
     </script>
-  
+
  -->
 
-  
-  
+
+
    <h1>Static Map Example</h1>
 
     <img id="mapImage" src="" alt="Map will be here" />
@@ -118,18 +118,18 @@ locations.forEach(loc => {
 		    function loadMap(lat, lng) {
 		        // URL에 lat, lng 값을 정확하게 전달
 		        const mapUrl = "http://localhost:8080/maps/static?lat="+lat+"&lng="+lng;
-		        
+
 		        console.log("Generated Map URL: ", mapUrl);  // URL이 잘 생성됐는지 확인
 		        const imgElement = document.getElementById('mapImage');
 		        imgElement.src = mapUrl;
 		    }
-		
+
 		    // 예시: 샌프란시스코 위도, 경도
 		    loadMap(37.7749, -122.4194);
     </script>
-  
-  
-  
+
+
+
   <h2>주소를 입력하세요:</h2>
     <form id="geocodeForm">
         <input type="text" id="address" name="address" placeholder="주소 입력" required>
@@ -161,7 +161,7 @@ locations.forEach(loc => {
             });
         });
     </script>
-    
+
     </div>
 </section>
 

@@ -56,6 +56,9 @@ public class TileService {
 		String tileUrl = String.format("%s/%s/%d/%d/%d.jpg?key=%s", procyMapTilerBaseUrl+"/maps", style, zoom, x, y, apiKey);
 
 		System.out.println("tileUrl."+tileUrl);
+		System.out.println("tileUrl."+tileUrl);
+		System.out.println("tileUrl."+tileUrl);
+		System.out.println("tileUrl."+tileUrl);
 		return fetchMaptilerTile(tileUrl);
 	}
 
@@ -65,11 +68,15 @@ public class TileService {
         HttpEntity<String> entity = createHttpEntity();
         RestTemplate restTemplate = restTemplateFactory.getRestTemplate();
 
+
+        System.out.println("tileUrl........................"+tileUrl);
+
         try {
             ResponseEntity<byte[]> response = restTemplate.exchange(
                 tileUrl, HttpMethod.GET, entity, byte[].class);
             return response.getBody();
         } catch (HttpClientErrorException e) {
+        	e.printStackTrace();
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                 throw new RuntimeException("MapTiler API key is invalid or expired");
             } else if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
@@ -80,9 +87,11 @@ public class TileService {
             }
             throw new RuntimeException("Failed to fetch tile from MapTiler: " + e.getMessage());
         } catch (ResourceAccessException e) {
+        	e.printStackTrace();
             // 타임아웃이나 연결 문제
             throw new RuntimeException("Connection timeout or network error: " + e.getMessage());
         } catch (Exception e) {
+        	e.printStackTrace();
             throw new RuntimeException("Unexpected error fetching tile: " + e.getMessage());
         }
     }

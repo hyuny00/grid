@@ -25,6 +25,7 @@ public enum ErrorCode {
     FILE_ACCEPT_ERROR("FILE-06", " 파일확장자가 {{fileExt}}인 파일은 업로드 할수 없습니다."),
     FILE_ACCESS_DENIED("FILE-07", " 파일을 다운로드할 권한이 없습니다."),
     FILE_DELETE_DENIED("FILE-08", " 파일을 삭제할 권한이 없습니다."),
+    ZIP_EXT_ERROR("FILE-09", "ZIP파일 압축해제에 실패했습니다."),
     ;
 
     private final String code;

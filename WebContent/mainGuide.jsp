@@ -430,6 +430,9 @@ let template = `<tr class="\${rowData.displayClass}">
 
 
 
+sort: gridsample2
+contextMenuItems : gridsample1
+
 	</code></pre>
 </section>
 

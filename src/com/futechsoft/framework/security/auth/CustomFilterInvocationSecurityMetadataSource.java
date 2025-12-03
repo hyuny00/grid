@@ -35,21 +35,32 @@ public class CustomFilterInvocationSecurityMetadataSource implements FilterInvoc
 
 		if (requestMap == null)
 			return null;
-		String url = ((FilterInvocation) o).getRequestUrl();
+		//String url = ((FilterInvocation) o).getHttpRequest().getRequestURI();
+
+
+		String url = ((FilterInvocation) o).getHttpRequest().getRequestURI();
+		String contextPath = ((FilterInvocation) o).getHttpRequest().getContextPath();
+
+		if (url.startsWith(contextPath)) {
+		    url = url.substring(contextPath.length());
+		}
+
+
+
 		Iterator<String> ite = requestMap.keySet().iterator();
 
 		Collection<ConfigAttribute> result = null;
 		while (ite.hasNext()) {
 			String resURL = ite.next();
-			
+
 			if (pathMatcher.match(resURL, url)) {
 				result = requestMap.get(resURL);
 				break;
 			}
 		}
 
-		
-		
+
+
 		if (result == null || result.size() == 0) {
 			result = new ArrayList<ConfigAttribute>();
 			result.add(new SecurityConfig("ROLE_ADMIN"));

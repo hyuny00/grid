@@ -26,8 +26,8 @@
         <context:exclude-filter expression="org.springframework.stereotype.Repository" type="annotation"/>
     </context:component-scan>
 
-    
-     
+
+
  	<mvc:annotation-driven/>
 
  	<aop:aspectj-autoproxy />
@@ -42,6 +42,7 @@
 	<mvc:resources mapping="/fonts/**" location="/resources/fonts/" />
 	<mvc:resources mapping="/webfonts/**" location="/resources/webfonts/" />
   	<mvc:resources mapping="/resources/**" location="/resources/" />
+  	<mvc:resources mapping="/file/synap/result/**" location="file:/home/user/project/result/" />
 
   	<!-- secured method -->
 	<security:global-method-security proxy-target-class="true" secured-annotations="enabled" pre-post-annotations="enabled" />

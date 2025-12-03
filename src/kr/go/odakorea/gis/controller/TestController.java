@@ -37,6 +37,8 @@ public class TestController {
 		     */
 		    @GetMapping("/process-csv")
 		    public ResponseEntity<Map<String, Object>> processCSV() {
+
+		    	/*
 		        try {
 		            List<String> sqlQueries = geocodeUpdateService.processCSVAndGenerateSQL("C:/test/rgn2.csv");
 
@@ -64,7 +66,16 @@ public class TestController {
 
 		            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
 		        }
+		        */
+		    	 String result =geocodeUpdateService.processCSVAndUpdateCoordinates("C:/test/rgn3.csv", "C:/test/result2.csv");
+
+		    	 Map<String, Object> result1 = new HashMap<>();
+		    	 result1.put("success", true);
+		    	 result1.put("message", "CSV 처리 완료");
+
+		    	 return ResponseEntity.ok(result1);
 		    }
+
 
 
 

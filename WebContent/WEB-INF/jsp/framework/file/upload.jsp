@@ -3,7 +3,7 @@
 
 
 
-<c:if test="${param.isOnlyZip eq 'Y'}">
+<c:if test="${param.isOnlyZip eq 'Y' or param.extractZipYn eq 'Y'}">
     <c:set var="accept" value=".zip" />
 </c:if>
 
@@ -84,7 +84,16 @@
 
 			<!-- 파일이 없을 때 표시될 메시지 -->
 			<p id="emptyMessage_${uploadFormId}" class="txt-file" >첨부하실 파일을 마우스로 끌어오세요.</p>
-			<ul id="fileList_${uploadFormId}" data-thumbnail-yn="${param.thumbnailYn}"   data-required-attach-index="${param.requiredAttachIndex}" data-max-file-size="${param.maxFileSize}" data-accept-file="${accept}" data-single-file="${param.singleFile}" data-max-file-cnt="${param.maxFileCnt}" data-homepage-open-yn="${param.homepageOpenYn}"  data-iips-open-yn="${param.iipsOpenYn}" class="file-list dragndrop" style="display:none;"></ul>
+			<ul id="fileList_${uploadFormId}" data-thumbnail-yn="${param.thumbnailYn}"
+						 data-required-attach-index="${param.requiredAttachIndex}"
+						 data-max-file-size="${param.maxFileSize}"
+						 data-accept-file="${accept}"
+						 data-single-file="${param.singleFile}"
+						 data-max-file-cnt="${param.maxFileCnt}"
+						 data-homepage-open-yn="${param.homepageOpenYn}"
+						 data-iips-open-yn="${param.iipsOpenYn}"
+						 data-extract-zip-yn="${param.extractZipYn}"
+			 class="file-list dragndrop" style="display:none;"></ul>
 
 			<input type="file" id="file_input_${uploadFormId}" accept="${accept}" multiple onChange="uploadModule.upload('${uploadFormId}');" hidden/>
         </div>

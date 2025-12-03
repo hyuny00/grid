@@ -137,10 +137,13 @@ $(document).ready(function() {
     </td>
     <td data-field="no">{{no}}</td>
     <td data-field="name">
-        <input type="text" name="name" class="form-control form-control-sm" data-field="name" data-value="{{name}}">
+        <input type="text" name="name" class="form-control form-control-sm" data-field="name" data-value="{{name}}" readonly>
     </td>
     <td data-field="date">
-        <input type="text" class="form-control form-control-sm date-input" data-field="date" data-value="{{date}}">
+        <input type="text" class="form-control form-control-sm date-input" data-field="date" data-value="{{date}}" readonly>
+    </td>
+    <td>
+        <button type="button" class="btn btn-sm btn-edit-row" data-row-id="{{id}}">수정</button>
     </td>
 </tr>
 </script>
@@ -162,4 +165,50 @@ function refreshGrid(gridId) {
         gridManagers[gridId].fetchData();
     }
 }
+
+// 수정/저장 버튼 이벤트 처리
+$(document).on('click', '.btn-edit-row', function() {
+    const $btn = $(this);
+    const $row = $btn.closest('tr');
+    const rowId = $btn.data('row-id');
+    
+    // 현재 버튼 상태 확인
+    const isEditing = $btn.text().trim() === '저장';
+    
+    if (!isEditing) {
+        // "수정" 상태 -> 편집 모드로 변경
+        $row.find('input[data-field="name"], input[data-field="date"]').each(function() {
+            $(this).prop('readonly', false).focus();
+        });
+        $btn.text('저장').removeClass('btn-edit-row').addClass('btn-save-row');
+    } else {
+        // "저장" 상태 -> 저장 후 읽기 전용으로 변경
+        const formData = {};
+        $row.find('input[data-field]').each(function() {
+            const $input = $(this);
+            const fieldName = $input.data('field');
+            formData[fieldName] = $input.val();
+        });
+        
+        // 읽기 전용으로 변경
+        $row.find('input[data-field="name"], input[data-field="date"]').each(function() {
+            $(this).prop('readonly', true);
+        });
+        
+        $btn.text('수정').removeClass('btn-save-row').addClass('btn-edit-row');
+        
+        // 서버에 저장 (필요시)
+        console.log('저장할 데이터:', { id: rowId, ...formData });
+        // AJAX를 통해 서버에 저장하는 로직을 여기에 추가할 수 있습니다
+        // $.ajax({
+        //     type: 'POST',
+        //     url: '/sample/grid/update',
+        //     data: JSON.stringify({ id: rowId, ...formData }),
+        //     contentType: 'application/json',
+        //     success: function(response) {
+        //         console.log('저장 완료');
+        //     }
+        // });
+    }
+});
 </script>

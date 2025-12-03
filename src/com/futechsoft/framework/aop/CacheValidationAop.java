@@ -83,7 +83,7 @@ public class CacheValidationAop {
             com.github.benmanes.caffeine.cache.Cache<Object, Object> nativeCache =
                     (com.github.benmanes.caffeine.cache.Cache<Object, Object>)
                     ((CaffeineCache) cacheManager.getCache(cacheTmpName)).getNativeCache();
-            System.out.println("캐시 '" + cacheName + "' 의 현재 크기: " + nativeCache.estimatedSize());
+            System.out.println("캐시 '" + cacheTmpName + "' 의 현재 크기: " + nativeCache.estimatedSize());
 
             nativeCache.policy().expireAfterAccess().ifPresent(policy -> {
                 System.out.println("Access TTL: " + policy.getExpiresAfter(TimeUnit.DAYS) + " days");

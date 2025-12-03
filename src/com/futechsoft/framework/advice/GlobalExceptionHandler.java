@@ -1,4 +1,4 @@
-package com.futechsoft.framework.exception;
+package com.futechsoft.framework.advice;
 
 import java.sql.SQLException;
 
@@ -23,6 +23,10 @@ import org.springframework.web.context.request.async.AsyncRequestTimeoutExceptio
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.futechsoft.framework.common.constant.ViewInfo;
+import com.futechsoft.framework.exception.AjaxException;
+import com.futechsoft.framework.exception.BoardNotFoundException;
+import com.futechsoft.framework.exception.FileDownloadException;
+import com.futechsoft.framework.exception.FileUploadException;
 import com.futechsoft.framework.security.vo.CustomUserDetails;
 
 

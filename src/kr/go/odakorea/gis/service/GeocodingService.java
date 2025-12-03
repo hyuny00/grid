@@ -13,39 +13,42 @@ import com.futechsoft.gis.vo.GeocodingResponse;
 
 @Service("gis.service.GeocodingService")
 public class GeocodingService {
-	
-	
+
+
 	@Autowired
 	RestTemplateFactory restTemplateFactory;
-    
+
 	@Value("${maptiler.proxy.baseUrl}")
 	private String procyMapTilerBaseUrl;
-	
-	
+
+
 	@Value("${maptiler.apiKey}")
 	private String apiKey;
-	
+
 
     /**
      * 지오코딩 API를 호출하여 검색어에 해당하는 위치의 위도/경도 정보를 가져옵니다.
-     * 
+     *
      * @param query 검색어 (주소, 장소명 등)
      * @return 위도와 경도 정보 (위도, 경도)
      */
     public Coordinates geocode(String query) {
         try {
         	RestTemplate  restTemplate = restTemplateFactory.getRestTemplate();
-        	
+
             // API URL 구성
             String url = UriComponentsBuilder
                     .fromHttpUrl(procyMapTilerBaseUrl + "/geocoding/" + query + ".json")
                     .queryParam("key", apiKey)
                     .build()
                     .toString();
-            
+
+
+            System.out.println("geocoding.................."+url);
+
             // API 호출
             GeocodingResponse response = restTemplate.getForObject(url, GeocodingResponse.class);
-            
+
             // 첫 번째 결과의 좌표 반환 (결과가 없으면 null 반환)
             if (response != null && response.getFeatures() != null && !response.getFeatures().isEmpty()) {
                 Feature firstFeature = response.getFeatures().get(0);

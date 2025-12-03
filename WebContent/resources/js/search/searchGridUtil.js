@@ -6,6 +6,7 @@ class CommonGridManager {
     constructor() {
         this.categoryData = {};
         this.codeMap = {};
+        this.basePath='';
     }
 
     /**
@@ -54,7 +55,7 @@ class CommonGridManager {
             }
 
             $.ajax({
-                url: '/common/selectCode',
+                url:  this.basePath+'/common/selectCode',
                 type: 'get',
                 contentType: "application/x-www-form-urlencoded; charset=UTF-8",
                 data: requestData,
@@ -218,7 +219,7 @@ class CommonGridManager {
             }
 
             $.ajax({
-                url: '/common/selectCodeMultiple',
+                url: this.basePath+'/common/selectCodeMultiple',
                 type: 'post',
                 contentType: "application/json; charset=UTF-8",
                 data: jsonString,
@@ -330,7 +331,7 @@ class CommonGridManager {
 
 
             $.ajax({
-                url: '/common/selectCodeListMultiple',
+                url: this.basePath+'/common/selectCodeListMultiple',
                 type: 'post',
                 contentType: "application/json; charset=UTF-8",
                 data:  JSON.stringify({ requests: requests }),

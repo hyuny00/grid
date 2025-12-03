@@ -18,6 +18,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javax.annotation.Resource;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -552,6 +554,9 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 
 	    try (ZipOutputStream zipStream = new ZipOutputStream(new FileOutputStream(zipFileName))) {
 	        for (FileInfoVo fileInfoVo : fileInfoVos) {
+
+
+
 	            //파일다운로드 권한 (이미 체크했지만 한번 더)
 	            boolean fileDownloadCheck = FileUtil.hasFileDownloadAuth(fileInfoVo);
 	            if(fileDownloadCheck) {
@@ -856,5 +861,74 @@ public class FileUploadService extends EgovAbstractServiceImpl {
 
 		 mapper.updateFilePstnSecd(params);
 	}
+
+
+	public void streamZipFromTempFolder(FileInfoVo[] fileInfoVos, String tempFolder, HttpServletResponse response) throws Exception {
+
+
+		String zipFileName = FileUtil.getRandomId() + ".zip";
+
+	    //response.setContentType("application/zip");
+	    response.setContentType("application/octet-stream; charset=utf-8");
+	    response.setHeader("Content-Disposition",
+                "attachment; filename=\"" + java.net.URLEncoder.encode(zipFileName, "utf-8") + "\";");
+	    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+	    response.setHeader("Pragma", "no-cache");
+	    response.setHeader("Expires", "0");
+
+
+	    Set<String> usedFileNames = new HashSet<>();
+
+	    try (
+	        ServletOutputStream out = response.getOutputStream();
+	        ZipOutputStream zipStream = new ZipOutputStream(out)
+	    ) {
+	        for (FileInfoVo fileInfoVo : fileInfoVos) {
+	            if (!FileUtil.hasFileDownloadAuth(fileInfoVo)) {
+	                continue;
+	            }
+
+	            File file = Paths.get(tempFolder, fileInfoVo.getFileId() + ".FILE").toFile();
+	            if (!file.exists() || file.isDirectory()) {
+	                continue;
+	            }
+
+	            String uniqueFileName = getUniqueFileName(fileInfoVo.getFileNm(), usedFileNames);
+	            usedFileNames.add(uniqueFileName);
+
+	            try (FileInputStream fis = new FileInputStream(file)) {
+	                ZipEntry zipEntry = new ZipEntry(uniqueFileName);
+	                zipEntry.setCreationTime(FileTime.fromMillis(file.lastModified()));
+	                zipStream.putNextEntry(zipEntry);
+
+	                byte[] buffer = new byte[4096];
+	                int length;
+
+	                while ((length = fis.read(buffer)) > 0) {
+	                    try {
+	                        zipStream.write(buffer, 0, length);
+	                    } catch (IOException writeException) {
+	                        // 👇 이곳에서 연결 끊김 감지됨
+	                        System.out.println("클라이언트가 연결을 끊었습니다. ZIP 생성 중단.");
+	                        return; // 즉시 중단
+	                    }
+	                }
+
+	                zipStream.closeEntry();
+	            }
+	        }
+
+	        try {
+	            zipStream.finish(); // 모든 항목 완료
+	        } catch (IOException e) {
+	            System.out.println("ZIP 스트림 종료 중 IOException 발생 (클라이언트 중단 가능성): " + e.getMessage());
+	        }
+
+	    } catch (IOException e) {
+	        // getOutputStream() 또는 ZipOutputStream 생성 중 예외
+	        System.out.println("ZIP 생성 중 IOException: " + e.getMessage());
+	    }
+	}
+
 }
 

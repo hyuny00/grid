@@ -27,7 +27,6 @@ public class TileController {
         // B 서버에서 타일을 가져옵니다.
         byte[] tile = tileService.getTile(zoom, x, y);
 
-        System.out.println("KKKKKKKKKKKKKKKKKKKKKKKK");
 
         // 타일 이미지 파일을 클라이언트에게 반환합니다.
         return ResponseEntity.ok()

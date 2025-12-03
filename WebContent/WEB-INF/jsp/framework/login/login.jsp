@@ -13,7 +13,7 @@
 <body>
 <h2>로그인 </h2>
 <form name="form1" method="post" action="${basePath}/loginSessAndJwt">
-<input type="hidden" name="${ _csrf.parameterName }" value="${ _csrf.token }">
+
 <table>
     <tr height="40px">
         <td>유저ID</td>

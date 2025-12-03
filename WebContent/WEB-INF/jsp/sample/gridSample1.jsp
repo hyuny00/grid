@@ -91,7 +91,8 @@ $(document).ready(function() {
              label: '삭제',
              icon: 'fas fa-trash',
              shortcut: 'Del',
-             disabled: (node) => node.level === 0 && node.children?.length > 0
+             disabled: (node) => node.level === 0 && Array.isArray(node.children) && node.children.length > 0
+
          }
      ],
      onContextMenuClick: function(action, nodeId, node, $row, gridManager) {

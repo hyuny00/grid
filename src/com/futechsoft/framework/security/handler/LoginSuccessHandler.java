@@ -89,9 +89,19 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
 
 		SavedRequest savedRequest = requestCache.getRequest(request, response);
+
+
+		System.out.println("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ");
+		System.out.println("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ");
+		System.out.println("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ");
+		System.out.println("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ");
+
+		System.out.println("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ................."+defaultUrl);
+
 		if (savedRequest != null) {
 			String targetUrl = savedRequest.getRedirectUrl();
 
+			System.out.println("sssssssssssssssssssssssssssssss................."+targetUrl);
 			if(!StringUtils.endsWithAny(targetUrl, ext)) {
 				redirectStratgy.sendRedirect(request, response, targetUrl);
 			}else {

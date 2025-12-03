@@ -14,30 +14,30 @@ $(document).ready(function() {
      templateId: 'node-row-template-1',
      urls: {
     	 mainUrl: '/sample/newSampleList2',
-     }, 
+     },
      pageSize: 10,
-     
+
      onRowClick: function(rowData, $row) {
          console.log('선택된 행:', rowData);
      }
  });
- 
+
 
 });
- 
+
 </script>
 
 <div class="pgtBox">
     <div class="lt">
         <h2>요청 중인 연계</h2>
     </div>
-    
+
     <ul class="breadcrumb">
         <li class="home"><a href="javascript:;">홈</a></li>
         <li><a href="javascript:;">평가</a></li>
         <li><a href="javascript:;">자체평가</a></li>
     </ul>
-    
+
     <div class="rt"></div>
 </div>
 <form id="searchForm" method="post">
@@ -71,26 +71,26 @@ $(document).ready(function() {
 	            </ul>
 	        </div>
 	    </div>
-	    
+
 	    <div class="btn-wrap">
 	        <button type="button" class="btn-apply">조건검색</button>
 	        <button type="reset" class="btn-reset"><span class="sr-only">초기화</span></button>
 	    </div>
 	</div>
-	
+
 	<div class="schList">
 	    <div class="titBox">
 	        <div class="lt"></div>
 	        <div class="rt">
 	            <div class="btn-wrap">
-	                <button type="button" class="btn excel">엑셀다운로드</button>
+	                <button type="button" class="btn excel">엑셀다운로드  </button>
 	                <button type="button" class="btn hwp">한글다운로드</button>
 	                <button type="button" class="btn pdf">PDF다운로드</button>
 	                <button type="button" class="btn biz">사업등록</button>
 	            </div>
 	        </div>
 	    </div>
-	    
+
 	    <div class="tblBox">
 	     <div id="grid1-container">
 	        <table class="tbl col" id="grid1">
@@ -124,11 +124,11 @@ $(document).ready(function() {
 	            <tbody id="grid1-body">
 	            </tbody>
 	        </table>
-	        
-	        
+
+
 		        <!-- pagination -->
 		        <div class="pagination" id="grid1-pagination">
-		           
+
 		        </div>
 		        <!-- //pagination -->
 	        </div>
@@ -138,7 +138,7 @@ $(document).ready(function() {
 </form>
 <!-- 첫 번째 그리드용 템플릿 -->
 <script type="text/html" id="node-row-template-1">
-   
+
 <tr>
     <td>
         <div class="tblChk">

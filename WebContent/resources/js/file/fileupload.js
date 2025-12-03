@@ -298,13 +298,24 @@ var uploadModule =(function() {
 			 }else{
 				 metadata.maxFileSize = 0;
 			 }
-			 if(acceptFile==='.zip'){
-				 metadata.isOnlyZip='Y';
-			 }
+
 
 			 var thumbnailYn=  $("#fileList_"+uploadFormId).data("thumbnailYn");
 			 if(thumbnailYn==='Y'){
 				 metadata.thumbnailYn='Y';
+			 }
+
+			 var extractZipYn =  $("#fileList_"+uploadFormId).data("extractZipYn");
+
+			 //isOnlyZip :isOnlyZip 이 Y 이면 acceptFile 이 .zip임.  isOnlyZip : zip파일을 저장시 압축해제,  extractZipYn:zip파일을 파일업로드시 압축해제해서 리스트 보여줌
+			 if (String(acceptFile).trim() === '.zip' && String(extractZipYn).trim() !== 'Y') {
+				    metadata.isOnlyZip = 'Y';
+				    metadata.extractZipYn='N';
+			 }
+
+			 if(extractZipYn==='Y'){
+				 metadata.extractZipYn='Y';
+				 metadata.isOnlyZip = 'N';
 			 }
 
 			 processFile(metadata);
@@ -392,7 +403,11 @@ var uploadModule =(function() {
 			    		return;
 			    	}
 
+
 			    	var fileInfo = result.fileInfo[0];
+			    	var fileInfoArray = result.fileInfo;
+
+
 
 			    	metadata.chunkIndex++;
 
@@ -443,7 +458,23 @@ var uploadModule =(function() {
 
 		    			processFile(metadata);
 
-			    		displayFileList(fileInfo, metadata.uploadFormId);
+			    		//displayFileList(fileInfo, metadata.uploadFormId);
+		    			 // 🔹 fileInfo가 배열이면 각각 처리, 아니면 단일 처리
+
+
+		    			 if(metadata.extractZipYn==='Y'){
+		    				 if (Array.isArray(fileInfoArray)) {
+		    					 fileInfoArray.forEach(function(info){
+			    		             displayFileList(info, metadata.uploadFormId);
+			    		         });
+			    		     }
+		    			 }else{
+		    				 displayFileList(fileInfo, metadata.uploadFormId);
+		    			 }
+
+
+
+
 
 			    		$("#progressBar_"+metadata.uploadFormId).hide();
 			    		$("#progressBar_"+metadata.uploadFormId).val(0);

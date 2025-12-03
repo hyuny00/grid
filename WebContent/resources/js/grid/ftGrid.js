@@ -1763,7 +1763,7 @@ class TreeGridManager {
 
                             if (this.isTreeMode && node.children && node.children.length > 0) {
                                 updateLimitedNodeChecked(node.children);
-                            }
+                            }  
                         } else {
                             node.checked = false;
                             if (this.isTreeMode && node.children && node.children.length > 0) {

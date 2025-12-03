@@ -167,6 +167,10 @@ function closePopup(){
 								  <jsp:include page="/file/uploadForm" flush="true">
                                         <jsp:param name="refDocId" value="attcDocId"/>
                                         <jsp:param name="docId" value="${result.attcDocId}"/>
+                                         <jsp:param name="allDownload" value="Y"/>
+                                          <jsp:param name="extractZipYn" value="Y"/>
+
+
                                     </jsp:include>
 
 							</td>

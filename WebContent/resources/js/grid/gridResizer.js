@@ -128,9 +128,14 @@ class ColgroupTableResizer {
         const cols = colgroup.querySelectorAll('col');
         const currentCol = cols[this.currentColumn];
 
+
+        const tableId = this.currentTable.id;
+
+
+
         if (currentCol) {
             currentCol.style.width = newWidth.toFixed(1) + '%';
-            this.updateIndicator(newWidth);
+            this.updateIndicator(newWidth,tableId);
         }
     }
 
@@ -205,7 +210,7 @@ class ColgroupTableResizer {
         }
     }
 
-    updateIndicator(width) {
+    updateIndicator(width,tableId) {
         if (this.indicator) {
             this.indicator.textContent = `${tableId} - 넓이: ${width.toFixed(1)}%`;
         }

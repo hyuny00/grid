@@ -45,6 +45,8 @@ public class FileInfoVo implements Serializable {
 
 	private String taskSecd;
 
+	private String extractZipYn;
+
 
 	public FileInfoVo() {
 	}
@@ -243,6 +245,14 @@ public class FileInfoVo implements Serializable {
 
 	public void setTaskSecd(String taskSecd) {
 		this.taskSecd = taskSecd;
+	}
+
+	public String getExtractZipYn() {
+		return extractZipYn;
+	}
+
+	public void setExtractZipYn(String extractZipYn) {
+		this.extractZipYn = extractZipYn;
 	}
 
 }

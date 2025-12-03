@@ -117,24 +117,53 @@ public class CommonUtil {
 
 
 	public static void copy(InputStream in, OutputStream out, long length) throws IOException {
-	    // 최적화된 버전
-	    int BUFFER_SIZE = Math.min(64 * 1024, (int)(length / 100)); // 동적 계산
-	    BUFFER_SIZE = Math.max(8 * 1024, BUFFER_SIZE); // 최소 8KB
+	    int BUFFER_SIZE = Math.min(64 * 1024, (int)(length / 100));
+	    BUFFER_SIZE = Math.max(8 * 1024, BUFFER_SIZE);
 
 	    byte[] buffer = new byte[BUFFER_SIZE];
 	    int bytesRead;
 
-	    // BufferedOutputStream 사용하되 원본 스트림은 닫지 않음
 	    BufferedOutputStream bufferedOut = new BufferedOutputStream(out, BUFFER_SIZE);
 	    try {
 	        while ((bytesRead = in.read(buffer)) != -1) {
 	            bufferedOut.write(buffer, 0, bytesRead);
 	        }
-	        bufferedOut.flush(); // flush만 하고 close는 하지 않음
-	    } finally {
-	        // bufferedOut.close() 하지 않음 - 원본 out이 닫힐 수 있음
+	        bufferedOut.flush();
+	    } catch (IOException e) {
+	        if (isClientAbortException(e)) {
+	            // 사용자 다운로드 중단 감지
+	            // LOGGER.info("[INFO] 다운로드 중단 감지");
+	            System.out.println("[INFO] 다운로드 중단 감지");
+	            // 필요한 정리 작업 가능
+	        } else {
+	            throw e;
+	        }
 	    }
+	    // finally에서 닫지 않음
 	}
+
+	public static boolean isClientAbortException(Throwable e) {
+	    while (e != null) {
+	        String className = e.getClass().getName();
+	        String message = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+
+	        if (className.contains("ClientAbortException")) {
+	            return true;
+	        }
+	        if (message.contains("broken pipe") ||
+	            message.contains("connection reset") ||
+	            message.contains("stream closed") ||
+	            message.contains("connection aborted") ||
+	            message.contains("connection reset by peer")) {
+	            return true;
+	        }
+
+	        e = e.getCause();
+	    }
+	    return false;
+	}
+
+
 
 	/**
      * @param src

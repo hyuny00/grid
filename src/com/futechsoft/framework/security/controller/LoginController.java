@@ -53,18 +53,18 @@ public class LoginController {
 
 	@Autowired
 	private LoginSuccessHandler loginSuccessHandler;
-	
-	
+
+
 	@Autowired
 	private LoginSuccessJwtHandler loginSuccessJwtHandler;
-	
-	
+
+
 
 	@RequestMapping("/main")
 	public String main() throws Exception {
 
 		return "tiles:main";
-		
+
 	}
 
 	@RequestMapping(value = "/loginWithoutSecurity")
@@ -109,13 +109,13 @@ public class LoginController {
 	private boolean matchPassword(String loginPwd, String password) {
 		return (passwordEncoder.matches(loginPwd, password));
 	}
-	
-	
+
+
 	@RequestMapping(value = "/loginSessAndJwt")
 	public void loginWithoutSecurityJwt(String userId, String password, HttpServletRequest request, HttpServletResponse response) throws Exception {
-		
+
 		System.out.println("userIduserId...."+userId);
-		
+
 		try {
 			CustomUserDetails user = (CustomUserDetails) userDetailsService.loadUserByUsername(userId);
 
@@ -123,8 +123,8 @@ public class LoginController {
 			if (!matchPassword(password, user.getPassword())) {
 				throw new BadCredentialsException(ErrorCode.BAD_CREDENTIALS.getMessage());
 			}
-			
-			
+
+
 			// Authentication 객체 생성
 	        Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
 

@@ -21,18 +21,18 @@ import kr.go.odakorea.gis.service.GeocodingService;
  */
 @RestController
 public class GeocodingController {
-	
-	
+
+
 	@Autowired
     private  GeocodingService geocodingService;
-	
-	
+
+
 	/**
 	 * 지역명으로 위도 경도 정보를 가져온다
 	 * @param query
 	 * @return
 	 */
-    @GetMapping("/geocode")
+    @GetMapping("/api/geocode")
     public Coordinates geocode(@RequestParam String query) {
         return geocodingService.geocode(query);
     }

@@ -33,14 +33,14 @@ $(document).ready(function() {
         searchFormId: 'searchForm',
         templateId: 'node-row-template-1',
         urls: {
-            mainUrl: '/sample/selectSampleList',
+            mainUrl: '${basePath}/sample/selectSampleList',
         },
         pageSize: 3,
         onRowClick: function(rowData, $row) {
             console.log('선택된 행:', rowData);
             sampleDetail(rowData.id);
         },
-        
+
         onRowDoubleClick: function(rowData, $row) {
             console.log('더블클릭된 행:', rowData);
             // 여기에 더블클릭 시 실행할 로직 추가
@@ -59,7 +59,7 @@ $(document).ready(function() {
         $preparingFileModal.dialog({ modal: true });
         $("#progressbar").progressbar({ value: false });
 
-        $.fileDownload("/file/largeExcelDown", {
+        $.fileDownload("${basePath}/file/largeExcelDown", {
             httpMethod: "post",
             data: $("#searchForm").serialize(),
             successCallback: function () {
@@ -91,7 +91,7 @@ function selectCode() {
     var cdGroupSn = $("#test option:selected").data('code-group');
 
     $.ajax({
-        url: '/common/selectCode',
+        url: '${basePath}/common/selectCode',
         type: 'get',
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
         data: { code: code, cdGroupSn: cdGroupSn },
@@ -182,30 +182,30 @@ function selectCode() {
                 <div class="btn-wrap">
                     <button type="button" class="btn excel" id="btn-excel">엑셀다운로드</button>
                     <button type="button" class="btn biz" onclick="sampleForm();">등록</button>
-				    <button type="button" class="btn" onclick="openCustomPopup('pop01', '/sample/popup1')">팝업1</button>
-				    <button type="button" class="btn" onclick="openCustomPopup('pop02', '/sample/popup2',{id:'2', name:'aaa'})">팝업2</button>
-         
-                    
+				    <button type="button" class="btn" onclick="openCustomPopup('pop01', '${basePath}/sample/popup1')">팝업1</button>
+				    <button type="button" class="btn" onclick="openCustomPopup('pop02', '${basePath}/sample/popup2',{id:'2', name:'aaa'})">팝업2</button>
+
+
                 </div>
             </div>
-        </div> 
+        </div>
 
         <div class="tblBox">
             <table class="tbl col" id="grid1">
                 <thead>
                     <tr>
                      <th>NO</th>
-                        
+
                          <th scope="col" class="sortable" data-sort="id">
             					ID <span class="sort-icon"></span>
-        				</th> 
-        				
+        				</th>
+
         				 <th scope="col" class="sortable" data-sort="name">
             					이름 <span class="sort-icon"></span>
-        				</th> 
-                        
-                        <th>useYn</th> 
-                        <th>description</th> 
+        				</th>
+
+                        <th>useYn</th>
+                        <th>description</th>
                         <th>regUser</th>
                     </tr>
                 </thead>

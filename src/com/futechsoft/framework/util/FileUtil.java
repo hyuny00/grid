@@ -6,15 +6,21 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import javax.imageio.ImageIO;
@@ -260,7 +266,7 @@ public class FileUtil {
 		}
 		return data;
 	}
-	
+
 	 /**
      * ZIP 파일을 압축해제합니다 (한글 파일명 지원)
      * @param zipFilePath 압축해제할 ZIP 파일 경로
@@ -268,37 +274,37 @@ public class FileUtil {
      * @throws IOException
      */
     public static void extractZip(FileInfoVo fileInfoVo,  String uploadPath, String destDir) throws IOException {
-    	
-    	
-    	
+
+
+
     	String filePath = fileInfoVo.getFilePath();
-    	
+
     	 Path source = Paths.get(uploadPath, filePath, fileInfoVo.getFileId()+".FILE");
          Path target = Paths.get(destDir,fileInfoVo.getFileId()+".zip");
          Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
          System.out.println("파일명 변경 성공!");
-         
-    	
-    	
+
+
+
         Path destPath = Paths.get(destDir, fileInfoVo.getFileId());
-        
+
         // 대상 디렉토리가 없으면 생성
         if (!Files.exists(destPath)) {
             Files.createDirectories(destPath);
         }
-        
+
         String zipFilePath= target.toString();
-        
+
         // 한글 파일명 지원을 위해 여러 인코딩 시도
         Charset[] charsets = {
             Charset.forName("UTF-8"),
             Charset.forName("EUC-KR"),
             Charset.forName("MS949")
         };
-        
+
         boolean extracted = false;
         IOException lastException = null;
-        
+
         for (Charset charset : charsets) {
             try {
                 extractWithCharset(zipFilePath, destPath.toString(), charset);
@@ -310,31 +316,31 @@ public class FileUtil {
                 System.out.println("인코딩 " + charset.name() + " 실패, 다음 인코딩 시도...");
             }
         }
-        
+
         if (!extracted) {
             throw new IOException("모든 인코딩 시도 실패", lastException);
         }
     }
-    
+
     /**
      * 특정 인코딩으로 ZIP 파일을 압축해제합니다
      */
     private static void extractWithCharset(String zipFilePath, String destDir, Charset charset) throws IOException {
         try (FileInputStream fis = new FileInputStream(zipFilePath);
              ZipInputStream zis = new ZipInputStream(fis, charset)) {
-            
+
             ZipEntry entry;
             byte[] buffer = new byte[8192];
-            
+
             while ((entry = zis.getNextEntry()) != null) {
                 String entryName = entry.getName();
                 Path entryPath = Paths.get(destDir, entryName);
-                
+
                 // 디렉토리 순회 공격 방지
                 if (!entryPath.normalize().startsWith(Paths.get(destDir).normalize())) {
                     throw new IOException("잘못된 압축 항목: " + entryName);
                 }
-                
+
                 if (entry.isDirectory()) {
                     // 디렉토리 생성
                     Files.createDirectories(entryPath);
@@ -344,22 +350,89 @@ public class FileUtil {
                     if (parentDir != null && !Files.exists(parentDir)) {
                         Files.createDirectories(parentDir);
                     }
-                    
+
                     try (FileOutputStream fos = new FileOutputStream(entryPath.toFile());
                          BufferedOutputStream bos = new BufferedOutputStream(fos)) {
-                        
+
                         int len;
                         while ((len = zis.read(buffer)) > 0) {
                             bos.write(buffer, 0, len);
                         }
                     }
                 }
-                
+
                 zis.closeEntry();
                 System.out.println("압축해제: " + entryName);
             }
         }
     }
-    
 
+
+    // ZIP 해제 (앞에서 만든 extractZip 그대로 사용)
+    public static List<FileInfoVo> extractZip(File zipFile, String tempZipPath) throws Exception {
+        List<FileInfoVo> fileInfoList = new ArrayList<>();
+
+        Charset[] charsets = {
+            Charset.forName("MS949"), // Windows 우선
+            StandardCharsets.UTF_8
+        };
+
+        ZipFile zf = null;
+        for (Charset cs : charsets) {
+            try {
+                zf = new ZipFile(zipFile, cs);
+                break;
+            } catch (Exception e) {
+                // 실패하면 다음 인코딩 시도
+            }
+        }
+
+        if (zf == null) {
+            throw new IOException("지원하는 인코딩으로 ZIP 파일을 열 수 없습니다.");
+        }
+
+        Path unzipDir = Paths.get(tempZipPath);
+        if (!Files.exists(unzipDir)) {
+            Files.createDirectories(unzipDir);
+        }
+
+        Enumeration<? extends ZipEntry> entries = zf.entries();
+        while (entries.hasMoreElements()) {
+            ZipEntry entry = entries.nextElement();
+            if (entry.isDirectory()) continue;
+
+            String fileId = FileUtil.getRandomId();
+            String fileName = Paths.get(entry.getName()).getFileName().toString();
+
+            String extName = "";
+            int dotIndex = fileName.lastIndexOf(".");
+            if (dotIndex > 0) {
+                extName = fileName.substring(dotIndex + 1);
+            }
+
+            Path extractedFilePath = unzipDir.resolve(fileId + ".TEMP");
+            try (InputStream is = zf.getInputStream(entry);
+                 FileOutputStream fos = new FileOutputStream(extractedFilePath.toFile())) {
+                byte[] buffer = new byte[4096];
+                int len;
+                while ((len = is.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
+                }
+            }
+
+            File extractedFile = extractedFilePath.toFile();
+            FileInfoVo fileInfoVo = new FileInfoVo();
+            fileInfoVo.setFileSize(extractedFile.length());
+            fileInfoVo.setFileExt(extName);
+            fileInfoVo.setFileId(fileId);
+            fileInfoVo.setTempFilePath(extractedFilePath.toString());
+            fileInfoVo.setFileNm(fileName);
+            fileInfoVo.setUploadComplete("Y");
+            fileInfoVo.setTemp("Y");
+
+            fileInfoList.add(fileInfoVo);
+        }
+
+        return fileInfoList;
+    }
 }

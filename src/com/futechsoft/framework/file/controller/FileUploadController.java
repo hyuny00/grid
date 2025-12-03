@@ -118,7 +118,7 @@ public class FileUploadController extends AbstractController {
 	public Map<String, Object> upload(Model model, HttpSession session,  @RequestParam MultipartFile file, @RequestParam String metadata)
 			throws JsonMappingException, JsonProcessingException, FileUploadException {
 
-
+/*
 		String acceptDoc = "";
 		String acceptImage = "";
 		String acceptMultimedia = "";
@@ -131,7 +131,11 @@ public class FileUploadController extends AbstractController {
 		for (String accept : acceptMultimedias) {
 			acceptMultimedia += accept + ",";
 		}
+*/
 
+		String acceptDoc = String.join(",", acceptDocs);
+		String acceptImage = String.join(",", acceptImages);
+		String acceptMultimedia = String.join(",", acceptMultimedias);
 
 
 		Gson gson = new Gson();
@@ -158,14 +162,48 @@ public class FileUploadController extends AbstractController {
 					(uploadSize / 1024 / 1024) + "M"));
 
 		} else {
+
+
+
 			fileInfoVo = fileUploadService.upload(file, fileInfoVo);
-			List<FileInfoVo> fileList = new ArrayList<FileInfoVo>();
 
-			session.setAttribute("getFileExt", fileInfoVo.getFileExt());
-			session.setAttribute("getTempFilePath", fileInfoVo.getTempFilePath());
+			if(CommonUtil.nvl(fileInfoVo.getExtractZipYn()).equals("Y") && fileInfoVo.getUploadComplete().equals("Y")) {
 
-			fileList.add(fileInfoVo);
-			fileInfo.put("fileInfo", fileList);
+
+				File tempFile = new File(fileInfoVo.getTempFilePath());
+
+				// 새 파일명: fileId.zip
+				File zipFile = new File(tempFile.getParent(), fileInfoVo.getFileId() + ".zip");
+
+				 List<FileInfoVo> fileList = new ArrayList<>();
+
+				if (tempFile.renameTo(zipFile)) {
+					try {
+						fileList = FileUtil.extractZip(zipFile, tempZipPath);
+						fileInfo.put("fileInfo", fileList);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+
+						fileInfo.put("errorCode", ErrorCode.ZIP_EXT_ERROR.getCode());
+						fileInfo.put("errorMessage", ErrorCode.ZIP_EXT_ERROR.getMessage());
+
+					}
+				}
+
+
+
+
+			}else {
+				List<FileInfoVo> fileList = new ArrayList<FileInfoVo>();
+
+				session.setAttribute("getFileExt", fileInfoVo.getFileExt());
+				session.setAttribute("getTempFilePath", fileInfoVo.getTempFilePath());
+
+				fileList.add(fileInfoVo);
+				fileInfo.put("fileInfo", fileList);
+			}
+
 		}
 
 		return fileInfo;
@@ -263,7 +301,7 @@ public class FileUploadController extends AbstractController {
 	 */
 	private void setuploadForm(String acceptType, HttpServletRequest req) throws Exception {
 
-
+/*
 		String acceptDoc = "";
 		String acceptImage = "";
 		String acceptMultimedia = "";
@@ -276,6 +314,14 @@ public class FileUploadController extends AbstractController {
 		for (String accept : acceptMultimedias) {
 			acceptMultimedia += accept + ",";
 		}
+*/
+
+		String acceptDoc = String.join(",", acceptDocs);
+		String acceptImage = String.join(",", acceptImages);
+		String acceptMultimedia = String.join(",", acceptMultimedias);
+
+		String acceptAll = String.join(",", acceptDoc, acceptImage, acceptMultimedia);
+
 
 		String uploadFormId = FileUtil.getRandomId();
 
@@ -291,7 +337,7 @@ public class FileUploadController extends AbstractController {
 			req.setAttribute("accept", acceptMultimedia);
 
 		} else {
-			req.setAttribute("accept", acceptDoc + "," + acceptImage + "," + acceptMultimedia);
+			req.setAttribute("accept", acceptAll);
 		}
 	}
 
@@ -469,8 +515,16 @@ public class FileUploadController extends AbstractController {
 					OutputStream out = response.getOutputStream();
 					CommonUtil.copy(fis, out, fileLength);
 				} catch (Exception e) {
-					e.printStackTrace();
-					throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+					//e.printStackTrace();
+					//throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+					if (CommonUtil.isClientAbortException(e)) {
+				        // 사용자 다운로드 중단, 조용히 로그만 남기고 끝내도 됨
+				        System.out.println("[INFO] 사용자 다운로드 중단 감지");
+				    } else {
+				        e.printStackTrace();
+				        throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+				    }
+
 				}
 			} else {
 				throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
@@ -1194,21 +1248,16 @@ public class FileUploadController extends AbstractController {
 	        // ZIP 파일 생성 - 임시 폴더의 파일들로 생성
 	        FileInfoVo[] processedFileArray = processedFileInfos.toArray(new FileInfoVo[0]);
 	        String zipFileName = FileUtil.getRandomId() + ".zip";
-	        String zipFilePath = tempZipPath + File.separator + zipFileName;
-	        fileUploadService.createZipFromTempFolder(processedFileArray, zipFilePath, tempDownloadDir);
+	       // String zipFilePath = tempZipPath + File.separator + zipFileName;
+	        String zipFilePath = tempZipPath;
+	       // fileUploadService.createZipFromTempFolder(processedFileArray, zipFilePath, tempDownloadDir);
 
+	        fileUploadService.streamZipFromTempFolder(processedFileArray, tempDownloadDir, res);
+/*
 	        // ZIP 파일 다운로드
 	        File zipFile = Paths.get(tempZipPath, zipFileName).toFile();
 	        if (zipFile.isFile() && zipFile.exists()) {
 	            res.setContentType("application/octet-stream; charset=utf-8");
-
-	            /*
-	            if (zipFile.length() > 1024 * 1024 * 20) { // 20M
-	                res.setHeader("Content-Transfer-Encoding", "chunked");
-	            } else {
-	                res.setContentLength((int) zipFile.length());
-	                res.setHeader("Content-Transfer-Encoding", "binary");
-	            }*/
 
 
 	            res.setContentLengthLong(zipFile.length());
@@ -1231,7 +1280,7 @@ public class FileUploadController extends AbstractController {
 	        } else {
 	            throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
 	        }
-
+*/
 	    } catch (Exception e) {
 	        e.printStackTrace();
 	        throw new FileDownloadException(e.getMessage());
