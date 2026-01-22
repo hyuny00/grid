@@ -1,0 +1,67 @@
+
+        .tbl {
+            width: 100%;
+            border-collapse: collapse;
+            /*min-width: 800px;*/
+        }
+
+        .schList .tbl th,
+        .schList .tbl td {
+            text-align: left;
+            position: relative;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+
+        /*.tbl tbody tr:nth-child(even) td {
+            background-color: #f8f9fa;
+        }
+
+        .tbl tbody tr:hover td {
+            background-color: #e3f2fd;
+        }*/
+
+        .resizer {
+            position: absolute;
+            top: 0;
+            right: -2px;
+            width: 4px;
+            height: 100%;
+            background: transparent;
+            cursor: col-resize;
+            user-select: none;
+            z-index: 10;
+            transition: background-color 0.2s;
+        }
+
+        .resizer:hover {
+            background-color: #007bff;
+            width: 3px;
+            right: -1px;
+        }
+
+        .resizer.resizing {
+            background-color: #007bff;
+            width: 3px;
+            right: -1px;
+        }
+
+        /* 마지막 열은 리사이저 숨김 */
+        .tbl th:last-child .resizer {
+            display: none;
+        }
+
+        .resize-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: none;
+            z-index: 1000;
+        }
