@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ftGrid.js - 전체 기능 샘플</title>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Toastr (알림 메시지) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <!-- Flatpickr (날짜 선택) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+
+    <!-- ftGrid CSS -->
+    <link rel="stylesheet" href="ftGrid.css">
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        h2 {
+            color: #555;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #007bff;
+        }
+
+        /* 검색 폼 */
+        .schBox {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .schBox .searchFlt ul {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .schBox .searchFlt li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .schBox .searchFlt li p {
+            font-weight: bold;
+            color: #555;
+            margin: 0;
+            white-space: nowrap;
+        }
+        .schBox input[type="text"],
+        .schBox select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .schBox .btn-wrap {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* 버튼 */
+        .btn, button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-apply, .btn-search { background-color: #007bff; color: white; }
+        .btn-apply:hover { background-color: #0056b3; }
+        .btn-reset { background-color: #6c757d; color: white; }
+        .btn-save { background-color: #28a745; color: white; }
+        .btn-save:hover { background-color: #1e7e34; }
+        .btn-add-row, .btn-add-child, .btn-plus { background-color: #17a2b8; color: white; }
+        .btn-delete, .btn-del { background-color: #dc3545; color: white; }
+        .btn-move-up, .btn-move-down { background-color: #6c757d; color: white; }
+        .btn.excel { background-color: #217346; color: white; }
+
+        /* 그리드 컨테이너 */
+        .cntBox, .grid-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .titBox {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .titBox .btn-wrap {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* 테이블 */
+        .tblBox { overflow-x: auto; }
+        table.tbl {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        table.tbl th,
+        table.tbl td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+            vertical-align: middle;
+        }
+        table.tbl th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            position: relative;
+        }
+        table.tbl tbody tr:hover { background-color: #f5f5f5; }
+        table.tbl tbody tr.on { background-color: #e3f2fd; }
+        .tC { text-align: center; }
+
+        /* 정렬 아이콘 */
+        th.sortable { cursor: pointer; user-select: none; }
+        th.sortable:hover { background-color: #e9ecef; }
+        th.sortable .sort-icon {
+            display: inline-block;
+            width: 12px;
+            margin-left: 4px;
+            color: #999;
+        }
+        th.sortable .sort-icon.asc::after { content: '▲'; font-size: 10px; color: #007bff; }
+        th.sortable .sort-icon.desc::after { content: '▼'; font-size: 10px; color: #007bff; }
+
+        /* 리사이저 */
+        th .resizer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            user-select: none;
+        }
+        th .resizer:hover { background-color: #007bff; }
+        table.resizable-table { table-layout: fixed; }
+
+        /* 입력 필드 */
+        table.tbl input[type="text"],
+        table.tbl input[type="number"],
+        table.tbl select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        table.tbl input:focus,
+        table.tbl select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        /* 체크박스 */
+        .tblChk { display: flex; justify-content: center; align-items: center; }
+        .tblChk input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        .tblChk label { display: none; }
+
+        /* 트리 토글 */
+        .tableNode { display: flex; align-items: center; text-align: left; }
+        .btn-tblnode {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 5px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        .btn-tblnode::before { content: '+'; }
+        .btn-tblnode.opened::before { content: '-'; }
+        .space, .line { display: inline-block; width: 25px; flex-shrink: 0; }
+
+        /* 페이지네이션 */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .pagination .page-navi {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .pagination .page-navi:hover:not([disabled]) { background-color: #e9ecef; }
+        .pagination .page-navi[disabled] { opacity: 0.5; cursor: not-allowed; }
+        .pagination .page-navi.prev::before { content: '◀ 이전'; }
+        .pagination .page-navi.next::before { content: '다음 ▶'; }
+        .pagination .page-links { display: flex; gap: 5px; }
+        .pagination .page-link {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: #fff;
+            text-decoration: none;
+            color: #333;
+            border-radius: 4px;
+        }
+        .pagination .page-link:hover { background-color: #e9ecef; }
+        .pagination .page-link.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .pagination select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .pagination p { margin: 0; color: #666; }
+
+        /* 탭 */
+        .tab-container { margin-top: 30px; }
+        .tab-buttons { display: flex; gap: 5px; margin-bottom: -1px; }
+        .tab-btn {
+            padding: 10px 20px;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            background: #f8f9fa;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab-btn.active {
+            background: #fff;
+            border-bottom: 1px solid #fff;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+            border: 1px solid #ddd;
+            padding: 20px;
+            background: #fff;
+            border-radius: 0 4px 4px 4px;
+        }
+        .tab-content.active { display: block; }
+
+        /* 결과 영역 */
+        .result-area {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            min-height: 100px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .result-area pre { margin: 0; white-space: pre-wrap; font-size: 13px; }
+
+        /* 숨김 */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        /* selectBox */
+        .selectBox select { width: 100%; }
+
+        /* 배지 */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .badge.pt { background-color: #e3f2fd; color: #1976d2; }
+        .span.orange { background-color: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 3px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<h1>ftGrid.js 전체 기능 샘플</h1>
+
+<!-- 탭 메뉴 -->
+<div class="tab-container">
+    <div class="tab-buttons">
+        <button class="tab-btn active" data-tab="basic">기본 그리드</button>
+        <button class="tab-btn" data-tab="tree">트리 그리드</button>
+        <button class="tab-btn" data-tab="lazy">Lazy 트리</button>
+        <button class="tab-btn" data-tab="api">API 테스트</button>
+    </div>
+
+    <!-- ==================== 기본 그리드 탭 ==================== -->
+    <div id="basic-tab" class="tab-content active">
+        <h2>기본 그리드 (정렬, 리사이저, CRUD)</h2>
+
+        <!-- 검색 폼 -->
+        <div class="schBox col">
+            <form id="searchForm1" method="post">
+                <input type="hidden" name="currentPage" value="1" />
+                <div class="searchFlt">
+                    <div class="schCol">
+                        <ul>
+                            <li>
+                                <p>이름</p>
+                                <input type="text" name="schName" placeholder="이름 검색" />
+                            </li>
+                            <li>
+                                <p>상태</p>
+                                <select name="schStatus">
+                                    <option value="">전체</option>
+                                    <option value="01">카테고리A</option>
+                                    <option value="02">카테고리B</option>
+                                </select>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="btn-wrap">
+                    <button type="button" class="btn-apply btn-search">검색</button>
+                    <button type="reset" class="btn-reset"><span class="sr-only">초기화</span></button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 그리드 -->
+        <div class="cntBox" id="grid1-container">
+            <div class="titBox">
+                <div class="lt"></div>
+                <div class="rt">
+                    <div class="btn-wrap">
+                        <button type="button" class="btn excel">엑셀다운로드</button>
+                        <button type="button" class="btn-save txt btn-save">저장</button>
+                        <button type="button" class="btn-plus txt btn-add-row">추가</button>
+                        <button type="button" class="btn-del btn-delete"><span class="sr-only">삭제</span></button>
+                        <button type="button" class="btn btn-move-up">위</button>
+                        <button type="button" class="btn btn-move-down">아래</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="schList">
+                <div class="tblBox">
+                    <table class="tbl col resizable-table" id="grid1">
+                        <colgroup>
+                            <col style="width: 5%;">
+                            <col style="width: 6%;">
+                            <col style="width: 15%;">
+                            <col style="width: 20%;">
+                            <col style="width: 12%;">
+                            <col style="width: 12%;">
+                            <col style="width: 15%;">
+                            <col style="width: 15%;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <div class="tblChk">
+                                        <input type="checkbox" id="chk01" class="check-all"><label for="chk01"></label>
+                                    </div>
+                                </th>
+                                <th scope="col">NO<div class="resizer"></div></th>
+                                <th scope="col" class="sortable" data-sort="name">이름<span class="sort-icon"></span><div class="resizer"></div></th>
+                                <th scope="col" class="sortable" data-sort="email">이메일<span class="sort-icon"></span><div class="resizer"></div></th>
+                                <th scope="col" class="sortable" data-sort="status">상태<span class="sort-icon"></span><div class="resizer"></div></th>
+                                <th scope="col" class="sortable" data-sort="amount">금액<span class="sort-icon"></span><div class="resizer"></div></th>
+                                <th scope="col" class="sortable" data-sort="regDate">등록일<span class="sort-icon"></span><div class="resizer"></div></th>
+                                <th scope="col">전화번호</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grid1-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="pagination" id="grid1-pagination"></div>
+        </div>
+
+        <!-- 기본 그리드 행 템플릿 -->
+        <script type="text/html" id="grid1-row-template">
+<tr class="{{displayClass}}" data-level="{{level}}" data-parent-path="{{parentPath}}">
+    <td>
+        <div class="tblChk">
+            <input type="checkbox" {{checkedAttr}} id="chk-{{id}}" class="row-check"><label for="chk-{{id}}"></label>
+        </div>
+    </td>
+    <td class="tC">{{reverseIndex}}</td>
+    <td><input type="text" data-field="name" data-value="{{name}}" /></td>
+    <td><input type="text" data-field="email" data-value="{{email}}" /></td>
+    <td>
+        <div class="selectBox">
+            <select data-field="status" data-value="{{status}}">
+                <option value="">선택</option>
+                {{#each statusOptions}}
+                <option value="{{this.value}}">{{this.text}}</option>
+                {{/each}}
+            </select>
+        </div>
+    </td>
+    <td><input type="number" data-field="amount" data-value="{{amount}}" style="text-align:right" /></td>
+    <td><input type="text" data-field="regDate" data-value="{{regDate}}" class="date-input" /></td>
+    <td class="tC">{{format phone "phone"}}</td>
+</tr>
+        </script>
+    </div>
+
+    <!-- ==================== 트리 그리드 탭 (Full Load) ==================== -->
+    <div id="tree-tab" class="tab-content">
+        <h2>트리 그리드 - Full Load (treeLoadMode: 'full')</h2>
+
+        <div class="schBox col">
+            <form id="searchForm2" method="post">
+                <input type="hidden" name="currentPage" value="1" />
+                <div class="searchFlt">
+                    <div class="schCol">
+                        <ul>
+                            <li>
+                                <p>프로젝트명</p>
+                                <input type="text" name="schProjectName" placeholder="프로젝트명 검색" />
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="btn-wrap">
+                    <button type="button" class="btn-apply btn-search">검색</button>
+                    <button type="reset" class="btn-reset"><span class="sr-only">초기화</span></button>
+                </div>
+            </form>
+        </div>
+
+        <div class="cntBox" id="grid2-container">
+            <div class="titBox">
+                <div class="lt"></div>
+                <div class="rt">
+                    <div class="btn-wrap">
+                        <button type="button" class="btn-save txt btn-save">저장</button>
+                        <button type="button" class="btn-plus txt btn-add-row">추가</button>
+                        <button type="button" class="btn-plus txt btn-add-child">자식추가</button>
+                        <button type="button" class="btn-del btn-delete"><span class="sr-only">삭제</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="schList">
+                <div class="tblBox">
+                    <table class="tbl col resizable-table" id="grid2">
+                        <colgroup>
+                            <col style="width: 5%;">
+                            <col style="width: 10%;">
+                            <col style="width: 35%;">
+                            <col style="width: 15%;">
+                            <col style="width: 15%;">
+                            <col style="width: 20%;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <div class="tblChk">
+                                        <input type="checkbox" id="chk02" class="check-all"><label for="chk02"></label>
+                                    </div>
+                                </th>
+                                <th scope="col">사업번호<div class="resizer"></div></th>
+                                <th scope="col">사업명<div class="resizer"></div></th>
+                                <th scope="col">수원국<div class="resizer"></div></th>
+                                <th scope="col">등록일<div class="resizer"></div></th>
+                                <th scope="col">사업상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grid2-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="pagination" id="grid2-pagination"></div>
+        </div>
+
+        <!-- 트리 그리드 행 템플릿 -->
+        <script type="text/html" id="grid2-row-template">
+<tr class="{{displayClass}}" data-level="{{level}}" data-parent-path="{{parentPath}}">
+    <td>
+        <div class="tblChk">
+            <input type="checkbox" {{checkedAttr}} id="chk-{{id}}" class="row-check"><label for="chk-{{id}}"></label>
+        </div>
+    </td>
+    <td class="tC">{{projectId}}</td>
+    <td style="{{indentStyle}}">
+        <div class="tableNode">
+            {{toggleSymbol}}
+            <input type="text" name="projectTitle" style="width:95%" data-field="projectTitle" data-value="{{projectTitle}}">
+        </div>
+    </td>
+    <td>{{country}}</td>
+    <td><input type="text" class="date-input" placeholder="날짜선택" data-field="regDate" data-value="{{regDate}}"></td>
+    <td>
+        <div class="selectBox">
+            <select data-field="statusCd" data-value="{{statusCd}}">
+                <option value="">선택하세요</option>
+                <option value="01">카테고리A</option>
+                <option value="02">카테고리B</option>
+            </select>
+        </div>
+    </td>
+</tr>
+        </script>
+    </div>
+
+    <!-- ==================== Lazy 트리 그리드 탭 ==================== -->
+    <div id="lazy-tab" class="tab-content">
+        <h2>트리 그리드 - Lazy Load (treeLoadMode: 'lazy')</h2>
+
+        <div class="schBox col">
+            <form id="searchForm3" method="post">
+                <input type="hidden" name="currentPage" value="1" />
+                <div class="searchFlt">
+                    <div class="schCol">
+                        <ul>
+                            <li>
+                                <p>프로젝트명</p>
+                                <input type="text" name="schProjectName" placeholder="프로젝트명 검색" />
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="btn-wrap">
+                    <button type="button" class="btn-apply btn-search">검색</button>
+                    <button type="reset" class="btn-reset"><span class="sr-only">초기화</span></button>
+                </div>
+            </form>
+        </div>
+
+        <div class="cntBox" id="grid3-container">
+            <div class="titBox">
+                <div class="lt"></div>
+                <div class="rt">
+                    <div class="btn-wrap">
+                        <button type="button" class="btn-save txt btn-save">저장</button>
+                        <button type="button" class="btn-plus txt btn-add-row">추가</button>
+                        <button type="button" class="btn-plus txt btn-add-child">자식추가</button>
+                        <button type="button" class="btn-del btn-delete"><span class="sr-only">삭제</span></button>
+                        <button type="button" class="btn btn-move-up">위</button>
+                        <button type="button" class="btn btn-move-down">아래</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="schList">
+                <div class="tblBox">
+                    <table class="tbl col resizable-table" id="grid3">
+                        <colgroup>
+                            <col style="width: 5%;">
+                            <col style="width: 10%;">
+                            <col style="width: 35%;">
+                            <col style="width: 15%;">
+                            <col style="width: 15%;">
+                            <col style="width: 20%;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <div class="tblChk">
+                                        <input type="checkbox" id="chk03" class="check-all"><label for="chk03"></label>
+                                    </div>
+                                </th>
+                                <th scope="col">사업번호<div class="resizer"></div></th>
+                                <th scope="col">사업명<div class="resizer"></div></th>
+                                <th scope="col">수원국<div class="resizer"></div></th>
+                                <th scope="col">등록일<div class="resizer"></div></th>
+                                <th scope="col">사업상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grid3-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="pagination" id="grid3-pagination"></div>
+        </div>
+
+        <!-- Lazy 트리 그리드 행 템플릿 -->
+        <script type="text/html" id="grid3-row-template">
+<tr class="{{displayClass}}" data-level="{{level}}" data-parent-path="{{parentPath}}">
+    <td>
+        <div class="tblChk">
+            <input type="checkbox" {{checkedAttr}} id="chk3-{{id}}" class="row-check"><label for="chk3-{{id}}"></label>
+        </div>
+    </td>
+    <td class="tC">{{projectId}}</td>
+    <td style="{{indentStyle}}">
+        <div class="tableNode">
+            {{toggleSymbol}}
+            <input type="text" name="projectTitle" style="width:95%" data-field="projectTitle" data-value="{{projectTitle}}">
+        </div>
+    </td>
+    <td>{{country}}</td>
+    <td><input type="text" class="date-input" placeholder="날짜선택" data-field="regDate" data-value="{{regDate}}"></td>
+    <td>
+        <div class="selectBox">
+            <select data-field="statusCd" data-value="{{statusCd}}">
+                <option value="">선택하세요</option>
+                {{#each statusOptions}}
+                <option value="{{this.value}}">{{this.text}}</option>
+                {{/each}}
+            </select>
+        </div>
+    </td>
+</tr>
+        </script>
+    </div>
+
+    <!-- ==================== API 테스트 탭 ==================== -->
+    <div id="api-tab" class="tab-content">
+        <h2>API 테스트</h2>
+
+        <div class="grid-container">
+            <h3>데이터 조회 API</h3>
+            <div class="btn-wrap" style="justify-content:flex-start; margin-bottom:10px;">
+                <button type="button" class="btn btn-apply" onclick="testGetData()">getData()</button>
+                <button type="button" class="btn btn-apply" onclick="testGetAllData()">getAllData()</button>
+                <button type="button" class="btn btn-apply" onclick="testGetCount()">getCount()</button>
+                <button type="button" class="btn btn-apply" onclick="testGetCheckedRows()">getCheckedRowsData()</button>
+                <button type="button" class="btn btn-apply" onclick="testGetCheckedCount()">getCheckedCount()</button>
+            </div>
+
+            <h3>행 조작 API</h3>
+            <div class="btn-wrap" style="justify-content:flex-start; margin-bottom:10px;">
+                <button type="button" class="btn btn-save" onclick="testAddRowTop()">addRow('top')</button>
+                <button type="button" class="btn btn-save" onclick="testAddRowBottom()">addRow('bottom')</button>
+                <button type="button" class="btn btn-apply" onclick="testGetRowData()">getRowData(첫번째 행)</button>
+                <button type="button" class="btn btn-apply" onclick="testUpdateRowField()">updateRowField(첫번째 행)</button>
+                <button type="button" class="btn btn-reset" onclick="testToggleAll(true)">toggleAll(true)</button>
+                <button type="button" class="btn btn-reset" onclick="testToggleAll(false)">toggleAll(false)</button>
+            </div>
+
+            <h3>설정 API</h3>
+            <div class="btn-wrap" style="justify-content:flex-start; margin-bottom:10px;">
+                <button type="button" class="btn btn-apply" onclick="testSetPageSize(5)">setPageSize(5)</button>
+                <button type="button" class="btn btn-apply" onclick="testSetPageSize(10)">setPageSize(10)</button>
+                <button type="button" class="btn btn-apply" onclick="testGetModifiedRows()">getModifiedRows()</button>
+                <button type="button" class="btn btn-apply" onclick="testGetDeletedRows()">getDeletedRows()</button>
+            </div>
+
+            <h3>결과</h3>
+            <div class="result-area">
+                <pre id="apiResult">API 결과가 여기에 표시됩니다.</pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 그리드 리사이저 -->
+<script src="gridResizer.js"></script>
+
+<!-- ftGrid.js -->
+<script src="ftGrid.js"></script>
+
+<!-- 초기화 스크립트 -->
+<script>
+// 탭 전환
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const tabId = this.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(tabId + '-tab').classList.add('active');
+    });
+});
+
+// selectOption 데이터 (템플릿에서 사용)
+const selectOption = {
+    statusOptions: [
+        { value: '01', text: '활성' },
+        { value: '02', text: '비활성' },
+        { value: '03', text: '대기중' }
+    ]
+};
+
+// ==================== 목업 데이터 ====================
+const mockData1 = {
+    total: 25,
+    data: [
+        { id: 1, name: '홍길동', email: 'hong@test.com', status: '01', amount: 1500000, regDate: '2024-01-15', phone: '01012345678' },
+        { id: 2, name: '김철수', email: 'kim@test.com', status: '02', amount: 2300000, regDate: '2024-02-20', phone: '01098765432' },
+        { id: 3, name: '이영희', email: 'lee@test.com', status: '01', amount: 890000, regDate: '2024-03-10', phone: '01055556666' },
+        { id: 4, name: '박민수', email: 'park@test.com', status: '03', amount: 3200000, regDate: '2024-04-05', phone: '01077778888' },
+        { id: 5, name: '정수진', email: 'jung@test.com', status: '01', amount: 1750000, regDate: '2024-05-12', phone: '01033334444' },
+        { id: 6, name: '최동훈', email: 'choi@test.com', status: '02', amount: 980000, regDate: '2024-06-18', phone: '01022221111' },
+        { id: 7, name: '강미란', email: 'kang@test.com', status: '01', amount: 2100000, regDate: '2024-07-22', phone: '01066669999' },
+        { id: 8, name: '윤서영', email: 'yoon@test.com', status: '03', amount: 1350000, regDate: '2024-08-30', phone: '01088880000' },
+        { id: 9, name: '조현우', email: 'jo@test.com', status: '01', amount: 2800000, regDate: '2024-09-14', phone: '01044445555' },
+        { id: 10, name: '한지민', email: 'han@test.com', status: '01', amount: 1920000, regDate: '2024-10-08', phone: '01011112222' }
+    ]
+};
+
+// 트리 데이터 (Full Load) - 부모/자식 관계 포함
+const mockTreeDataFull = {
+    total: 7,
+    data: [
+        { id: 1, projectId: 'P001', projectTitle: '웹 서비스 개발', country: '한국', regDate: '2024-01-01', statusCd: '01', parentProjectId: null, childYn: 'Y' },
+        { id: 2, projectId: 'P001-1', projectTitle: '프론트엔드 개발', country: '한국', regDate: '2024-01-15', statusCd: '01', parentProjectId: 'P001', childYn: 'N' },
+        { id: 3, projectId: 'P001-2', projectTitle: '백엔드 개발', country: '한국', regDate: '2024-02-01', statusCd: '02', parentProjectId: 'P001', childYn: 'N' },
+        { id: 4, projectId: 'P002', projectTitle: '모바일 앱 개발', country: '베트남', regDate: '2024-03-01', statusCd: '01', parentProjectId: null, childYn: 'Y' },
+        { id: 5, projectId: 'P002-1', projectTitle: 'iOS 앱 개발', country: '베트남', regDate: '2024-03-15', statusCd: '01', parentProjectId: 'P002', childYn: 'N' },
+        { id: 6, projectId: 'P002-2', projectTitle: 'Android 앱 개발', country: '베트남', regDate: '2024-04-01', statusCd: '02', parentProjectId: 'P002', childYn: 'N' },
+        { id: 7, projectId: 'P003', projectTitle: '데이터 분석 시스템', country: '필리핀', regDate: '2024-05-01', statusCd: '01', parentProjectId: null, childYn: 'N' }
+    ]
+};
+
+// 트리 데이터 (Lazy Load) - 부모만
+const mockTreeDataLazy = {
+    total: 3,
+    data: [
+        { id: 1, projectId: 'P001', projectTitle: '웹 서비스 개발', country: '한국', regDate: '2024-01-01', statusCd: '01', childYn: 'Y' },
+        { id: 2, projectId: 'P002', projectTitle: '모바일 앱 개발', country: '베트남', regDate: '2024-03-01', statusCd: '02', childYn: 'Y' },
+        { id: 3, projectId: 'P003', projectTitle: '데이터 분석 시스템', country: '필리핀', regDate: '2024-05-01', statusCd: '01', childYn: 'N' }
+    ]
+};
+
+// 자식 데이터 (Lazy Load용)
+const mockChildData = {
+    'P001': {
+        total: 2,
+        data: [
+            { id: 101, projectId: 'P001-1', projectTitle: '프론트엔드 개발', country: '한국', regDate: '2024-01-15', statusCd: '01', childYn: 'N' },
+            { id: 102, projectId: 'P001-2', projectTitle: '백엔드 개발', country: '한국', regDate: '2024-02-01', statusCd: '02', childYn: 'N' }
+        ]
+    },
+    'P002': {
+        total: 2,
+        data: [
+            { id: 201, projectId: 'P002-1', projectTitle: 'iOS 앱 개발', country: '베트남', regDate: '2024-03-15', statusCd: '01', childYn: 'N' },
+            { id: 202, projectId: 'P002-2', projectTitle: 'Android 앱 개발', country: '베트남', regDate: '2024-04-01', statusCd: '02', childYn: 'N' }
+        ]
+    }
+};
+
+// ==================== AJAX 모킹 ====================
+const originalAjax = $.ajax;
+$.ajax = function(options) {
+    console.log('AJAX 요청:', options.url);
+
+    // 기본 그리드
+    if (options.url && options.url.includes('/api/grid1')) {
+        setTimeout(() => options.success(mockData1), 200);
+        return;
+    }
+
+    // 트리 그리드 Full
+    if (options.url && options.url.includes('/api/tree/full')) {
+        setTimeout(() => options.success(mockTreeDataFull), 200);
+        return;
+    }
+
+    // 트리 그리드 Lazy - 부모
+    if (options.url && options.url.includes('/api/tree/lazy') && !options.url.includes('/children/')) {
+        setTimeout(() => options.success(mockTreeDataLazy), 200);
+        return;
+    }
+
+    // 트리 그리드 Lazy - 자식
+    if (options.url && options.url.includes('/children/')) {
+        const match = options.url.match(/\/children\/([^\/]+)/);
+        const parentId = match ? match[1] : null;
+        const childData = mockChildData[parentId] || { total: 0, data: [] };
+        setTimeout(() => options.success(childData), 200);
+        return;
+    }
+
+    // 저장
+    if (options.url && options.url.includes('/save')) {
+        console.log('저장 데이터:', options.data);
+        setTimeout(() => {
+            toastr.success('저장되었습니다.');
+            options.success({ success: true });
+        }, 200);
+        return;
+    }
+
+    // 삭제
+    if (options.url && options.url.includes('/delete')) {
+        console.log('삭제 데이터:', options.data);
+        setTimeout(() => {
+            toastr.success('삭제되었습니다.');
+            options.success({ success: true });
+        }, 200);
+        return;
+    }
+
+    return originalAjax.apply(this, arguments);
+};
+
+// ==================== 그리드 초기화 ====================
+let grid1Instance, grid2Instance, grid3Instance;
+
+$(document).ready(function() {
+
+    // 1. 기본 그리드
+    grid1Instance = initTreeGrid({
+        gridId: 'grid1',
+        searchFormId: 'searchForm1',
+        templateId: 'grid1-row-template',
+        urlParamKey: 'id',
+        pageSize: 5,
+        urls: {
+            mainUrl: '/api/grid1/list',
+            saveUrl: '/api/grid1/save'
+        },
+        selectOption: selectOption,
+        defaultFields: {
+            name: '',
+            email: '',
+            status: '',
+            amount: 0,
+            regDate: '',
+            phone: ''
+        },
+        addRowPosition: 'top',
+        sortNoSearch: true,
+        resizableYn: 'Y',
+        onRowClick: function(rowData, $row, event) {
+            if (event && $(event.target).closest('.tblChk').length > 0) {
+                return false;
+            }
+            console.log('선택된 행:', rowData);
+        },
+        onRowDoubleClick: function(rowData, $row) {
+            console.log('더블클릭:', rowData);
+        },
+        onInitComplete: function() {
+            console.log('기본 그리드 초기화 완료');
+        }
+    });
+
+    // 2. 트리 그리드 (Full Load)
+    grid2Instance = initTreeGrid({
+        gridId: 'grid2',
+        searchFormId: 'searchForm2',
+        templateId: 'grid2-row-template',
+        urlParamKey: 'projectId',
+        urlParentParamKey: 'parentProjectId',
+        urls: {
+            mainUrl: '/api/tree/full/list',
+            saveUrl: '/api/tree/save'
+        },
+        treeLoadMode: 'full',
+        addRowPosition: 'top',
+        addChildPosition: 'bottom',
+        resizableYn: 'Y',
+        onRowClick: function(rowData, $row) {
+            console.log('트리 행 클릭:', rowData);
+        },
+        onInitComplete: function() {
+            console.log('트리 그리드 (Full) 초기화 완료');
+        }
+    });
+
+    // 3. 트리 그리드 (Lazy Load)
+    grid3Instance = initTreeGrid({
+        gridId: 'grid3',
+        searchFormId: 'searchForm3',
+        templateId: 'grid3-row-template',
+        urlParamKey: 'projectId',
+        pageSize: 10,
+        urls: {
+            mainUrl: '/api/tree/lazy/list',
+            childrenUrl: '/api/tree/lazy/children/{projectId}',
+            saveUrl: '/api/tree/save'
+        },
+        selectOption: selectOption,
+        treeLoadMode: 'lazy',
+        addRowPosition: 'top',
+        addChildPosition: 'bottom',
+        resizableYn: 'Y',
+        onRowClick: function(rowData, $row) {
+            console.log('Lazy 트리 행 클릭:', rowData);
+        },
+        onInitComplete: function() {
+            console.log('트리 그리드 (Lazy) 초기화 완료');
+        }
+    });
+
+});
+
+// ==================== API 테스트 함수 ====================
+function showResult(title, data) {
+    document.getElementById('apiResult').textContent = `[${title}]\n${JSON.stringify(data, null, 2)}`;
+}
+
+function testGetData() {
+    showResult('getData()', grid1Instance.getData());
+}
+
+function testGetAllData() {
+    showResult('getAllData()', grid1Instance.getAllData());
+}
+
+function testGetCount() {
+    showResult('getCount()', { count: grid1Instance.getCount() });
+}
+
+function testGetCheckedRows() {
+    showResult('getCheckedRowsData()', grid1Instance.getCheckedRowsData());
+}
+
+function testGetCheckedCount() {
+    showResult('getCheckedCount()', { count: grid1Instance.getCheckedCount() });
+}
+
+function testAddRowTop() {
+    const result = grid1Instance.addRow('top');
+    showResult('addRow("top")', result);
+}
+
+function testAddRowBottom() {
+    const result = grid1Instance.addRow('bottom');
+    showResult('addRow("bottom")', result);
+}
+
+function testGetRowData() {
+    const firstRow = grid1Instance.getRowDataByIndex(0);
+    if (firstRow) {
+        showResult('getRowData()', grid1Instance.getRowData(firstRow.id));
+    } else {
+        showResult('getRowData()', { error: '데이터가 없습니다.' });
+    }
+}
+
+function testUpdateRowField() {
+    const firstRow = grid1Instance.getRowDataByIndex(0);
+    if (firstRow) {
+        const newName = '수정_' + Date.now();
+        grid1Instance.updateRowField(firstRow.id, 'name', newName);
+        showResult('updateRowField()', { message: '이름 수정됨', newName: newName });
+    } else {
+        showResult('updateRowField()', { error: '데이터가 없습니다.' });
+    }
+}
+
+function testToggleAll(checked) {
+    grid1Instance.toggleAll(checked);
+    showResult('toggleAll(' + checked + ')', { checkedCount: grid1Instance.getCheckedCount() });
+}
+
+function testSetPageSize(size) {
+    grid1Instance.setPageSize(size);
+    showResult('setPageSize(' + size + ')', { message: '페이지 사이즈 변경됨' });
+}
+
+function testGetModifiedRows() {
+    showResult('getModifiedRows()', grid1Instance.getModifiedRows());
+}
+
+function testGetDeletedRows() {
+    showResult('getDeletedRows()', grid1Instance.getDeletedRows());
+}
+
+// 콘솔 안내
+console.log('========================================');
+console.log('그리드 인스턴스 접근:');
+console.log('- grid1Instance 또는 gridManagers["grid1"]');
+console.log('- grid2Instance 또는 gridManagers["grid2"]');
+console.log('- grid3Instance 또는 gridManagers["grid3"]');
+console.log('========================================');
+</script>
+
+</body>
+</html>

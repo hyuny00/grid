@@ -1,5 +1,1234 @@
-\
+/**
+ * ftGrid.css - ftGrid.js 그리드 컴포넌트 스타일
+ *
+ * 이 파일은 ftGrid.js 그리드 컴포넌트에 필요한 모든 스타일을 포함합니다.
+ * style.css에서 그리드 관련 스타일을 분리하여 독립적으로 사용할 수 있습니다.
+ */
 
+/* ==================== 기본 입력 요소 ==================== */
+input:where([type="text"], [type="tel"], [type="number"], [type="search"], [type="time"], [type="password"]) {
+    height: 36px;
+    padding: 3px 8px;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #464C53;
+    background: #fff;
+    border: 1px solid #B1B8BE;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+input:where([type="text"], [type="tel"], [type="number"], [type="search"], [type="time"], [type="password"])[readonly] {
+    background: #F4F5F6;
+}
+input::placeholder {
+    font-size: 16px;
+    font-weight: 400;
+    color: #8A949E;
+    text-align: left;
+}
+input[type="text"].pickr {
+    width: 100%;
+    padding-right: 28px;
+    background: #fff url(img/ico_pickr.svg) no-repeat center right 7px;
+}
+input[type="text"]:disabled {
+    background: #F4F5F6;
+}
+
+select {
+    box-sizing: border-box;
+    width: 100%;
+    height: 34px;
+    padding: 4px 30px 4px 8px;
+    font-weight: 500;
+    background: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+input:where([type="text"], [type="tel"], [type="number"], [type="search"], [type="time"], [type="password"]):focus,
+textarea:focus {
+    outline: 0 none;
+    border-color: #434C89;
+}
+
+/* ==================== 스크롤바 ==================== */
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+*::-webkit-scrollbar-track {
+    background-color: #E9E9E9;
+}
+*::-webkit-scrollbar-thumb {
+    background-color: #8A949E;
+    border-radius: 8px;
+}
+
+/* ==================== selectBox ==================== */
+.selectBox {
+    position: relative;
+    width: auto;
+    border: 1px solid #B1B8BE;
+    border-radius: 4px;
+}
+.selectBox::after {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    content: '';
+    width: 14px;
+    height: 14px;
+    background: url(img/ico_select_arr.svg) no-repeat center;
+    transform: translateY(-50%);
+    transition: 0.3s all;
+    pointer-events: none;
+}
+.selectBox:has(:open)::after {
+    transform: rotate(180deg) translateY(50%);
+    transition: 0.3s all;
+}
+
+/* ==================== tblBox (테이블 컨테이너) ==================== */
+.tblBox {
+    width: 100%;
+    overflow: auto;
+    position: relative;
+}
+:where(.cntBox, .tblBox, .adBox, .boxLi, .pagination, .tblDb) + .titBox {
+    margin-top: 40px;
+}
+:where(.cntBox, .schList, .tblBox, .adBox, .boxLi, .pagination, .txtLi) + .tblBox {
+    margin-top: 20px;
+}
+:where(.cntBox, .tblBox, .adBox, .boxLi, .pagination) + .tblBox .tbl::before {
+    background: #E2E6EA;
+}
+.toggleBox + :where(.titBox, .tblBox) {
+    margin-top: 20px;
+}
+:where(.titBox, .tblBox, .pagination) + .toggleBox {
+    margin-top: 40px;
+}
+.btn-wrap + :where(.titBox, .tblBox) {
+    margin-top: 40px;
+}
+
+/* ==================== tbl (테이블 기본) ==================== */
+.tbl {
+    position: relative;
+    width: 100%;
+    table-layout: fixed;
+}
+.tbl::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    content: '';
+    display: block;
+    width: 100%;
+    height: 1px;
+    background: #58616A;
+    z-index: 1;
+}
+.tbl.col tbody tr {
+    border-bottom: 1px dashed #CDD1D5;
+}
+.tbl.col.de tbody tr {
+    border-bottom: 1px solid #CDD1D5;
+}
+.tbl.col :is(th, td) {
+    text-align: center;
+}
+.tbl.row :is(th, td) {
+    text-align: left;
+}
+.tbl :where(th, td) {
+    display: table-cell;
+    vertical-align: middle;
+    height: 53px;
+    font-weight: 400;
+    line-height: 1.4;
+    box-sizing: border-box;
+}
+.tbl th {
+    font-size: 15px;
+}
+.tbl tr {
+    border-bottom: 1px solid #E2E6EA;
+}
+.tbl tr td {
+    padding: 8px 15px;
+    font-size: 16px;
+    color: #1E2124;
+}
+.tbl thead th {
+    position: relative;
+    padding: 8px 5px 6px 5px;
+    text-align: center;
+    color: #464C53;
+    background: #f4f5f6;
+}
+.tbl thead th:not(:last-child) {
+    border-right: 1px solid #E2E6EA;
+}
+.tbl thead th:not(:first-child)::before {
+    content: '';
+    display: block;
+    position: absolute;
+    left: -1px;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: #E2E6EA;
+    z-index: 1;
+}
+.tbl tbody th {
+    padding: 11px 15px 9px 15px;
+    text-align: left;
+    color: #8A949E;
+}
+.tbl tfoot th {
+    position: relative;
+    padding: 8px 15px 6px 5px;
+    text-align: center;
+    color: #464C53;
+    background: #f4f5f6;
+    font-weight: 700;
+    font-size: 16px;
+}
+.tbl.row th {
+    color: #464C53;
+    background: #f4f5f6;
+}
+.tbl.row td {
+    color: #464C53;
+}
+.tbl.row th[rowspan]:first-child {
+    border-right: 1px solid #E2E6EA;
+}
+.tbl.tL :is(th, td):not(.tC, .tR) {
+    text-align: left;
+}
+.tbl.tR :is(th, td):not(.tL, .tC) {
+    text-align: right;
+}
+.tbl.tC :is(th, td):not(.tL, .tR) {
+    text-align: center;
+}
+.tbl :is(th, td).top {
+    vertical-align: top;
+}
+.tbl :is(th, td).mid {
+    vertical-align: middle;
+}
+.tbl :is(th, td).bottom {
+    vertical-align: bottom;
+}
+.tbl.done::before {
+    content: none;
+}
+.tbl.done.col tbody tr {
+    border-bottom: 1px solid #E2E6EA;
+}
+.tbl span.red {
+    color: #db4545;
+}
+
+/* tbl 빈 데이터 */
+.tbl .empty {
+    height: 250px;
+    text-align: center !important;
+    vertical-align: middle;
+}
+.tbl .empty > p {
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 500;
+}
+.tbl .empty > p::before {
+    content: '';
+    display: block;
+    margin: 0 auto 10px;
+    width: 32px;
+    height: 32px;
+    background: url(img/ico_nodata.svg) no-repeat center;
+}
+.tbl .empty .txtLi {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* tbl 배경색 */
+.tbl .bgSec {
+    background-color: #EBF2FC !important;
+}
+.tbl .bgTer {
+    background-color: #EBF7F1 !important;
+}
+.tbl .bgQua {
+    background-color: #F1F0F9 !important;
+}
+.tbl .bgTotal > td {
+    background-color: #EBF2FC !important;
+}
+
+.tblBox .tbl + .tbl {
+    margin-top: -1px;
+}
+.tblBox .tbl + .tbl:before {
+    background: #E2E6EA;
+}
+
+.tbl .ellipsis {
+    max-width: 100%;
+}
+.tbl .txtnBtn {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+}
+
+/* tbl 중첩 테이블 */
+.tbl .tbl.col {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+.tbl .tbl.col:before {
+    display: none;
+}
+.tbl .tbl.col tr {
+    margin: 0;
+    padding: 0;
+    border: 0 none !important;
+}
+.tbl .tbl.col td,
+.tbl .tbl.col th {
+    border: 1px solid #cdd1d5;
+}
+.tbl .tbl.col tbody tr:first-child td {
+    border-top: 0 none;
+}
+.tbl .tbl thead th:not(:first-child)::before {
+    background-color: #cdd1d5;
+}
+
+/* tbl 행 상태 */
+.tbl tr.on {
+    background: #F0F2F6;
+    transition: 0.3s all;
+}
+.tbl tr.on :is(td, a) {
+    color: #5349C0;
+    transition: 0.3s all;
+}
+.tbl tr.bgRed {
+    background: rgba(214, 61, 74, 0.10);
+    transition: 0.3s all;
+}
+
+/* 헤더 고정 */
+.tblBox.fix {
+    overflow-y: auto;
+    height: 584px;
+}
+.tblBox.fix .tbl {
+    border-collapse: separate;
+}
+.tblBox.fix .tbl thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.tblBox.fix .tbl thead th {
+    border-bottom: 1px solid #E2E6EA;
+}
+.tblBox.fix .tbl tbody td {
+    border-bottom: 1px dashed #CDD1D5;
+}
+.tblBox.fix .tbl tbody tr:last-child td {
+    border-bottom: 0 none;
+}
+
+/* tbl 내부 요소 */
+.tbl .txtBox {
+    display: block;
+    white-space: normal;
+}
+.tbl .txtBox.pre {
+    display: block;
+    white-space: pre-wrap;
+}
+
+.tbl td > .btn-wrap {
+    display: flex;
+}
+.tbl td.tC > .btn-wrap {
+    justify-content: center;
+}
+
+.btn-wrap + .tbl {
+    margin-top: 10px;
+}
+
+.tbl.bt0::before {
+    background-color: #CDD1D5;
+}
+
+/* ==================== 체크박스 / 라디오 ==================== */
+.chkBox, .rdoBox {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 30px;
+}
+.chkBox.tC, .rdoBox.tC {
+    justify-content: center;
+}
+
+.tblChk {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 25px;
+}
+
+/* 테이블 내 체크박스 - 기본 스타일 (보이게) */
+.tblChk input[type="checkbox"] {
+    position: relative !important;
+    width: 18px !important;
+    height: 18px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    cursor: pointer;
+}
+.tblChk label {
+    display: none;
+}
+
+/* 일반 폼 체크박스/라디오 - 커스텀 스타일 (숨기고 label로 표시) */
+:where(.chkBox, .rdoBox) :where(input[type="checkbox"], input[type="radio"]) {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+:where(.chkBox, .rdoBox) :where(input[type="checkbox"], input[type="radio"]):focus-visible + label {
+    outline: 1px solid #434C89;
+}
+:where(.chkBox, .rdoBox) :where(input[type="checkbox"], input[type="radio"]) + label {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 5px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #464C53;
+    cursor: pointer;
+}
+:where(.chkBox, .rdoBox) :where(input[type="checkbox"], input[type="radio"]) + label::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    background: #fff;
+    border: 1px solid #B1B8BE;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+:where(.chkBox, .rdoBox) :where(input[type="checkbox"], input[type="radio"]) + label:hover::before {
+    border: 0 none;
+    background: url(img/ico_chk_hover.svg) no-repeat center;
+}
+:where(.chkBox, .rdoBox) :where(input[type="checkbox"], input[type="radio"]):checked + label::before {
+    background: #6D4FFF url(img/ico_chk_on.svg) no-repeat center;
+    border-color: #6D4FFF;
+}
+:where(.chkBox, .rdoBox) :where(input[type="checkbox"], input[type="radio"]):disabled + label {
+    color: #B1B8BE;
+    cursor: initial;
+}
+:where(.chkBox, .rdoBox) :where(input[type="checkbox"], input[type="radio"]):disabled + label::before {
+    background: #E6E8EA;
+    border-color: #E6E8EA;
+    cursor: initial;
+}
+:where(.chkBox, .rdoBox) :where(input[type="checkbox"], input[type="radio"]):checked:disabled + label::before {
+    background: #E6E8EA url(img/ico_chk_disa.svg) no-repeat center;
+    border-color: #E6E8EA;
+}
+
+/* 라디오 버튼 */
+input[type="radio"] + label::before {
+    border-radius: 50%;
+}
+input[type="radio"] + label:hover::before {
+    border: 1px solid #58616A;
+}
+input[type="radio"]:checked + label::before {
+    border: 0 none;
+    background: #6D4FFF url(img/ico_radio_on.svg) no-repeat center;
+}
+input[type="radio"]:disabled + label::before {
+    border: 0 none;
+}
+input[type="radio"]:checked:disabled + label::before {
+    background: #E6E8EA url(img/ico_radio_disa.svg) no-repeat center;
+    border-color: #B1B8BE;
+}
+
+/* ==================== btn-wrap (버튼 래퍼) ==================== */
+.btn-wrap {
+    display: inline-flex;
+    justify-content: end;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    height: auto;
+}
+.btn-wrap.tC {
+    justify-content: center !important;
+}
+.btn-wrap.tL {
+    justify-content: flex-start !important;
+}
+.btn-wrap.tR {
+    justify-content: flex-end !important;
+}
+:where(.tblBox, .schList, .tabBox, .boxLi, .cntBox, .docViewer) + .btn-wrap {
+    margin-top: 40px;
+}
+.btn-wrap > .lt {
+    display: flex;
+    margin-right: auto;
+    gap: 5px;
+}
+.btn-wrap > .rt {
+    display: flex;
+    margin-left: auto;
+    gap: 5px;
+}
+
+/* ==================== 버튼 기본 스타일 ==================== */
+button[class^="btn-"] {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+    font-weight: 500;
+    border: 1px solid #929AA2;
+    border-radius: 4px;
+    box-sizing: border-box;
+    color: #464c53;
+}
+button[class^="btn-"].txt {
+    width: auto;
+    padding: 0 10px 0 30px;
+}
+.btn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 60px;
+    height: 36px;
+    padding: 0 10px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #464c53;
+    background: #fff;
+    border: 1px solid #929AA2;
+    border-radius: 4px;
+}
+.btn.sm {
+    min-width: auto;
+    height: 24px;
+    padding: 0 8px;
+    font-size: 13px;
+}
+.btn:hover,
+button[class^="btn-"]:hover {
+    border-color: #464C53;
+}
+.tbl .btn,
+.tbl button[class^="btn-"] {
+    color: #7d7d7d;
+}
+.tbl .btn:hover,
+.tbl button[class^="btn-"]:hover {
+    border-color: #464C53;
+}
+.btn:disabled,
+button[class^="btn-"]:disabled {
+    border-color: #c3c7cb;
+    background-color: #F3F3F3;
+    color: #bbb;
+}
+
+/* btn 포인트 컬러 */
+.btn.pt {
+    color: #fff;
+    background: #524C91;
+    border-color: #524C91;
+}
+.btn.purple {
+    color: #fff;
+    background: #6d4fff;
+    border-color: #6d4fff;
+}
+.btn.purple:hover,
+.btn.purple:focus {
+    border-color: #3215C1;
+    background-color: #3215C1;
+}
+
+/* btn-save */
+.btn-save.txt {
+    display: flex;
+    gap: 4px;
+    padding: 0 9px !important;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background: #524C91;
+    border-color: #524C91;
+}
+.btn-save::before {
+    content: '';
+    display: block;
+    width: 16px;
+    height: 16px;
+    background: url(img/ico_save.svg) no-repeat center;
+}
+.btn-save.txt:hover,
+.btn-save.txt:focus {
+    border-color: #1D1666;
+    background-color: #1D1666;
+}
+.btn-save.txt:disabled::before {
+    opacity: 0.5;
+}
+
+/* btn-plus */
+.btn-plus {
+    display: flex;
+    gap: 4px;
+    width: auto !important;
+    padding: 0 9px;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    border: 1px solid #B1B8BE;
+    background: #fff;
+}
+.btn-plus::before {
+    content: '';
+    display: block;
+    width: 16px;
+    height: 16px;
+    background: url(img/ico_plus.svg) no-repeat center;
+}
+.btn-plus.txt {
+    padding: 0 9px !important;
+    color: #fff !important;
+    background: #434C89;
+    border-color: #434C89;
+}
+.btn-plus.txt::before {
+    content: '';
+    background-image: url(img/ico_plus_txt.svg);
+}
+.btn-plus.txt:disabled {
+    border-color: #777;
+    background-color: #777;
+    color: #bbb !important;
+}
+.btn-plus.txt:disabled::before {
+    opacity: 0.5;
+}
+.btn-plus.txt:hover {
+    background-color: #171F55;
+}
+
+/* btn-del */
+.btn-del {
+    display: flex;
+    gap: 4px;
+    padding: 0 9px;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    border: 1px solid #B1B8BE;
+}
+.btn-del::before {
+    content: '';
+    display: block;
+    width: 16px;
+    height: 16px;
+    background: url(img/ico_del.svg) no-repeat center;
+}
+.btn-del.txt {
+    width: auto;
+    padding: 0 9px !important;
+    letter-spacing: -0.4px;
+    color: #464C53;
+    background-position: 10px center;
+}
+.btn-del:disabled::before {
+    opacity: 0.5;
+}
+
+/* btn-apply (검색버튼) */
+button.btn-apply {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    min-width: 100px;
+    height: 40px;
+    padding: 10px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #fff;
+    background: #6D4FFF;
+    border-color: #58616A !important;
+    border-radius: 4px;
+}
+button.btn-apply::before {
+    content: '';
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    background: url(img/ico_apply.svg) no-repeat center;
+}
+button.btn-apply:hover,
+button.btn-apply:focus {
+    background-color: #3215C1;
+}
+button.btn-apply:disabled {
+    border-color: #777 !important;
+    background-color: #777;
+    color: #bbb;
+}
+button.btn-apply:disabled::before {
+    opacity: 0.5;
+}
+
+/* btn-reset */
+.btn-reset {
+    width: 36px;
+    height: 36px;
+    background: #fff url(img/ico_reset.svg) no-repeat center;
+    padding: 0 !important;
+    border: 1px solid #B1B8BE;
+}
+.btn-reset.txt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: 60px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #6D7882;
+    background: #fff;
+    border: none;
+}
+.btn-reset.txt::after {
+    content: '';
+    display: block;
+    width: 14px;
+    height: 14px;
+    background: url(img/ico_reset.svg) no-repeat center;
+}
+.btn-reset:disabled {
+    background: none !important;
+}
+
+/* btn excel */
+.btn:where(.excel, .hwp, .pdf)::before {
+    content: '';
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    margin: 0 4px 1px 0;
+}
+.btn:where(.excel, .hwp, .pdf):disabled::before {
+    opacity: 0.5;
+}
+.btn.excel::before {
+    background: url(img/ico_excel.svg) no-repeat center;
+}
+.btn.hwp::before {
+    background: url(img/ico_hwp.svg) no-repeat center;
+}
+.btn.pdf::before {
+    background: url(img/ico_pdf.svg) no-repeat center;
+}
+
+/* grid control btn */
+button[class^="btn-grid"] {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: auto;
+    padding: 0 9px;
+    background-color: #fff;
+}
+button[class^="btn-grid"]::before {
+    content: '';
+    display: block;
+    width: 16px;
+    height: 16px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+button[class^="btn-grid"]:empty {
+    width: 36px;
+    height: 36px;
+}
+.btn-grid-plus::before {
+    flex-shrink: 0;
+    background-image: url(img/ico_grid_plus.svg);
+}
+.btn-grid-minus::before {
+    flex-shrink: 0;
+    background-image: url(img/ico_grid_minus.svg);
+}
+.btn-grid-copy::before {
+    flex-shrink: 0;
+    background-image: url(img/ico_grid_copy.svg);
+}
+button[class^="btn-grid"]:disabled {
+    color: #9da0a3;
+    background-color: #F3F3F3;
+}
+button[class^="btn-grid"]:disabled::before {
+    opacity: 0.5;
+}
+
+/* btn-sort */
+button[class^="btn-sort"] {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: auto;
+    padding: 0 9px;
+    background-color: #fff;
+}
+button[class^="btn-sort"]::before {
+    content: '';
+    display: block;
+    width: 16px;
+    height: 16px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+button[class^="btn-sort"]:empty {
+    width: 36px;
+    height: 36px;
+}
+.btn-sort-down::before {
+    background-image: url(img/ico_sort_down.svg);
+}
+.btn-sort-up::before {
+    background-image: url(img/ico_sort_up.svg);
+}
+button[class^="btn-sort"]:disabled {
+    color: #9da0a3;
+    background-color: #F3F3F3;
+}
+button[class^="btn-sort"]:disabled::before {
+    opacity: 0.5;
+}
+
+/* btn-tblnode (트리 토글 버튼) */
+button[class^="btn-tblnode"] {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: auto;
+    height: auto;
+    font-size: inherit;
+    color: #7d7d7d;
+    border: 0 none;
+    background: none;
+}
+button[class^="btn-tblnode"]::before {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 20px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+.btn-tblnode::before {
+    background-image: url(img/ico_tbl_plus.svg);
+}
+.btn-tblnode.opened::before {
+    background-image: url(img/ico_tbl_minus.svg);
+}
+
+/* ==================== pagination ==================== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 24px;
+}
+.page-navi {
+    width: 30px;
+    height: 30px;
+    background: #fff;
+    background-repeat: no-repeat;
+    border: 1px solid #CED6DD;
+    border-radius: 4px;
+}
+.page-navi:hover {
+    border-color: #A5A9AD;
+}
+.page-navi:disabled {
+    cursor: default;
+}
+.page-navi.prev {
+    margin-right: 20px;
+    background-image: url(img/ico_prev.svg);
+    background-position: center left 45%;
+}
+.page-navi.prev:disabled {
+    background-image: url(img/ico_prev_dis.svg);
+}
+.page-navi.next {
+    margin-left: 20px;
+    background-image: url(img/ico_next.svg);
+    background-position: center right 45%;
+}
+.page-navi.next:disabled {
+    background-image: url(img/ico_next_dis.svg);
+}
+.page-links {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.page-links a {
+    display: block;
+    box-sizing: border-box;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 6px;
+    color: #464C53;
+    font-weight: 400;
+    font-size: 16px;
+    text-align: center;
+    line-height: 30px;
+    border-radius: 4px;
+}
+.page-links a.active {
+    font-weight: 700;
+    color: #5349C0;
+    background: #F2F4FE;
+}
+.page-links a:hover {
+    text-decoration: underline;
+}
+.pagination p {
+    margin-left: 18px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #6F7F92;
+}
+.pagination select {
+    width: auto;
+    margin-left: 18px;
+    padding: 4px 34px 4px 12px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #6F7F92;
+    background: #fff url(img/ico_select_arr.svg) no-repeat center right 12px;
+    border: 1px solid #CED6DD;
+    border-radius: 4px;
+}
+
+/* ==================== schBox (검색박스) ==================== */
+.schBox {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    padding: 30px 250px 56px 0;
+    margin: auto;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.5;
+    color: #1E2124;
+}
+.schBox::after {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    content: '';
+    display: block;
+    width: calc(100% + 80px);
+    height: 26px;
+    background: #F4F5F6;
+    border-top: 3px solid #E5E8EA;
+    transform: translateX(-50%);
+}
+
+/* schRow */
+.schRow {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+.schRow:first-child + .schRow {
+    margin-top: 2px;
+}
+
+/* schBtn */
+.schBtn {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    right: 0;
+    top: 30px;
+    bottom: 56px;
+    padding: 0 40px 0 50px;
+    border-left: 1px solid #ddd;
+}
+
+/* ==================== schList ==================== */
+.schList .tblBox {
+    border: 1px solid #CED6DD;
+    border-radius: 6px;
+}
+.schList .tbl::before {
+    content: none;
+}
+.schList .tbl tbody tr:last-child {
+    border: none;
+}
+.schList .tbl:not(.de) thead th {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #1E2124;
+}
+.schList .tbl:not(.de) td {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: -1px;
+    color: #6D7882;
+}
+.schList .tbl td {
+    padding: 7px 15px;
+    text-align: left;
+}
+.schList .tbl a {
+    display: block;
+    max-width: 100%;
+    font-size: inherit;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #1E2124;
+    letter-spacing: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.schList .tblBox .tbl + .tbl {
+    border-top: 1px solid #E2E6EA;
+}
+.schList + .schList {
+    margin-top: 20px;
+}
+
+/* schList hover/active 상태 */
+.schList .tbl tbody tr:hover th,
+.schList .tbl tbody tr:hover td {
+    background-color: #E8EBF2;
+}
+.schList .tbl tbody tr.on th,
+.schList .tbl tbody tr.on td {
+    background-color: #F2F4FE;
+    color: #5349C0;
+}
+.schList .tbl tbody tr.on a {
+    color: #5349C0;
+}
+.schList .tbl tbody tr.notice td {
+    font-weight: 500;
+    background-color: #FEFDF1;
+}
+
+.ico-notice {
+    display: block;
+    width: 20px;
+    height: 20px;
+    margin: 0 auto;
+    background: url(img/ico_notice.svg) no-repeat center;
+}
+
+/* ==================== titBox ==================== */
+.titBox {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.titBox .lt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.titBox .rt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.titBox h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1E2124;
+}
+
+/* ==================== cntBox (컨텐츠 박스) ==================== */
+.cntBox {
+    margin-top: 20px;
+}
+.cntBox:first-child {
+    margin-top: 0;
+}
+
+/* ==================== pickrBox (날짜 선택) ==================== */
+.pickrBox {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: 400px;
+    max-width: 100%;
+}
+.pickrBox.sm {
+    width: 200px;
+}
+.pickrBox p {
+    display: inline-block;
+    margin: 0 1px;
+    font-size: inherit;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #464C53;
+}
+.pickrBox em {
+    font-style: normal;
+}
+
+/* ==================== badge / span ==================== */
+.span {
+    display: inline-block;
+    width: auto;
+    min-width: 85px;
+    padding: 4px 6px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    color: #464C53;
+    background: #E8E8E8;
+    border-radius: 4px;
+}
+.span.orange {
+    color: #895919;
+    background: #F8EFDF;
+}
+.span.blue {
+    color: #2459A2;
+    background: #E6F0FD;
+}
+.span.green {
+    color: #6D7B10;
+    background: #F1F8DF;
+}
+.span.cyan {
+    color: #36795A;
+    background: #E2F3F2;
+}
+.span.red {
+    color: #D63D4A;
+    background: #FBECED;
+}
+.span:last-child {
+    margin-right: 4px;
+}
+
+.badge {
+    display: inline-block;
+    width: auto;
+    min-width: 46px;
+    padding: 3px 4px 2px;
+    margin: auto;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 21px;
+    color: #fff;
+    background: #ACABAB;
+    border: 0;
+    border-radius: 4px;
+}
+.badge.lg {
+    min-width: 76px;
+    letter-spacing: 0;
+}
+.badge.pt {
+    background: #4F9097;
+}
+.badge.gray {
+    background: #868686;
+}
+.badge.orange {
+    background: #DC984F;
+}
+.badge.blue {
+    background: #5D8CB0;
+}
+.badge.purple {
+    background: #7D74AA;
+}
+.badge.yellow {
+    background: #ffc919;
+}
+
+/* ==================== 트리 그리드 전용 ==================== */
 .tree-row {
     display: table-row;
     background: #f9f9f9;
@@ -11,11 +1240,7 @@
 .date-input {
     width: 120px;
 }
-/*
-.tree-indent {
-    padding-left: 20px;
-}
-*/
+
 .tree-toggle {
     cursor: pointer;
     margin-right: 8px;
@@ -33,20 +1258,22 @@
     cursor: default;
 }
 
-
-
-/* 오류 셀 스타일 */
-.excel-error-cell {
-    color: #d32f2f !important;
+/* tableNode (트리 노드 컨테이너) */
+.tableNode {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    text-align: left;
 }
 
-.excel-error-cell:focus {
-    background-color: #ffcdd2 !important;
-    border-color: #d32f2f !important;
+/* 들여쓰기 */
+.space, .line {
+    display: inline-block;
+    width: 25px;
+    flex-shrink: 0;
 }
 
-
-
+/* ==================== 정렬 (Sort) ==================== */
 .sortable {
     cursor: pointer;
     user-select: none;
@@ -61,25 +1288,71 @@
 }
 
 .sort-icon::before {
-    content:'';display:block;width:22px;height:22px;background:url(../../img/ico_sort.svg) no-repeat center;
+    content: '';
+    display: block;
+    width: 22px;
+    height: 22px;
+    background: url(img/ico_sort.svg) no-repeat center;
 }
 
 .sort-icon.asc::before {
-	background-image:url(../../img/ico_sort_asc.svg);
+    background-image: url(img/ico_sort_asc.svg);
 }
 
 .sort-icon.desc::before {
-    background-image:url(../../img/ico_sort_desc.svg);
+    background-image: url(img/ico_sort_desc.svg);
 }
 
 .sort-icon.remote::before {
-    background:url(../../img/ico_sort_remote.svg) no-repeat center;
+    background: url(img/ico_sort_remote.svg) no-repeat center;
 }
 
 .sort-icon.remote.asc::before {
-	background-image:url(../../img/ico_sort_remote_asc.svg);
+    background-image: url(img/ico_sort_remote_asc.svg);
 }
 
 .sort-icon.remote.desc::before {
-    background-image:url(../../img/ico_sort_remote_desc.svg);
+    background-image: url(img/ico_sort_remote_desc.svg);
+}
+
+/* ==================== 엑셀 오류 셀 ==================== */
+.excel-error-cell {
+    color: #d32f2f !important;
+}
+
+.excel-error-cell:focus {
+    background-color: #ffcdd2 !important;
+    border-color: #d32f2f !important;
+}
+
+/* ==================== 컬럼 리사이저 ==================== */
+th .resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+}
+
+th .resizer:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+table.resizable-table {
+    table-layout: fixed;
+}
+
+/* ==================== 숨김 텍스트 (접근성) ==================== */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
