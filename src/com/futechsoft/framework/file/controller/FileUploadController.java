@@ -5,10 +5,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,9 +29,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.FileCopyUtils;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -42,20 +46,20 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.futechsoft.framework.common.controller.AbstractController;
-import com.futechsoft.framework.common.pagination.Page;
-import com.futechsoft.framework.common.pagination.Pageable;
 import com.futechsoft.framework.common.service.RemoteFileDownloader;
+import com.futechsoft.framework.exception.BizException;
 import com.futechsoft.framework.exception.ErrorCode;
 import com.futechsoft.framework.exception.FileDownloadException;
 import com.futechsoft.framework.exception.FileUploadException;
 import com.futechsoft.framework.file.service.FileUploadService;
 import com.futechsoft.framework.file.vo.FileInfoVo;
+import com.futechsoft.framework.security.auth.JwtTokenProvider;
 import com.futechsoft.framework.util.CommonUtil;
 import com.futechsoft.framework.util.FileUtil;
 import com.futechsoft.framework.util.FtMap;
-import com.futechsoft.framework.util.SecurityUtil;
+import com.futechsoft.framework.util.SynnapConvertToHtml;
 import com.google.gson.Gson;
-import java.util.Base64;
+
 import kr.go.odakorea.gis.service.KoicaScrapingService;
 
 @Controller
@@ -69,8 +73,9 @@ public class FileUploadController extends AbstractController {
 	@Resource(name = "gis.service.KoicaScrapingService")
 	KoicaScrapingService koicaScrapingService;
 
-	//@Autowired
-	//PropertiesConfiguration propertiesConfiguration;
+	@Autowired
+	JwtTokenProvider jwtTokenProvider;
+
 
 	@Value("${file.uploadPath.temp}")
 	private String tempUploadPath;
@@ -110,32 +115,47 @@ public class FileUploadController extends AbstractController {
    private String[] outIp;
 
 
+
+   @Value("${hwp.template.path}")
+   private String hwpTemplatePath;
+
+   @Value("${excel.template.path}")
+   private String excelTemplatePath;
+
+
 	@Autowired
 	private RemoteFileDownloader remoteFileDownloader;
+
+
+
+	@Value("${synap.resultPath}")
+	private String resultPath;
+
+	@Value("${synap.moduleBasePath}")
+	private String moduleBasePath;
+
+	@Value("${synap.convert_count}")
+	private int convert_count;
+
+
+	@Value("${synap.synapContextPath}")
+	private String synapContextPath;
+
+
+	@Value("${file.uploadPath.iati}")
+	private String iatiUploadPath;
+
 
 	@RequestMapping(value = "/file/upload")
 	@ResponseBody
 	public Map<String, Object> upload(Model model, HttpSession session,  @RequestParam MultipartFile file, @RequestParam String metadata)
-			throws JsonMappingException, JsonProcessingException, FileUploadException {
+			throws Exception {
 
-/*
-		String acceptDoc = "";
-		String acceptImage = "";
-		String acceptMultimedia = "";
-		for (String accept : acceptDocs) {
-			acceptDoc += accept + ",";
-		}
-		for (String accept : acceptImages) {
-			acceptImage += accept + ",";
-		}
-		for (String accept : acceptMultimedias) {
-			acceptMultimedia += accept + ",";
-		}
-*/
 
-		String acceptDoc = String.join(",", acceptDocs);
-		String acceptImage = String.join(",", acceptImages);
-		String acceptMultimedia = String.join(",", acceptMultimedias);
+		String acceptDoc=String.join(",", acceptDocs);
+		String acceptImage=String.join(",", acceptImages);
+		String acceptMultimedia=String.join(",", acceptMultimedias);
+
 
 
 		Gson gson = new Gson();
@@ -162,28 +182,30 @@ public class FileUploadController extends AbstractController {
 					(uploadSize / 1024 / 1024) + "M"));
 
 		} else {
-
-
-
 			fileInfoVo = fileUploadService.upload(file, fileInfoVo);
 
-			if(CommonUtil.nvl(fileInfoVo.getExtractZipYn()).equals("Y") && fileInfoVo.getUploadComplete().equals("Y")) {
 
+			if (CommonUtil.nvl(fileInfoVo.getExtractZipYn()).equals("Y") && fileInfoVo.getUploadComplete().equals("Y")) {
 
 				File tempFile = new File(fileInfoVo.getTempFilePath());
 
 				// 새 파일명: fileId.zip
 				File zipFile = new File(tempFile.getParent(), fileInfoVo.getFileId() + ".zip");
 
-				 List<FileInfoVo> fileList = new ArrayList<>();
+				List<FileInfoVo> fileList = new ArrayList<>();
 
 				if (tempFile.renameTo(zipFile)) {
 					try {
-						fileList = FileUtil.extractZip(zipFile, tempZipPath);
+						fileList = FileUtil.extractZip(zipFile, tempUploadPath);
 						fileInfo.put("fileInfo", fileList);
-					} catch (Exception e) {
+
+						if(zipFile.exists()) {
+							boolean check=zipFile.delete();
+							LOGGER.debug("delete Zip file..{}",check);
+						}
+					} catch (BizException e) {
 						// TODO Auto-generated catch block
-						e.printStackTrace();
+						//e.printStackTrace();
 
 						fileInfo.put("errorCode", ErrorCode.ZIP_EXT_ERROR.getCode());
 						fileInfo.put("errorMessage", ErrorCode.ZIP_EXT_ERROR.getMessage());
@@ -193,8 +215,8 @@ public class FileUploadController extends AbstractController {
 
 
 
+			} else {
 
-			}else {
 				List<FileInfoVo> fileList = new ArrayList<FileInfoVo>();
 
 				session.setAttribute("getFileExt", fileInfoVo.getFileExt());
@@ -203,7 +225,6 @@ public class FileUploadController extends AbstractController {
 				fileList.add(fileInfoVo);
 				fileInfo.put("fileInfo", fileList);
 			}
-
 		}
 
 		return fileInfo;
@@ -231,12 +252,6 @@ public class FileUploadController extends AbstractController {
 	public Map<String, List<FileInfoVo>> deleteFile(@RequestBody FileInfoVo[] fileInfoVos) throws Exception {
 
 
-
-
-		/*
-		 * Gson gson = new Gson();
-		 * FileInfoVo[] fileInfoVos = gson.fromJson(delFileInfo, FileInfoVo[].class);
-		 */
 		List<FileInfoVo> fileList = new ArrayList<FileInfoVo>();
 
 		for (FileInfoVo fileInfoVo : fileInfoVos) {
@@ -301,27 +316,13 @@ public class FileUploadController extends AbstractController {
 	 */
 	private void setuploadForm(String acceptType, HttpServletRequest req) throws Exception {
 
-/*
-		String acceptDoc = "";
-		String acceptImage = "";
-		String acceptMultimedia = "";
-		for (String accept : acceptDocs) {
-			acceptDoc += accept + ",";
-		}
-		for (String accept : acceptImages) {
-			acceptImage += accept + ",";
-		}
-		for (String accept : acceptMultimedias) {
-			acceptMultimedia += accept + ",";
-		}
-*/
 
-		String acceptDoc = String.join(",", acceptDocs);
-		String acceptImage = String.join(",", acceptImages);
-		String acceptMultimedia = String.join(",", acceptMultimedias);
 
-		String acceptAll = String.join(",", acceptDoc, acceptImage, acceptMultimedia);
+		String acceptDoc=String.join(",", acceptDocs);
+		String acceptImage=String.join(",", acceptImages);
+		String acceptMultimedia=String.join(",", acceptMultimedias);
 
+		String acceptAll =String.join(",", acceptDoc,acceptImage,acceptMultimedia);
 
 		String uploadFormId = FileUtil.getRandomId();
 
@@ -339,24 +340,253 @@ public class FileUploadController extends AbstractController {
 		} else {
 			req.setAttribute("accept", acceptAll);
 		}
+
+		req.setAttribute("token", jwtTokenProvider.createAnonymousToken("fileUser"));
 	}
 
 
 	/**
-	 * 외부사용자 파일다운로드(홈페이지 , 기타).csrf 해제필요  ROLE_ANONYMOUS 권한, 외부사용자도 쿠기설정되느지 확인필요
+	 * 외부사용자 파일다운로드(홈페이지 , 기타).csrf 해제필요  ROLE_ANONYMOUS 권한
 	 * @param request
 	 * @param response
 	 * @throws Exception
 	 */
-	@RequestMapping(value = "/api/file/download")
-	public void apiFiledownload(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		download( request,  response);
+	@RequestMapping(value = "/api/file/download/{fileId}", method = {RequestMethod.GET, RequestMethod.HEAD})
+	public void apiFiledownload( @PathVariable String fileId, HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+
+		FtMap params =new FtMap();
+		params.put("fileId", fileId);
+		FileInfoVo fileInfoVo = fileUploadService.getFileInfo(params);
+
+		if(fileInfoVo==null) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.setContentType("application/json;charset=UTF-8");
+			response.getWriter().write("{\"error\":\"권한없음\"}");
+			return;
+		}
+
+		if(CommonUtil.nvl(fileInfoVo.getHmpgRlsYn()).equals("Y") || CommonUtil.nvl(fileInfoVo.getIipsRlsYn()).equals("Y")) {
+
+			String homePageToken= jwtTokenProvider.createAnonymousToken("homePageUser");
+
+			download( request,  response,  fileId, homePageToken, null);
+		}else {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.setContentType("application/json;charset=UTF-8");
+			response.getWriter().write("{\"error\":\"권한없음\"}");
+			return;
+		}
+
+
+	}
+
+	@RequestMapping(value = "/api/file/commonDownload/{fileId}", method = {RequestMethod.GET, RequestMethod.HEAD})
+	public void commonDownload( @PathVariable String fileId, HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+
+		FtMap params =new FtMap();
+		params.put("fileId", fileId);
+		FileInfoVo fileInfoVo = fileUploadService.getFileInfo(params);
+
+		if(fileInfoVo==null) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.setContentType("application/json;charset=UTF-8");
+			response.getWriter().write("{\"error\":\"권한없음\"}");
+			return;
+		}
+		download( request,  response,  fileId, null, null);
 	}
 
 
-	@RequestMapping(value = "/file/download")
-	public void download(HttpServletRequest request, HttpServletResponse response) throws Exception {
+	@ResponseBody
+	@RequestMapping("/file/getToken")
+	public Map<String, String>  getToken() throws Exception{
 
+		String token= jwtTokenProvider.createAnonymousToken("anonymousUser");
+
+		Map<String, String> response = new HashMap<>();
+	    response.put("token", token);
+
+	    return response;
+	}
+
+
+	@RequestMapping(value = "/file/iatiDownload/{fileNm:.+}")
+	public void iatiDownloadFile(@PathVariable String fileNm, HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+
+		File iatiFile =  Paths.get(iatiUploadPath,fileNm).toFile();
+
+		if(iatiFile.exists()) {
+
+			if (iatiFile.isFile() && iatiFile.exists()) {
+
+				response.setContentType("application/octet-stream; charset=utf-8");
+				response.setContentLengthLong(iatiFile.length());
+
+				response.setHeader("Content-Disposition",
+						"attachment; filename=\"" + java.net.URLEncoder.encode(fileNm, "utf-8") + "\";");
+
+				try ( FileInputStream fis = new FileInputStream(iatiFile);) {
+					OutputStream out = response.getOutputStream();
+					CommonUtil.copy(fis, out, iatiFile.length());
+				} catch (BizException e) {
+					throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+				}
+
+			} else {
+				throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+			}
+
+		}else {
+			String token= jwtTokenProvider.createAnonymousToken("homePageUser");
+			iatiDownload( request,  response,  fileNm, token, null);
+		}
+
+
+	}
+
+	private void iatiDownload(HttpServletRequest request, HttpServletResponse response, String fileNm, String token, String thumbnailYn) throws Exception {
+
+
+		String[] remoteIps=null;
+
+		if(inOutDiv.equals("in")){
+			remoteIps= outIp;
+		}else if(inOutDiv.equals("out")){
+			remoteIps= inIp;
+		}
+
+		String selectedIp = remoteIps[ThreadLocalRandom.current().nextInt(remoteIps.length)];
+
+		LOGGER.debug("selectedIp......{}",selectedIp);
+
+		File downloadFile = null;
+
+		String fullRemoteUrl="";
+
+		try {
+
+			downloadFile = Paths.get(iatiUploadPath,fileNm).toFile();
+
+			if(!downloadFile.exists()) {
+				LOGGER.debug("다른서버에서 파일 조회....{}", downloadFile.toString());
+
+				String jwtToken = null;
+				if (token != null) {
+					jwtToken = token;
+				}
+
+				// 1. JWT 가져오기
+				if(jwtToken==null) {
+					String authHeader = request.getHeader("Authorization");
+
+			        // Authorization 헤더 확인
+			        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			            jwtToken = authHeader.substring(7);
+			        }
+				}
+
+		        if(jwtToken==null) {
+		        	Cookie[] cookies = request.getCookies();
+				    if (cookies != null) {
+				        for (Cookie cookie : cookies) {
+				            if ("JWT".equals(cookie.getName())) {
+				                jwtToken = cookie.getValue();
+				                break;
+				            }
+				        }
+				    }
+		        }
+
+			    LOGGER.debug("jwtToken....{}", jwtToken);
+
+				// 임시 파일 경로 생성
+				String tempFileName = fileNm + "_" + System.currentTimeMillis() + ".tmp";
+				downloadFile = Paths.get(tempUploadPath, tempFileName).toFile();
+
+				fullRemoteUrl = "http://"+selectedIp+"/file/iatiRemoteDownload/" + fileNm;
+
+				// 여기서 사용!
+				remoteFileDownloader.downloadFileFromOtherWAS(fullRemoteUrl, jwtToken, downloadFile.getAbsolutePath(), 0);
+			}
+
+
+
+			if (downloadFile.isFile() && downloadFile.exists()) {
+
+
+				File fileToMove = Paths.get(iatiUploadPath, fileNm).toFile();
+
+				LOGGER.debug("기존서버파일 활용....{}", fileToMove.toString());
+
+				if(!fileToMove.exists()) {
+
+					LOGGER.debug("다른서버에 파일저장....{}", fileToMove.toString());
+
+					FileUtils.forceMkdir(fileToMove.getParentFile());
+					Files.move(downloadFile.toPath(), fileToMove.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+
+					downloadFile=fileToMove;
+				}
+
+				response.setContentType("application/octet-stream; charset=utf-8");
+
+				long fileLength= downloadFile.length();
+				response.setContentLengthLong( downloadFile.length());
+
+
+				response.setHeader("Content-Disposition",
+						"attachment; filename=\"" + java.net.URLEncoder.encode(fileNm, "utf-8") + "\";");
+
+				try ( FileInputStream fis = new FileInputStream(downloadFile);) {
+					OutputStream out = response.getOutputStream();
+					CommonUtil.copy(fis, out, fileLength);
+				} catch (BizException e) {
+					if (CommonUtil.isClientAbortException(e)) {
+				        // 사용자 다운로드 중단, 조용히 로그만 남기고 끝내도 됨
+				      //  System.out.println("[INFO] 사용자 다운로드 중단 감지");
+				    } else {
+				        //e.printStackTrace();
+				        throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+				    }
+				}
+			} else {
+				throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+			}
+
+		} catch (BizException e) {
+			//e.printStackTrace();
+			throw new FileDownloadException(e.getMessage());
+
+		}
+
+	}
+
+
+
+
+	@RequestMapping(value = "/file/download/{fileId}/{fileToken}")
+	public void downloadFile(@PathVariable String fileId,@PathVariable String fileToken, HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+		FtMap params =new FtMap();
+		params.put("fileId", fileId);
+		FileInfoVo fileInfoVo = fileUploadService.getFileInfo(params);
+
+		if(fileInfoVo==null) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.setContentType("application/json;charset=UTF-8");
+			response.getWriter().write("{\"error\":\"권한없음\"}");
+			return;
+		}
+
+		download( request,  response,  fileId, fileToken, "N");
+	}
+
+	@RequestMapping(value = "/file/download")
+	public void download(HttpServletRequest request, HttpServletResponse response, String fileId, String token, String thumbnailYn) throws Exception {
 
 
 		String[] remoteIps=null;
@@ -379,12 +609,18 @@ public class FileUploadController extends AbstractController {
 
 		FtMap params = getFtMap(request);
 
-		String downloadFileInfo = params.getString("downloadFileInfo");
+
+		FileInfoVo fileInfoVo = null;
+		if(CommonUtil.nvl(fileId).equals("")) {
+			String downloadFileInfo = params.getString("downloadFileInfo");
+			Gson gson = new Gson();
+			fileInfoVo = gson.fromJson(downloadFileInfo, FileInfoVo.class);
+		}else {
+			fileInfoVo= new FileInfoVo();
+			fileInfoVo.setFileId(fileId);
+		}
 
 
-
-		Gson gson = new Gson();
-		FileInfoVo fileInfoVo = gson.fromJson(downloadFileInfo, FileInfoVo.class);
 
 		File downloadFile = null;
 
@@ -399,38 +635,75 @@ public class FileUploadController extends AbstractController {
 				params.put("fileId", fileInfoVo.getFileId());
 				fileInfoVo = fileUploadService.getFileInfo(params);
 
+
+				/*
 				// 파일다운로드 권한
 				boolean fileDownloadCheck = FileUtil.hasFileDownloadAuth(fileInfoVo);
 				if (!fileDownloadCheck) {
 					throw new FileDownloadException(ErrorCode.FILE_ACCESS_DENIED.getMessage());
 				}
+				 */
 
+				LOGGER.debug("fileInfoVo.getFileId().length()......{}",fileInfoVo.getFileId().length());
 
 
 				if(fileInfoVo.getFileId().length()==32) {
-					downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
+
+					if(CommonUtil.nvl(thumbnailYn).equals("Y")) {
+						downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + "."+fileInfoVo.getFileExt()).toFile();
+					}else {
+						downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
+					}
+
 				}else {
-					downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId()).toFile();
+					String temFileId="";
+					if(fileInfoVo!=null &&  fileInfoVo.getFileId().length() >4) {
+						 temFileId=fileInfoVo.getFileId().substring(fileInfoVo.getFileId().length()-4);
+					}
+
+					LOGGER.debug("temFileId...................{}",temFileId);
+
+
+
+					temFileId =  String.valueOf(Integer.parseInt(temFileId));
+
+					LOGGER.debug("temFileId2...................{}",temFileId);
+
+
+					downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), temFileId).toFile();
+
+					LOGGER.debug("downloadFile...................{}",downloadFile);
+					LOGGER.debug("downloadFile...................{}",downloadFile.toPath());
+					LOGGER.debug("downloadFile...................{}",downloadFile.getName());
 				}
+
+				LOGGER.debug("downloadFile.exists()...................{}",downloadFile.exists());
 
 
 				if(!filePstnSecd.equals(fileInfoVo.getFilePstnSecd())) {
+
+					LOGGER.debug("not eq filePstnSecd");
 
 					if(!downloadFile.exists()) {
 						LOGGER.debug("다른서버에서 파일 조회....{}", downloadFile.toString());
 
 
+						String jwtToken = null;
+
+						if (token != null) {
+							jwtToken = token;
+						}
 
 
+						// 1. JWT 가져오기
+						if(jwtToken==null) {
+							String authHeader = request.getHeader("Authorization");
 
-						 // 1. JWT 가져오기
-				        String authHeader = request.getHeader("Authorization");
-				        String jwtToken = null;
-
-				        // Authorization 헤더 확인
-				        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-				            jwtToken = authHeader.substring(7);
-				        }
+					        // Authorization 헤더 확인
+					        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+					            jwtToken = authHeader.substring(7);
+					        }
+						}
 
 				        if(jwtToken==null) {
 				        	Cookie[] cookies = request.getCookies();
@@ -443,6 +716,7 @@ public class FileUploadController extends AbstractController {
 						        }
 						    }
 				        }
+
 
 
 					    LOGGER.debug("jwtToken....{}", jwtToken);
@@ -468,7 +742,6 @@ public class FileUploadController extends AbstractController {
 			if (downloadFile.isFile() && downloadFile.exists()) {
 
 
-
 				////////////////////////
 				//평가   && !fileInfoVo.getTaskSecd().equals("06")
 				if(!filePstnSecd.equals(fileInfoVo.getFilePstnSecd()) && !StringUtils.defaultString(fileInfoVo.getTemp(), "").equals("Y")) {
@@ -492,56 +765,51 @@ public class FileUploadController extends AbstractController {
 
 				///////////////////
 
-				response.setContentType("application/octet-stream; charset=utf-8");
-
+				//response.setContentType("application/octet-stream; charset=utf-8");
 				/*
-				if (downloadFile.length() > 1024 * 1024 * 20) { // 20M
-					response.setHeader("Content-Transfer-Encoding", "chunked");
-				} else {
-					response.setContentLength((int) downloadFile.length());
-					response.setHeader("Content-Transfer-Encoding", "binary");
+				if(fileInfoVo.getFileNm().endsWith("jpg") || fileInfoVo.getFileNm().endsWith("jpeg")) {
+					response.setContentType("image/jpeg");
+				}else if( fileInfoVo.getFileNm().endsWith("png")) {
+					response.setContentType("image/png");
+				}else if( fileInfoVo.getFileNm().endsWith("gif")) {
+					response.setContentType("image/gif");
+				}else {
+					 response.setContentType("application/octet-stream; charset=utf-8");
 				}
-				*/
+				 */
+
+				 response.setContentType("application/octet-stream; charset=utf-8");
+
 				long fileLength= downloadFile.length();
-				//response.setContentLength((int) downloadFile.length());
 				response.setContentLengthLong( downloadFile.length());
 
+
+				LOGGER.debug("fileInfoVo.getFileNm()....{}", fileInfoVo.getFileNm());
 
 				response.setHeader("Content-Disposition",
 						"attachment; filename=\"" + java.net.URLEncoder.encode(fileInfoVo.getFileNm(), "utf-8") + "\";");
 
 				try ( FileInputStream fis = new FileInputStream(downloadFile);) {
-					// FileCopyUtils.copy(fis, out);
 					OutputStream out = response.getOutputStream();
 					CommonUtil.copy(fis, out, fileLength);
-				} catch (Exception e) {
-					//e.printStackTrace();
-					//throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+				} catch (BizException e) {
 					if (CommonUtil.isClientAbortException(e)) {
 				        // 사용자 다운로드 중단, 조용히 로그만 남기고 끝내도 됨
-				        System.out.println("[INFO] 사용자 다운로드 중단 감지");
+				      //  System.out.println("[INFO] 사용자 다운로드 중단 감지");
 				    } else {
-				        e.printStackTrace();
+				        //e.printStackTrace();
 				        throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
 				    }
-
 				}
 			} else {
 				throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
 			}
 
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (BizException e) {
+			//e.printStackTrace();
 			throw new FileDownloadException(e.getMessage());
 
-		}finally {
-	        // 원격에서 받은 임시 파일 정리
-	        if (StringUtils.isNotEmpty(fullRemoteUrl) && downloadFile != null) {
-	            try {
-	            //  Files.deleteIfExists(downloadFile.toPath());
-	            } catch (Exception ignored) {}
-	        }
-	    }
+		}
 
 	}
 
@@ -554,129 +822,7 @@ public class FileUploadController extends AbstractController {
 	@RequestMapping(value = "/file/thumbnail/{fileId}", method = {RequestMethod.GET, RequestMethod.HEAD})
 	public void thumbnailDownload( @PathVariable String fileId, HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-		String[] remoteIps=null;
-
-		String filePstnSecd="";
-		if(inOutDiv.equals("in")){
-			filePstnSecd="01";
-			remoteIps= outIp;
-
-		}else if(inOutDiv.equals("out")){
-			filePstnSecd="02";
-			remoteIps= inIp;
-		}
-
-		String selectedIp = remoteIps[ThreadLocalRandom.current().nextInt(remoteIps.length)];
-
-
-		FtMap params = getFtMap(request);
-        params.put("fileId", fileId);
-        FileInfoVo fileInfoVo = fileUploadService.getFileInfo(params);
-
-
-		File downloadFile = null;
-
-		String fullRemoteUrl="";
-
-		try {
-			if (StringUtils.defaultString(fileInfoVo.getTemp(), "").equals("Y")) {
-				downloadFile = Paths.get(tempUploadPath, fileInfoVo.getFileId() + ".TEMP").toFile();
-
-			} else {
-
-				params.put("fileId", fileInfoVo.getFileId());
-				fileInfoVo = fileUploadService.getFileInfo(params);
-
-				// 파일다운로드 권한
-				boolean fileDownloadCheck = FileUtil.hasFileDownloadAuth(fileInfoVo);
-				if (!fileDownloadCheck) {
-					throw new FileDownloadException(ErrorCode.FILE_ACCESS_DENIED.getMessage());
-				}
-
-
-				if(filePstnSecd.equals(fileInfoVo.getFilePstnSecd())) {
-
-					if(fileInfoVo.getFileId().length()==32) {
-						downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + "."+fileInfoVo.getFileExt()).toFile();
-					}else {
-						downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId()).toFile();
-					}
-
-				}else {
-
-					String jwtToken = null;
-
-				    Cookie[] cookies = request.getCookies();
-				    if (cookies != null) {
-				        for (Cookie cookie : cookies) {
-				            if ("JWT".equals(cookie.getName())) {
-				                jwtToken = cookie.getValue();
-				                break;
-				            }
-				        }
-				    }
-
-				    LOGGER.debug("jwtToken....{}", jwtToken);
-
-					// 최적의 청크 수 계산
-					int optimalChunks = calculateOptimalChunks(fileInfoVo.getFileSize());
-
-					// 임시 파일 경로 생성
-					String tempFileName = fileInfoVo.getFileId() + "_" + System.currentTimeMillis() + ".tmp";
-					downloadFile = Paths.get(tempUploadPath, tempFileName).toFile();
-
-					fullRemoteUrl = "http://"+selectedIp+"/file/remoteDownload/" + fileInfoVo.getFileId();
-
-					// 여기서 사용!
-					remoteFileDownloader.downloadFileFromOtherWAS(fullRemoteUrl, jwtToken, downloadFile.getAbsolutePath(),
-							optimalChunks);
-
-				}
-
-			}
-
-			if (downloadFile.isFile() && downloadFile.exists()) {
-
-				if(fileInfoVo.getFileExt().endsWith("jpg") || fileInfoVo.getFileExt().endsWith("jpeg")) {
-					response.setContentType("image/jpeg");
-				}else if( fileInfoVo.getFileExt().endsWith("png")) {
-					response.setContentType("image/png");
-				}else if( fileInfoVo.getFileExt().endsWith("gif")) {
-					response.setContentType("image/gif");
-				}else {
-					 response.setContentType("application/octet-stream; charset=utf-8");
-				}
-
-				//response.setContentLength((int) fileInfoVo.getFileSize());
-				//response.setHeader("Content-Transfer-Encoding", "binary");
-				response.setContentLengthLong(downloadFile.length());
-
-
-				try ( FileInputStream fis = new FileInputStream(downloadFile);) {
-					// FileCopyUtils.copy(fis, out);
-					OutputStream out = response.getOutputStream();
-					CommonUtil.copy(fis, out, fileInfoVo.getFileSize());
-				} catch (Exception e) {
-					e.printStackTrace();
-					throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
-				}
-			} else {
-				throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new FileDownloadException(e.getMessage());
-
-		}finally {
-	        // 원격에서 받은 임시 파일 정리
-	        if (StringUtils.isNotEmpty(fullRemoteUrl) && downloadFile != null) {
-	            try {
-	               Files.deleteIfExists(downloadFile.toPath());
-	            } catch (Exception ignored) {}
-	        }
-	    }
-
+		download( request,  response,  fileId, null, "Y");
 	}
 
 	@RequestMapping(value = "/file/remoteDownload/{fileId}", method = {RequestMethod.GET, RequestMethod.HEAD})
@@ -704,8 +850,6 @@ public class FileUploadController extends AbstractController {
 	        }
 
 
-
-
 	        if(fileInfoVo.getFileId().length()==32) {
 
 	        	if( fileInfoVo.getFilePath().endsWith("thumbnail")) {
@@ -715,7 +859,16 @@ public class FileUploadController extends AbstractController {
 	        	}
 
 			}else {
-				downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId()).toFile();
+
+
+				String temFileId="";
+				if(fileInfoVo!=null &&  fileInfoVo.getFileId().length() >4) {
+					 temFileId=fileInfoVo.getFileId().substring(fileInfoVo.getFileId().length()-4);
+				}
+				temFileId =  String.valueOf(Integer.parseInt(temFileId));
+
+				downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), temFileId).toFile();
+
 			}
 
 
@@ -809,8 +962,71 @@ public class FileUploadController extends AbstractController {
 
 	            out.flush();
 
+	        } catch (BizException e) {
+	            //e.printStackTrace();
+	            throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+	        }
+
+	    } catch (BizException e) {
+	    	//e.printStackTrace();
+	        throw new FileDownloadException(e.getMessage());
+	    }
+	}
+
+	@RequestMapping(value = "/file/iatiRemoteDownload/{fileNm:.+}", method = {RequestMethod.GET, RequestMethod.HEAD})
+	public void iatiRemoteDownload(
+	    @PathVariable String fileNm,
+	    HttpServletRequest request,
+	    HttpServletResponse response) throws Exception {
+
+	    LOGGER.info("Request Method: {}", request.getMethod());
+
+	    File downloadFile = null;
+	    try {
+
+	    	downloadFile = Paths.get(iatiUploadPath, fileNm).toFile();
+
+	        if (!downloadFile.exists() || !downloadFile.isFile()) {
+	            throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+	        }
+
+	        if (!downloadFile.exists() || !downloadFile.isFile()) {
+	            throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+	        }
+
+	        long fileLength = downloadFile.length();
+
+	        // 헤더 설정
+	        response.setContentType("application/octet-stream; charset=utf-8");
+	        response.setContentLengthLong(fileLength);
+	        response.setHeader("Content-Disposition",
+	            "attachment; filename=\"" + java.net.URLEncoder.encode(fileNm, "utf-8") + "\";");
+
+	        // 파일 전송
+	        try (FileInputStream fis = new FileInputStream(downloadFile);
+	             OutputStream out = response.getOutputStream()) {
+
+	            byte[] buffer = new byte[8192];
+	            int bytesRead;
+
+	            while ((bytesRead = fis.read(buffer)) != -1) {
+	                try {
+	                    out.write(buffer, 0, bytesRead);
+
+	                    // 주기적으로 flush
+	                    if (bytesRead == buffer.length) {
+	                        out.flush();
+	                    }
+	                } catch (IOException e) {
+	                    LOGGER.warn("Client disconnected during download");
+	                    break;
+	                }
+	            }
+
+	            out.flush();
+
 	        } catch (Exception e) {
-	            e.printStackTrace();
+	            LOGGER.error("File download error", e);
 	            throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
 	        }
 
@@ -818,6 +1034,7 @@ public class FileUploadController extends AbstractController {
 	        throw new FileDownloadException(e.getMessage());
 	    }
 	}
+
 
 
 	/**
@@ -918,16 +1135,16 @@ public class FileUploadController extends AbstractController {
 					// FileCopyUtils.copy(fis, out);
 					OutputStream out = response.getOutputStream();
 					CommonUtil.copy(fis, out, downloadFile.length());
-				} catch (Exception e) {
-					e.printStackTrace();
+				} catch (BizException e) {
+					//e.printStackTrace();
 					throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
 				}
 			} else {
 				throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
 			}
 
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (BizException e) {
+			//e.printStackTrace();
 			throw new FileDownloadException(e.getMessage());
 
 		}finally {
@@ -935,7 +1152,9 @@ public class FileUploadController extends AbstractController {
 	        if (StringUtils.isNotEmpty(fullRemoteUrl) && downloadFile != null) {
 	            try {
 	              Files.deleteIfExists(downloadFile.toPath());
-	            } catch (Exception ignored) {}
+	            } catch (BizException ignored) {
+	            	LOGGER.error(ignored.getMessage());
+	            }
 	        }
 	    }
 
@@ -1071,12 +1290,12 @@ public class FileUploadController extends AbstractController {
 
 
 	            out.flush();
-	        } catch (Exception e) {
-	            e.printStackTrace();
+	        } catch (BizException e) {
+	            //e.printStackTrace();
 	            throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
 	        }
 
-	    } catch (Exception e) {
+	    } catch (BizException e) {
 	        throw new FileDownloadException(e.getMessage());
 	    }
 	}
@@ -1182,7 +1401,18 @@ public class FileUploadController extends AbstractController {
 	                        if(fileInfoVo.getFileId().length() == 32) {
 	                            originalFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
 	                        } else {
-	                            originalFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId()).toFile();
+
+	                        	String temFileId="";
+	            				if(fileInfoVo!=null &&  fileInfoVo.getFileId().length() >4) {
+	            					 temFileId=fileInfoVo.getFileId().substring(fileInfoVo.getFileId().length()-4);
+	            				}
+
+
+	            				originalFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), temFileId).toFile();
+
+
+
+	                        	//originalFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId()).toFile();
 	                        }
 
 	                        if (originalFile.exists()) {
@@ -1232,7 +1462,7 @@ public class FileUploadController extends AbstractController {
 	                    LOGGER.warn("File not found or download failed for fileId: {}", fileInfoVo.getFileId());
 	                }
 
-	            } catch (Exception e) {
+	            } catch (BizException e) {
 	                LOGGER.error("Error processing file: " + fileInfoVo.getFileId(), e);
 	                // 개별 파일 오류는 로그만 남기고 계속 진행
 	                continue;
@@ -1281,8 +1511,8 @@ public class FileUploadController extends AbstractController {
 	            throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
 	        }
 */
-	    } catch (Exception e) {
-	        e.printStackTrace();
+	    } catch (BizException e) {
+	        //e.printStackTrace();
 	        throw new FileDownloadException(e.getMessage());
 
 	    } finally {
@@ -1298,7 +1528,10 @@ public class FileUploadController extends AbstractController {
 	                }
 	                tempDir.delete();
 	            }
-	        } catch (Exception ignored) {}
+	        } catch (BizException ignored) {
+
+	        	LOGGER.error(ignored.getMessage());
+	        }
 	    }
 	}
 
@@ -1418,7 +1651,16 @@ public class FileUploadController extends AbstractController {
 						if(fileInfoVo.getFileId().length()==32) {
 							downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), fileInfoVo.getFileId() + ".FILE").toFile();
 						}else {
-							downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), fileInfoVo.getFileId()).toFile();
+
+							String temFileId="";
+            				if(fileInfoVo!=null &&  fileInfoVo.getFileId().length() >4) {
+            					 temFileId=fileInfoVo.getFileId().substring(fileInfoVo.getFileId().length()-4);
+            				}
+
+            				temFileId =  String.valueOf(Integer.parseInt(temFileId));
+            				downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), temFileId).toFile();
+
+							//downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), fileInfoVo.getFileId()).toFile();
 						}
 
 					}else {
@@ -1459,7 +1701,7 @@ public class FileUploadController extends AbstractController {
 				} else {
 					throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
 				}
-			} catch (Exception e) {
+			} catch (BizException e) {
 				LOGGER.error(e.toString());
 				throw new FileDownloadException(e.getMessage());
 			}
@@ -1545,7 +1787,17 @@ public class FileUploadController extends AbstractController {
 						if(fileInfoVo.getFileId().length()==32) {
 							downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), fileInfoVo.getFileId() + ".FILE").toFile();
 						}else {
-							downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), fileInfoVo.getFileId()).toFile();
+
+							String temFileId="";
+            				if(fileInfoVo!=null &&  fileInfoVo.getFileId().length() >4) {
+            					 temFileId=fileInfoVo.getFileId().substring(fileInfoVo.getFileId().length()-4);
+            				}
+
+            				temFileId =  String.valueOf(Integer.parseInt(temFileId));
+            				downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), temFileId).toFile();
+
+
+							//downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), fileInfoVo.getFileId()).toFile();
 						}
 
 					}else {
@@ -1620,8 +1872,8 @@ public class FileUploadController extends AbstractController {
 				} else {
 					result = "FAIL";
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
+			} catch (BizException e) {
+				//e.printStackTrace();
 				LOGGER.error(e.toString());
 				throw new FileDownloadException(e.getMessage());
 
@@ -1630,13 +1882,386 @@ public class FileUploadController extends AbstractController {
 		        if (StringUtils.isNotEmpty(fullRemoteUrl) && downloadFile != null) {
 		            try {
 		              Files.deleteIfExists(downloadFile.toPath());
-		            } catch (Exception ignored) {}
+		            } catch (BizException ignored) {
+
+		            	LOGGER.error(ignored.getMessage());
+		            }
 		        }
 		    }
 
 			return result;
 
 		}
+
+		/***
+		 * 한글 파일 양식 다운로드
+		 * @param request
+		 * @param response
+		 * @throws Exception
+		 */
+		@RequestMapping(value = "/file/downloadTemplate/fileForm")
+		public void downloadTemplate(HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+			FtMap params = getFtMap(request);
+			String fileName=params.getString("fileName");
+			String contentType=params.getString("contentType");
+			String type=params.getString("type");
+
+			String path = hwpTemplatePath;
+			if("hwp".equals(type)) {
+				path = hwpTemplatePath;
+			} else if("excel".equals(type)) {
+				path = excelTemplatePath;
+			}
+			File downloadFile = Paths.get(path, fileName).toFile();
+			//System.out.println("downloadFile::: "+ downloadFile);
+			response.setContentType(contentType);
+			response.setContentLengthLong(downloadFile.length());
+
+			response.setHeader("Content-Disposition",
+					"attachment; filename=\"" + java.net.URLEncoder.encode(fileName, "utf-8") + "\";");
+
+			try ( FileInputStream fis = new FileInputStream(downloadFile);) {
+				OutputStream out = response.getOutputStream();
+				CommonUtil.copy(fis, out, downloadFile.length());
+			} catch (BizException e) {
+				//e.printStackTrace();
+				throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+			}
+
+		}
+
+
+
+
+		 // 업로드 한 파일로 변환 시작
+	    @RequestMapping(value = "/file/synap/conv/{fileId}/{fileToken}", method = RequestMethod.GET)
+	    public String requestPdfConvert(@PathVariable String fileId,@PathVariable String fileToken, HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+	    	FtMap params =new FtMap();
+			params.put("fileId", fileId);
+			//FileInfoVo fileInfoVo = fileUploadService.getFileInfo(params);
+
+			File file = synapDownload( request,  response,  fileId, fileToken, "N");
+
+
+	    	String fileName = file.getName();
+
+
+	    	String inputFile=tempUploadPath+"/"+file.getName();
+
+
+	        File xmlFile = new File(resultPath + fileName + ".xml");
+	        if (xmlFile.isFile() == false) {
+	            // 초기변환 시작
+	        	SynnapConvertToHtml cvt = new SynnapConvertToHtml(moduleBasePath);
+	            int cvt_ret = cvt.convertToHtmlPartial(inputFile, resultPath, fileName, 1,
+	                convert_count);
+	            if (cvt_ret != 0) {
+	                // 오류 처리
+	            }
+	        }
+
+	        // 스킨으로 리다이렉트(옵션)
+	       // final String contextPath = "/result/"; // 스킨에서 변환 결과에 접근할 수 있는 경로
+	        fileName = URLEncoder.encode(fileName, "UTF-8");
+	        // 공백 문자 관련 처리
+	        fileName = fileName.replaceAll("\\+", "%20");
+	        final String retString = String.format("redirect:/skin/doc.html?fn=%s&rs=%s",
+	            fileName, synapContextPath); // 스킨이 설정되어 있는 경로와 파라미터를 전송
+	        return retString;
+
+	    }
+/*
+	    // 스킨의 requestContext와 형식이 같아야 한다.
+	    // XML URL은 다음과 같은 모양이 된다. ex) /example/result/convert_file_id.xml
+	    @RequestMapping(value = "/file/synap/result/{fileName:.+}")
+	    @ResponseBody
+	    public ResponseEntity<FileSystemResource> getMetaFile(@PathVariable("fileName")
+	        String fileName) throws IOException {
+
+
+	        Path target = Paths.get(resultPath, fileName);
+
+	        // 파일이 있으면 그대로 반환
+
+	        HttpHeaders headers= new HttpHeaders();
+	        headers.setContentType(MediaType.parseMediaType("application/xhtml+xml"));
+
+	        if (Files.exists(target)) {
+	            return ResponseEntity.ok().headers(headers).body(new FileSystemResource(target.toFile()));
+	        }
+	        throw new FileNotFoundException(fileName + " not found");
+	    }
+
+	    // 스킨의 requestContext와 형식이 같아야 한다.
+	    // 이미지 URL은 다음과 같은 모양이 된다. ex) /example/result/convert_file_id.files/34.png
+	    @RequestMapping(value = "/file/synap/result/{idPath:.+}/{fileName:.+}")
+	    @ResponseBody
+	    public ResponseEntity<FileSystemResource> getResultFile(@PathVariable("idPath") String idPath,
+	        @PathVariable("fileName") String fileName) throws IOException {
+	        String id = idPath;
+	        if (idPath.contains(".")) {
+	            id = idPath.substring(0, idPath.lastIndexOf("."));
+	        }
+
+
+	        Path target = Paths.get(resultPath, idPath, fileName);
+
+
+	        // 파일이 있으면 그대로 반환
+	        if (Files.exists(target)) {
+	            return ResponseEntity.ok().body(new FileSystemResource(target.toFile()));
+	        }
+
+	        SynnapConvertToHtml cvt = new SynnapConvertToHtml(moduleBasePath);
+
+	        // 부분 변환 시작 번호 구하기 1, 11, 21 ...
+	        // 파일명에서 pageNum 분리( 23.png => 23 )
+	        int pageNum;
+	        if (fileName.contains(".")) {
+	            pageNum = Integer.parseInt(fileName.split("\\.")[0]);
+	        } else {
+	            throw new FileNotFoundException(fileName + " not found");
+	        }
+	        pageNum = (pageNum / CONVERT_COUNT) * CONVERT_COUNT + 1; // pageNum을 시작 번호로 변경
+
+	        String syncKey = id + pageNum;
+	        synchronized (syncKey) {
+	            // 파일이 있으면 그대로 반환 - sync 블럭 진입 시
+	            // 이미 다른 스레드에서 변환된 파일이 있는지 확인
+	            if (Files.exists(target)) {
+	                return ResponseEntity.ok().body(new FileSystemResource(target.toFile()));
+	            }
+
+	            // 추가 변환
+	            int outputValue = cvt.convertToHtmlPartial(tempUploadPath + id, resultPath, id,
+	                pageNum, CONVERT_COUNT);
+	            if (outputValue != 0) {
+	                // 변환 에러. 에러 처리 코드를 추가합니다.
+	                throw new FileNotFoundException(fileName + " not found");
+	            }
+	        }
+
+	        HttpHeaders headers= new HttpHeaders();
+	        headers.setContentType(MediaType.parseMediaType("application/xhtml+xml"));
+
+	        return ResponseEntity.ok().headers(headers).body(new FileSystemResource(target.toFile()));
+	    }
+*/
+
+		public File synapDownload(HttpServletRequest request, HttpServletResponse response, String fileId, String token, String thumbnailYn) throws Exception {
+
+
+			String[] remoteIps=null;
+
+
+			String filePstnSecd="";
+			if(inOutDiv.equals("in")){
+				filePstnSecd="01";
+				remoteIps= outIp;
+
+			}else if(inOutDiv.equals("out")){
+				filePstnSecd="02";
+				remoteIps= inIp;
+			}
+
+			String selectedIp = remoteIps[ThreadLocalRandom.current().nextInt(remoteIps.length)];
+
+			LOGGER.debug("selectedIp......{}",selectedIp);
+
+
+			FtMap params = getFtMap(request);
+
+
+			FileInfoVo fileInfoVo = null;
+			if(CommonUtil.nvl(fileId).equals("")) {
+				String downloadFileInfo = params.getString("downloadFileInfo");
+				Gson gson = new Gson();
+				fileInfoVo = gson.fromJson(downloadFileInfo, FileInfoVo.class);
+			}else {
+				fileInfoVo= new FileInfoVo();
+				fileInfoVo.setFileId(fileId);
+			}
+
+
+
+			File downloadFile = null;
+
+			String fullRemoteUrl="";
+
+			try {
+				if (StringUtils.defaultString(fileInfoVo.getTemp(), "").equals("Y")) {
+					downloadFile = Paths.get(tempUploadPath, fileInfoVo.getFileId() + ".TEMP").toFile();
+
+				} else {
+
+					params.put("fileId", fileInfoVo.getFileId());
+					fileInfoVo = fileUploadService.getFileInfo(params);
+
+					// 파일다운로드 권한
+					boolean fileDownloadCheck = FileUtil.hasFileDownloadAuth(fileInfoVo);
+					if (!fileDownloadCheck) {
+						throw new FileDownloadException(ErrorCode.FILE_ACCESS_DENIED.getMessage());
+					}
+
+					LOGGER.debug("fileInfoVo.getFileId().length()......{}",fileInfoVo.getFileId().length());
+
+
+
+					if(fileInfoVo.getFileId().length()==32) {
+
+						if(CommonUtil.nvl(thumbnailYn).equals("Y")) {
+							downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + "."+fileInfoVo.getFileExt()).toFile();
+						}else {
+							downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
+						}
+
+					}else {
+
+
+						String temFileId="";
+        				if(fileInfoVo!=null &&  fileInfoVo.getFileId().length() >4) {
+        					 temFileId=fileInfoVo.getFileId().substring(fileInfoVo.getFileId().length()-4);
+        				}
+        				temFileId =  String.valueOf(Integer.parseInt(temFileId));
+
+        				downloadFile = Paths.get(realUploadPath, StringUtils.defaultString(fileInfoVo.getFilePath()), temFileId).toFile();
+
+
+						//downloadFile = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId()).toFile();
+					}
+
+					LOGGER.debug("!filePstnSecd.equals(fileInfoVo.getFilePstnSecd())......{}",	!filePstnSecd.equals(fileInfoVo.getFilePstnSecd()));
+
+
+
+					if(!filePstnSecd.equals(fileInfoVo.getFilePstnSecd())) {
+
+
+						if(!downloadFile.exists()) {
+							LOGGER.debug("다른서버에서 파일 조회....{}", downloadFile.toString());
+
+
+							String jwtToken = null;
+
+							if (token != null) {
+								jwtToken = token;
+							}
+
+
+							// 1. JWT 가져오기
+							String authHeader = request.getHeader("Authorization");
+
+					        // Authorization 헤더 확인
+					        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+					            jwtToken = authHeader.substring(7);
+					        }
+
+					        LOGGER.debug("jwtToken....{}", jwtToken);
+
+					        if(jwtToken==null) {
+					        	Cookie[] cookies = request.getCookies();
+							    if (cookies != null) {
+							        for (Cookie cookie : cookies) {
+							            if ("JWT".equals(cookie.getName())) {
+							                jwtToken = cookie.getValue();
+							                break;
+							            }
+							        }
+							    }
+					        }
+
+
+
+						    LOGGER.debug("jwtToken....{}", jwtToken);
+
+							// 최적의 청크 수 계산
+							int optimalChunks = calculateOptimalChunks(fileInfoVo.getFileSize());
+
+							// 임시 파일 경로 생성
+							String tempFileName = fileInfoVo.getFileId() + "_" + System.currentTimeMillis() + ".tmp";
+							downloadFile = Paths.get(tempUploadPath, tempFileName).toFile();
+
+							fullRemoteUrl = "http://"+selectedIp+"/file/remoteDownload/" + fileInfoVo.getFileId();
+
+							// 여기서 사용!
+							remoteFileDownloader.downloadFileFromOtherWAS(fullRemoteUrl, jwtToken, downloadFile.getAbsolutePath(), optimalChunks);
+						}else {
+							//return downloadFile;
+							File synapFileToMove = Paths.get(tempUploadPath, fileInfoVo.getFileId() + "."+fileInfoVo.getFileExt()).toFile();
+
+							Files.copy(downloadFile.toPath(), synapFileToMove.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+							return synapFileToMove;
+						}
+
+					}
+
+
+				}
+
+				if (downloadFile.isFile() && downloadFile.exists()) {
+
+					File fileToMove = Paths.get(realUploadPath, fileInfoVo.getFilePath(), fileInfoVo.getFileId() + ".FILE").toFile();
+
+					//평가   && !fileInfoVo.getTaskSecd().equals("06")
+					if(!filePstnSecd.equals(fileInfoVo.getFilePstnSecd()) && !StringUtils.defaultString(fileInfoVo.getTemp(), "").equals("Y")) {
+
+
+						LOGGER.debug("기존서버파일 활용....{}", fileToMove.toString());
+
+						if(!fileToMove.exists()) {
+
+							LOGGER.debug("다른서버에 파일저장....{}", fileToMove.toString());
+
+							FileUtils.forceMkdir(fileToMove.getParentFile());
+							Files.move(downloadFile.toPath(), fileToMove.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+
+							downloadFile=fileToMove;
+						}
+
+					}
+
+
+
+
+				} else {
+					throw new FileDownloadException(ErrorCode.FILE_NOT_FOUND.getMessage());
+				}
+
+
+				File synapFileToMove = Paths.get(tempUploadPath, fileInfoVo.getFileId() + "."+fileInfoVo.getFileExt()).toFile();
+
+				Files.copy(downloadFile.toPath(), synapFileToMove.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+				return synapFileToMove;
+
+			} catch (BizException e) {
+				//e.printStackTrace();
+				throw new FileDownloadException(e.getMessage());
+
+			}
+
+		}
+
+
+		@GetMapping("/file/check-file")
+	    public ResponseEntity<String> checkFile() {
+	        try {
+	            File htmlFile = new File("/GCLOUD/WebApp/deploy/odawas.war/result/10d42498b150491b897bc7d98012bc4d.hwp.view.html");
+	            File xhtmlFile = new File("/GCLOUD/WebApp/deploy/odawas.war/result/10d42498b150491b897bc7d98012bc4d.hwp.view.xhtml");
+
+	            String result = "HTML exists: " + htmlFile.exists() + ", readable: " + htmlFile.canRead() + "\n" +
+	                          "XHTML exists: " + xhtmlFile.exists() + ", readable: " + xhtmlFile.canRead();
+
+	            return ResponseEntity.ok(result);
+	        } catch (BizException e) {
+	            return ResponseEntity.ok("Error: " + e.getMessage());
+	        }
+	    }
+
 }
 
 
